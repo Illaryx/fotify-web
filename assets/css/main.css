@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-coral: #FF3D6B;
+  --color-violet: #7C3AED;
+  --color-night: #0F0A1E;
+  --color-night-800: #1A1330;
+  --color-night-700: #251C42;
+
+  --font-display: "Unbounded", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+}
