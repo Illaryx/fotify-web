@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "api:types": "swagger2openapi ../fotify-api/docs/swagger.json | npx openapi-typescript /dev/stdin -o app/types/api.ts"
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.80.2",
@@ -20,11 +21,20 @@
     "vue-router": "^5.0.4",
     "zod": "^3.24.4"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "sharp",
+      "vue-demi"
+    ]
+  },
   "devDependencies": {
     "@nuxt/image": "^1.10.0",
-    "@pinia/nuxt": "^0.10.1",
+    "@pinia/nuxt": "^0.11.3",
     "@tailwindcss/vite": "^4.1.7",
     "@vueuse/nuxt": "^12.7.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.1.7",
     "typescript": "^5.8.3"
   }
