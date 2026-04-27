@@ -177,7 +177,7 @@
               </div>
               <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-1">Paso 2</div>
               <h3 class="font-semibold text-white text-sm mb-2">Sube tus fotos</h3>
-              <p class="text-xs text-white/50 leading-relaxed">Arrastra hasta 5,000 fotos. La IA procesa los rostros automáticamente</p>
+              <p class="text-xs text-white/50 leading-relaxed">Arrastra hasta 2,000 fotos (5,000 con Plan Pro). La IA procesa los rostros automáticamente</p>
             </div>
 
             <div class="flex flex-col items-center text-center px-4 mb-8 lg:mb-0">

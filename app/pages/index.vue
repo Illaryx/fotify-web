@@ -191,7 +191,7 @@
     <section class="bg-night-2 border-y border-border px-5 md:px-10 lg:px-12 py-16 md:py-20">
       <div class="mb-10">
         <div class="text-[11px] font-semibold tracking-[3px] uppercase text-violet mb-2">¿Cómo funciona?</div>
-        <div class="font-display font-bold text-[24px] md:text-[28px] tracking-tight">Tres pasos. Menos de un minuto.</div>
+        <div class="font-display font-bold text-[24px] md:text-[28px] tracking-tight">Menos de un minuto.</div>
       </div>
 
       <!-- Mobile (<768px): horizontal snap scroll -->

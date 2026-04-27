@@ -81,10 +81,10 @@
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Proceso simplificado</div>
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">Solo 3 pasos para empezar a ganar</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">Solo 4 pasos para empezar a ganar</h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div class="bg-night-2 border border-border rounded-2xl p-6">
             <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">1</div>
             <h3 class="font-semibold text-white text-base mb-3">Registra el evento</h3>
@@ -100,7 +100,7 @@
           <div class="bg-night-2 border border-border rounded-2xl p-6">
             <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">2</div>
             <h3 class="font-semibold text-white text-base mb-3">Sube tus fotos</h3>
-            <p class="text-sm text-muted leading-relaxed">Arrastra hasta 5,000 fotos por evento. Nuestra IA procesa los rostros y los vincula automáticamente a cada atleta.</p>
+            <p class="text-sm text-muted leading-relaxed">Arrastra hasta 2,000 fotos por evento (5,000 con Plan Pro). Nuestra IA procesa los rostros y los vincula automáticamente a cada atleta.</p>
             <div class="mt-5 bg-night-3 rounded-xl p-4">
               <div class="flex items-center gap-2 mb-2">
                 <div class="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
@@ -114,8 +114,18 @@
 
           <div class="bg-night-2 border border-border rounded-2xl p-6">
             <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">3</div>
-            <h3 class="font-semibold text-white text-base mb-3">Cobra sin hacer nada más</h3>
-            <p class="text-sm text-muted leading-relaxed">Los atletas encuentran y compran sus fotos solos. Recibes transferencia a tu cuenta cada 15 días, automáticamente.</p>
+            <h3 class="font-semibold text-white text-base mb-3">La IA trabaja sola</h3>
+            <p class="text-sm text-muted leading-relaxed">Los atletas suben su selfie y la IA les encuentra en segundos entre miles de fotos. Sin que hagas nada más.</p>
+            <div class="mt-5 bg-night-3 rounded-xl p-4 flex items-center gap-3">
+              <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0"></div>
+              <span class="text-xs text-white/60">97% precisión · 0 errores hoy</span>
+            </div>
+          </div>
+
+          <div class="bg-night-2 border border-border rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">4</div>
+            <h3 class="font-semibold text-white text-base mb-3">Cobras cada 15 días</h3>
+            <p class="text-sm text-muted leading-relaxed">Los atletas compran solos. Recibes transferencia a tu cuenta cada quincena, automáticamente.</p>
             <div class="mt-5 bg-night-3 rounded-xl p-4 flex items-center justify-between">
               <div>
                 <div class="text-xs text-white/40 mb-0.5">Próximo pago</div>
@@ -394,7 +404,7 @@ const faq = [
   },
   {
     q: '¿Puedo establecer mis propios precios?',
-    a: 'Actualmente los precios son estándar (S/ 15 / pack 3 S/ 38 / pack 5 S/ 59 etc.) para asegurar conversión óptima. Los precios personalizados llegarán con el plan Pro en Q3 2025.',
+    a: 'Actualmente los precios son estándar (S/ 15 / pack 3 S/ 38 / pack 5 S/ 59 etc.) para asegurar conversión óptima. Los precios personalizados están disponibles con el plan Pro.',
   },
   {
     q: '¿Las fotos siguen siendo mías?',
