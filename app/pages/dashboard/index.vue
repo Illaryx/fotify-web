@@ -90,115 +90,227 @@
 
           <!-- ── RESUMEN ─────────────────────────────────────────────── -->
           <section v-show="activeSection === 'overview'">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <h1 class="text-xl font-display text-white">Buenas, {{ firstName }} 👋</h1>
-                <p class="text-sm text-white/45 mt-0.5">{{ todayLabel }}</p>
-              </div>
-            </div>
 
-            <!-- KPI cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div class="bg-night-2 border border-border rounded-2xl p-5">
-                <div class="text-xs text-white/40 mb-2">Ganancias acumuladas</div>
-                <div class="font-display text-2xl text-white mb-1">S/ {{ totalEarnings.toFixed(0) }}</div>
-                <div class="text-xs text-white/40">{{ payouts.length }} pago{{ payouts.length !== 1 ? 's' : '' }} recibido{{ payouts.length !== 1 ? 's' : '' }}</div>
+            <!-- First-time onboarding -->
+            <template v-if="isFirstTime">
+              <div class="mb-7">
+                <h1 class="font-display font-bold text-[22px] text-white mb-1">¡Bienvenido a Fotify, {{ firstName }}! 👋</h1>
+                <p class="text-sm text-white/40">Empieza creando tu primer evento y monetiza tus fotos.</p>
               </div>
-              <div class="bg-night-2 border border-border rounded-2xl p-5">
-                <div class="text-xs text-white/40 mb-2">Fotos subidas</div>
-                <div class="font-display text-2xl text-white mb-1">{{ totalPhotos.toLocaleString() }}</div>
-                <div class="text-xs text-white/40">en {{ events.length }} evento{{ events.length !== 1 ? 's' : '' }}</div>
-              </div>
-              <div class="bg-night-2 border border-border rounded-2xl p-5">
-                <div class="text-xs text-white/40 mb-2">Eventos activos</div>
-                <div class="font-display text-2xl text-white mb-1">{{ activeEventsCount }}</div>
-                <div class="text-xs text-white/40">de {{ events.length }} totales</div>
-              </div>
-              <div class="bg-night-2 border border-border rounded-2xl p-5">
-                <div class="text-xs text-white/40 mb-2">Pendiente de cobro</div>
-                <div class="font-display text-2xl text-violet mb-1">S/ {{ pendingAmount.toFixed(0) }}</div>
-                <div class="text-xs text-white/40">{{ pendingPayouts.length > 0 ? 'próximo pago programado' : 'sin pagos pendientes' }}</div>
-              </div>
-            </div>
 
-            <!-- Recent events table -->
-            <div class="bg-night-2 border border-border rounded-2xl overflow-hidden mb-6">
-              <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-                <div class="text-sm font-medium text-white">Eventos recientes</div>
-                <button class="text-xs text-violet hover:underline" @click="switchSection('events')">Ver todos</button>
+              <!-- Zero KPI (dimmed) -->
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 opacity-40 pointer-events-none select-none">
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Ganancias acumuladas</div>
+                  <div class="font-display text-2xl text-white mb-1">S/ 0</div>
+                  <div class="text-xs text-white/40">sin pagos aún</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Fotos subidas</div>
+                  <div class="font-display text-2xl text-white mb-1">0</div>
+                  <div class="text-xs text-white/40">en 0 eventos</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Eventos activos</div>
+                  <div class="font-display text-2xl text-white mb-1">0</div>
+                  <div class="text-xs text-white/40">de 0 totales</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Pendiente de cobro</div>
+                  <div class="font-display text-2xl text-violet mb-1">S/ 0</div>
+                  <div class="text-xs text-white/40">sin pagos pendientes</div>
+                </div>
               </div>
-              <div v-if="loadingEvents" class="py-10 flex justify-center">
-                <svg class="animate-spin text-violet/40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-              </div>
-              <div v-else-if="events.length === 0" class="py-10 text-center text-sm text-white/40">
-                No tienes eventos aún. <button class="text-violet hover:underline" @click="switchSection('events')">Crear uno</button>
-              </div>
-              <div v-else class="overflow-x-auto">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="border-b border-border">
-                      <th class="text-left py-3 px-5 text-xs text-white/35 font-medium uppercase tracking-wider">Evento</th>
-                      <th class="text-left py-3 px-4 text-xs text-white/35 font-medium uppercase tracking-wider hidden md:table-cell">Fecha</th>
-                      <th class="text-left py-3 px-4 text-xs text-white/35 font-medium uppercase tracking-wider">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border">
-                    <tr v-for="event in recentEvents" :key="event.id" class="hover:bg-night-3/50 transition-colors">
-                      <td class="py-4 px-5">
-                        <div class="text-sm text-white font-medium">{{ event.name }}</div>
-                        <div class="text-xs text-white/40">S/ {{ event.photo_price }} / foto</div>
-                      </td>
-                      <td class="py-4 px-4 text-sm text-white/60 hidden md:table-cell">
-                        {{ event.event_date ? formatDate(event.event_date) : '—' }}
-                      </td>
-                      <td class="py-4 px-4">
-                        <span :class="statusBadge(event.status)">{{ statusLabel(event.status) }}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
 
-            <!-- Quick actions -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <NuxtLink to="/dashboard/upload" class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group">
-                <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
-                  <IconUpload class="text-violet" />
+              <!-- Create first event CTA -->
+              <div class="bg-night-2 border border-violet/20 rounded-2xl p-6 mb-6">
+                <div class="text-center mb-5">
+                  <div class="font-display font-bold text-[18px] text-white mb-1">Crea tu primer evento</div>
+                  <p class="text-sm text-white/45">Elige el deporte y comienza a monetizar tus fotos.</p>
                 </div>
-                <span class="text-xs text-white/70 group-hover:text-white">Subir fotos</span>
-              </NuxtLink>
-              <button class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group" @click="switchSection('events')">
-                <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2" y="3" width="14" height="12" rx="2" stroke="#7C3AED" stroke-width="1.5"/>
-                    <path d="M6 3V1M12 3V1" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M2 7H16" stroke="#7C3AED" stroke-width="1.5"/>
-                    <path d="M6 11H9" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-5">
+                  <button
+                    v-for="sport in sports"
+                    :key="sport.name"
+                    class="flex flex-col items-center gap-2 bg-night-3 hover:bg-violet/15 border border-border hover:border-violet/40 rounded-xl p-3 transition-colors"
+                  >
+                    <span class="text-2xl">{{ sport.icon }}</span>
+                    <span class="text-[10px] text-white/55 font-medium">{{ sport.name }}</span>
+                  </button>
                 </div>
-                <span class="text-xs text-white/70 group-hover:text-white">Mis eventos</span>
-              </button>
-              <NuxtLink v-if="profile?.id" :to="`/photographers/${profile.id}`" class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group">
-                <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <circle cx="9" cy="7" r="3" stroke="#7C3AED" stroke-width="1.5"/>
-                    <path d="M3 16C3 13 5.7 11 9 11C12.3 11 15 13 15 16" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
+                <NuxtLink to="/dashboard/events/new" class="block w-full text-center bg-violet hover:bg-violet-deep text-white font-bold py-3.5 rounded-2xl text-[15px] transition-colors">
+                  Crear evento →
+                </NuxtLink>
+              </div>
+
+              <!-- Secondary cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="text-sm font-medium text-white">Completa tu perfil</div>
+                    <span class="text-xs text-white/40">40%</span>
+                  </div>
+                  <div class="w-full bg-border rounded-full h-1.5 mb-3">
+                    <div class="bg-violet h-1.5 rounded-full" style="width:40%"></div>
+                  </div>
+                  <button class="text-xs text-violet hover:underline" @click="switchSection('profile')">Completar →</button>
                 </div>
-                <span class="text-xs text-white/70 group-hover:text-white">Ver perfil público</span>
-              </NuxtLink>
-              <button class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group" @click="switchSection('earnings')">
-                <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="3" y="5" width="12" height="9" rx="2" stroke="#7C3AED" stroke-width="1.5"/>
-                    <path d="M3 8H15" stroke="#7C3AED" stroke-width="1.5"/>
-                    <path d="M7 11H11" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
+                <div class="bg-night-2 border border-border rounded-2xl p-5 opacity-50">
+                  <div class="flex items-center gap-2 mb-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <div class="text-sm font-medium text-white">Conecta tu banco</div>
+                  </div>
+                  <p class="text-xs text-white/40 mb-3">Disponible cuando tengas tu primer evento activo.</p>
+                  <span class="text-[10px] font-semibold bg-white/8 text-white/40 px-2 py-0.5 rounded-full">Bloqueado</span>
                 </div>
-                <span class="text-xs text-white/70 group-hover:text-white">Mis ganancias</span>
-              </button>
-            </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-sm font-medium text-white mb-2">Ver cómo funciona</div>
+                  <p class="text-xs text-white/40 mb-3">Aprende a crear eventos, subir fotos y recibir pagos.</p>
+                  <NuxtLink to="/how-it-works" class="text-xs text-violet hover:underline">Ver tutorial →</NuxtLink>
+                </div>
+              </div>
+
+              <!-- Explore panel -->
+              <div class="mb-6">
+                <div class="text-sm font-medium text-white mb-3">Explora tu panel</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <button
+                    v-for="link in navLinks.filter(l => l.section !== 'overview')"
+                    :key="link.section"
+                    class="bg-night-2 border border-border hover:border-violet/40 rounded-2xl p-4 text-left transition-colors"
+                    @click="switchSection(link.section)"
+                  >
+                    <div class="text-sm font-medium text-white mb-1">{{ link.label }}</div>
+                    <div class="text-xs text-violet">→</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Getting started checklist -->
+              <div class="bg-night-2 border border-border rounded-2xl p-5">
+                <div class="text-sm font-semibold text-white mb-4">Primeros pasos</div>
+                <div class="flex flex-col gap-3">
+                  <div v-for="item in onboardingSteps" :key="item.label" class="flex items-center gap-3">
+                    <div :class="['w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0', item.done ? 'bg-green-400/20' : 'bg-border']">
+                      <svg v-if="item.done" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <div v-else class="w-2 h-2 rounded-full bg-white/20"></div>
+                    </div>
+                    <span :class="['text-sm', item.done ? 'text-white/50 line-through' : 'text-white']">{{ item.label }}</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Normal overview (has events) -->
+            <template v-else>
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h1 class="text-xl font-display text-white">Buenas, {{ firstName }} 👋</h1>
+                  <p class="text-sm text-white/45 mt-0.5">{{ todayLabel }}</p>
+                </div>
+              </div>
+
+              <!-- KPI cards -->
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Ganancias acumuladas</div>
+                  <div class="font-display text-2xl text-white mb-1">S/ {{ totalEarnings.toFixed(0) }}</div>
+                  <div class="text-xs text-white/40">{{ payouts.length }} pago{{ payouts.length !== 1 ? 's' : '' }} recibido{{ payouts.length !== 1 ? 's' : '' }}</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Fotos subidas</div>
+                  <div class="font-display text-2xl text-white mb-1">{{ totalPhotos.toLocaleString() }}</div>
+                  <div class="text-xs text-white/40">en {{ events.length }} evento{{ events.length !== 1 ? 's' : '' }}</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Eventos activos</div>
+                  <div class="font-display text-2xl text-white mb-1">{{ activeEventsCount }}</div>
+                  <div class="text-xs text-white/40">de {{ events.length }} totales</div>
+                </div>
+                <div class="bg-night-2 border border-border rounded-2xl p-5">
+                  <div class="text-xs text-white/40 mb-2">Pendiente de cobro</div>
+                  <div class="font-display text-2xl text-violet mb-1">S/ {{ pendingAmount.toFixed(0) }}</div>
+                  <div class="text-xs text-white/40">{{ pendingPayouts.length > 0 ? 'próximo pago programado' : 'sin pagos pendientes' }}</div>
+                </div>
+              </div>
+
+              <!-- Recent events table -->
+              <div class="bg-night-2 border border-border rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <div class="text-sm font-medium text-white">Eventos recientes</div>
+                  <button class="text-xs text-violet hover:underline" @click="switchSection('events')">Ver todos</button>
+                </div>
+                <div v-if="loadingEvents" class="py-10 flex justify-center">
+                  <svg class="animate-spin text-violet/40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                </div>
+                <div v-else class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b border-border">
+                        <th class="text-left py-3 px-5 text-xs text-white/35 font-medium uppercase tracking-wider">Evento</th>
+                        <th class="text-left py-3 px-4 text-xs text-white/35 font-medium uppercase tracking-wider hidden md:table-cell">Fecha</th>
+                        <th class="text-left py-3 px-4 text-xs text-white/35 font-medium uppercase tracking-wider">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                      <tr v-for="event in recentEvents" :key="event.id" class="hover:bg-night-3/50 transition-colors">
+                        <td class="py-4 px-5">
+                          <div class="text-sm text-white font-medium">{{ event.name }}</div>
+                          <div class="text-xs text-white/40">S/ {{ event.photo_price }} / foto</div>
+                        </td>
+                        <td class="py-4 px-4 text-sm text-white/60 hidden md:table-cell">
+                          {{ event.event_date ? formatDate(event.event_date) : '—' }}
+                        </td>
+                        <td class="py-4 px-4">
+                          <span :class="statusBadge(event.status)">{{ statusLabel(event.status) }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Quick actions -->
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <NuxtLink to="/dashboard/upload" class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group">
+                  <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
+                    <IconUpload class="text-violet" />
+                  </div>
+                  <span class="text-xs text-white/70 group-hover:text-white">Subir fotos</span>
+                </NuxtLink>
+                <button class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group" @click="switchSection('events')">
+                  <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <rect x="2" y="3" width="14" height="12" rx="2" stroke="#7C3AED" stroke-width="1.5"/>
+                      <path d="M6 3V1M12 3V1" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+                      <path d="M2 7H16" stroke="#7C3AED" stroke-width="1.5"/>
+                      <path d="M6 11H9" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <span class="text-xs text-white/70 group-hover:text-white">Mis eventos</span>
+                </button>
+                <NuxtLink v-if="profile?.id" :to="`/photographers/${profile.id}`" class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group">
+                  <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <circle cx="9" cy="7" r="3" stroke="#7C3AED" stroke-width="1.5"/>
+                      <path d="M3 16C3 13 5.7 11 9 11C12.3 11 15 13 15 16" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <span class="text-xs text-white/70 group-hover:text-white">Ver perfil público</span>
+                </NuxtLink>
+                <button class="bg-night-2 border border-border hover:border-violet/50 rounded-2xl p-5 flex flex-col items-center gap-3 text-center transition-colors group" @click="switchSection('earnings')">
+                  <div class="w-10 h-10 rounded-full bg-violet/20 flex items-center justify-center group-hover:bg-violet/30 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <rect x="3" y="5" width="12" height="9" rx="2" stroke="#7C3AED" stroke-width="1.5"/>
+                      <path d="M3 8H15" stroke="#7C3AED" stroke-width="1.5"/>
+                      <path d="M7 11H11" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <span class="text-xs text-white/70 group-hover:text-white">Mis ganancias</span>
+                </button>
+              </div>
+            </template>
+
           </section>
 
           <!-- ── EVENTOS ────────────────────────────────────────────── -->
@@ -602,7 +714,24 @@ const pendingAmount = computed(() => pendingPayouts.value.reduce((s, p) => s + (
 const avgPayout = computed(() => paidPayouts.value.length ? totalEarnings.value / paidPayouts.value.length : 0)
 
 const activeEventsCount = computed(() => events.value.filter(e => e.status === 'active').length)
+const isFirstTime = computed(() => !loadingEvents.value && events.value.length === 0)
 const totalPhotos = computed(() => photos.value.length)
+
+const sports = [
+  { icon: '🏃', name: 'Maratón' },
+  { icon: '🚴', name: 'Ciclismo' },
+  { icon: '⛰️', name: 'Trail' },
+  { icon: '🏊', name: 'Natación' },
+  { icon: '🏆', name: 'Triatlón' },
+  { icon: '⭐', name: 'Otro' },
+]
+
+const onboardingSteps = computed(() => [
+  { label: 'Registro completado', done: true },
+  { label: 'Cuenta aprobada', done: !!profile.value },
+  { label: 'Crear tu primer evento', done: events.value.length > 0 },
+  { label: 'Subir tus primeras fotos', done: photos.value.length > 0 },
+])
 
 const recentEvents = computed(() => events.value.slice(0, 5))
 

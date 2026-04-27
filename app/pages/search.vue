@@ -311,36 +311,95 @@
 
       <!-- Empty state: actions -->
       <section v-if="resultVariant === 'empty'" class="px-5 lg:px-12 pb-20">
-        <div class="max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <!-- Retry -->
-          <div class="bg-night-2 border border-border rounded-2xl p-5">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-xl bg-violet/15 flex items-center justify-center flex-shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <div class="max-w-2xl">
+
+          <!-- Two action cards: retry + bib search -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+            <!-- Retry -->
+            <div class="bg-night-2 border border-border rounded-2xl p-5">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-violet/15 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </div>
+                <div class="text-[14px] font-semibold text-white">Reintentar con otra selfie</div>
               </div>
-              <div class="text-[14px] font-semibold text-white">Reintentar con otra selfie</div>
+              <ul class="flex flex-col gap-2 text-[12px] text-white/50 mb-4">
+                <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Cara bien iluminada y de frente</li>
+                <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Sin gafas de sol ni gorra</li>
+                <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Fondo sin mucho ruido visual</li>
+              </ul>
+              <button class="w-full bg-violet hover:bg-violet-deep text-white font-semibold py-2.5 rounded-xl text-[13px] transition-colors" @click="resetSearch">
+                Subir nueva selfie →
+              </button>
             </div>
-            <ul class="flex flex-col gap-2 text-[12px] text-white/50 mb-4">
-              <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Cara bien iluminada y de frente</li>
-              <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Sin gafas de sol ni gorra</li>
-              <li class="flex items-start gap-1.5"><span class="text-violet">→</span>Fondo sin mucho ruido visual</li>
-            </ul>
-            <button class="w-full bg-violet hover:bg-violet-deep text-white font-semibold py-2.5 rounded-xl text-[13px] transition-colors" @click="resetSearch">
-              Subir nueva selfie →
-            </button>
+
+            <!-- Bib number search -->
+            <div class="bg-night-2 border border-border rounded-2xl p-5">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-violet/15 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#7C3AED" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="2" width="12" height="14" rx="2"/><path d="M6 6H12M6 9H10M6 12H9"/></svg>
+                </div>
+                <div class="text-[14px] font-semibold text-white">Buscar por número de dorsal</div>
+              </div>
+              <p class="text-[12px] text-white/55 mb-4 leading-relaxed">Si participaste con dorsal, podemos buscar las fotos donde aparezca tu número.</p>
+              <input
+                v-model="bibNumber"
+                type="number"
+                placeholder="Ej: 2847"
+                class="w-full bg-night-3 border border-border rounded-xl px-4 py-3 text-[16px] font-semibold text-white placeholder:text-white/25 placeholder:font-normal placeholder:text-[13px] outline-none focus:border-violet/60 text-center tracking-widest mb-3 transition-colors"
+                min="1"
+                @keydown.enter="searchByBib"
+              />
+              <p v-if="bibError" class="text-[11px] text-coral mb-2">{{ bibError }}</p>
+              <button
+                :disabled="!bibNumber || bibSearching"
+                class="w-full bg-violet hover:bg-violet-deep disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl text-[13px] transition-colors flex items-center justify-center gap-2"
+                @click="searchByBib"
+              >
+                <svg v-if="bibSearching" class="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                {{ bibSearching ? 'Buscando...' : 'Buscar por dorsal' }}
+              </button>
+            </div>
           </div>
-          <!-- Browse event -->
-          <div v-if="event" class="bg-night-2 border border-border rounded-2xl p-5">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-xl bg-violet/15 flex items-center justify-center flex-shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+
+          <!-- Bib results -->
+          <div v-if="bibResults.length > 0" class="bg-night-2 border border-border rounded-2xl p-5 mb-8">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-5 h-5 rounded-full bg-green-400/20 flex items-center justify-center">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-              <div class="text-[14px] font-semibold text-white">Explorar la galería completa</div>
+              <span class="text-[13px] text-green-400 font-medium">{{ bibResults.length }} fotos encontradas para dorsal #{{ bibNumber }}</span>
             </div>
-            <p class="text-[12px] text-white/50 mb-4 leading-relaxed">Busca manualmente entre todas las fotos del evento y selecciona las tuyas.</p>
-            <NuxtLink :to="`/events/${event.slug}`" class="block w-full text-center border border-border hover:border-violet/40 text-white/60 hover:text-white py-2.5 rounded-xl text-[13px] transition-colors">
-              Ver todas las fotos →
+            <div class="grid grid-cols-4 gap-2 mb-4">
+              <div v-for="(r, i) in bibResults.slice(0, 3)" :key="r.photo_id" class="aspect-square rounded-xl bg-gradient-to-br from-violet/30 to-violet-deep/20 relative overflow-hidden">
+                <img v-if="r.thumbnail_url" :src="r.thumbnail_url" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 flex items-center justify-center text-[6px] text-white/10 font-bold tracking-widest -rotate-30">FOTIFY</div>
+              </div>
+              <div v-if="bibResults.length > 3" class="aspect-square rounded-xl bg-border flex items-center justify-center text-[12px] text-white/40 font-medium">+{{ bibResults.length - 3 }}</div>
+            </div>
+            <p class="text-[11px] text-white/40 mb-4">⚠️ La búsqueda por dorsal puede incluir fotos de otros atletas cercanos. Revisa antes de comprar.</p>
+          </div>
+
+          <!-- Browse all event photos -->
+          <div v-if="event" class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-[14px] font-semibold text-white">Todas las fotos del evento</h2>
+              <span class="text-[11px] text-white/40">{{ event.total_photos?.toLocaleString('es-PE') ?? '—' }} fotos disponibles</span>
+            </div>
+            <p class="text-[12px] text-white/50 mb-4">También puedes explorar todas las fotos del evento y seleccionar manualmente las tuyas.</p>
+            <NuxtLink :to="`/events/${event.slug}`" class="block w-full text-center border border-border hover:border-violet/40 text-white/60 hover:text-white py-3 rounded-full text-[13px] transition-colors">
+              Explorar todas las fotos del evento →
             </NuxtLink>
+          </div>
+
+          <!-- Contact support -->
+          <div class="bg-night-2 border border-border rounded-2xl p-5 flex items-start gap-4">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" class="flex-shrink-0 mt-0.5"><circle cx="10" cy="10" r="9" stroke="#7C3AED" stroke-width="1.4"/><path d="M10 14V10" stroke="#7C3AED" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="7" r="0.75" fill="#7C3AED"/></svg>
+            <div>
+              <div class="text-[13px] font-medium text-white mb-1">¿Estuviste en el evento pero no te encontramos?</div>
+              <p class="text-[11px] text-white/50 leading-relaxed mb-2">Puede pasar si el fotógrafo no te capturó en ningún ángulo. Si crees que hay un error, podemos revisar manualmente.</p>
+              <a href="mailto:soporte@fotify.pe" class="text-[11px] text-violet hover:underline">Contactar soporte →</a>
+            </div>
           </div>
         </div>
       </section>
@@ -768,6 +827,38 @@ const cartTotal = computed(() => {
   const perPhoto = event.value?.photo_price ?? searchResults.value[0]?.price ?? 0
   return (cart.count * perPhoto).toFixed(2)
 })
+
+// ── Bib search ────────────────────────────────────────────────────────────────
+const bibNumber = ref<string>('')
+const bibSearching = ref(false)
+const bibResults = ref<SearchResultResponse[]>([])
+const bibError = ref<string | null>(null)
+
+async function searchByBib() {
+  if (!bibNumber.value) return
+  bibSearching.value = true
+  bibError.value = null
+  bibResults.value = []
+  try {
+    const res = await $fetch<{ data: { results: SearchResultResponse[] } }>(
+      `${config.public.apiBase}/search/bib`,
+      {
+        method: 'POST',
+        body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
+        headers: { Authorization: `Bearer ${auth.tokens.access}` },
+      },
+    )
+    bibResults.value = res.data?.results ?? []
+    if (bibResults.value.length === 0) bibError.value = 'No encontramos fotos para ese dorsal.'
+    else if (eventId.value) cart.setEvent(eventId.value)
+  }
+  catch {
+    bibError.value = 'Error al buscar por dorsal. Intenta de nuevo.'
+  }
+  finally {
+    bibSearching.value = false
+  }
+}
 
 // ── Static content ────────────────────────────────────────────────────────────
 const selfieTips = [

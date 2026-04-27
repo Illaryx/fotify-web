@@ -52,7 +52,7 @@
       </Teleport>
 
       <!-- ── PROGRESS STEPS ─────────────────────────────────────────────────── -->
-      <div class="px-5 md:px-10 lg:px-12 py-5">
+      <div v-show="step !== 'failed'" class="px-5 md:px-10 lg:px-12 py-5">
         <div class="flex items-center max-w-sm mx-auto lg:mx-0">
           <div class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-full bg-violet flex items-center justify-center flex-shrink-0">
@@ -77,8 +77,144 @@
         </div>
       </div>
 
+      <!-- ── FAILED STATE ──────────────────────────────────────────────────── -->
+      <section v-if="step === 'failed'" class="px-5 md:px-10 lg:px-12 pb-16">
+        <div class="flex flex-col lg:flex-row gap-8 lg:items-start">
+
+          <!-- LEFT: error + reasons + actions -->
+          <div class="w-full lg:flex-1 order-2 lg:order-1">
+
+            <!-- Error header -->
+            <div class="bg-night-2 border border-red-500/20 rounded-2xl p-6 mb-5 text-center">
+              <div class="w-16 h-16 rounded-full bg-red-500/15 border-2 border-red-500/25 flex items-center justify-center mx-auto mb-4">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(239,68,68,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </div>
+              <h2 class="font-display font-bold text-[20px] text-white mb-2 tracking-tight">Pago no procesado</h2>
+              <p v-if="failedError" class="inline-block bg-red-500/10 text-red-400 text-[12px] font-medium px-3 py-1.5 rounded-full">{{ failedError }}</p>
+            </div>
+
+            <!-- What happened? -->
+            <div class="bg-night-2 border border-border rounded-2xl p-5 mb-5">
+              <div class="text-[13px] font-semibold text-white mb-3">¿Qué puede haber pasado?</div>
+              <div class="flex flex-col gap-2">
+                <button
+                  v-for="(reason, i) in failReasons"
+                  :key="i"
+                  :class="['flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all', selectedFailReason === i ? 'border-violet bg-violet/10 text-white' : 'border-border text-white/55 hover:border-violet/40 hover:text-white/80']"
+                  @click="selectedFailReason = i"
+                >
+                  <div :class="['w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center', selectedFailReason === i ? 'border-violet' : 'border-border']">
+                    <div v-if="selectedFailReason === i" class="w-2 h-2 rounded-full bg-violet"></div>
+                  </div>
+                  <span class="text-[13px]">{{ reason }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- What to do? -->
+            <div class="text-[13px] font-semibold text-white mb-3">¿Qué puedes hacer?</div>
+            <div class="flex flex-col gap-3">
+
+              <!-- Retry same method -->
+              <div class="bg-night-2 border border-border rounded-2xl p-5 flex items-center justify-between gap-4">
+                <div>
+                  <div class="text-[13px] font-semibold text-white mb-0.5">Reintentar con {{ payMethod === 'card' ? 'la misma tarjeta' : payMethod === 'yape' ? 'Yape' : 'Plin' }}</div>
+                  <p class="text-[11px] text-white/45">Vuelve al formulario y revisa los datos.</p>
+                </div>
+                <button
+                  class="flex-shrink-0 bg-violet hover:bg-violet-deep text-white font-semibold text-[13px] px-4 py-2.5 rounded-xl transition-colors"
+                  @click="step = 'form'; failedError = null; selectedFailReason = -1"
+                >
+                  Reintentar →
+                </button>
+              </div>
+
+              <!-- Switch to Yape -->
+              <button
+                v-if="payMethod !== 'yape'"
+                class="bg-night-2 border border-border hover:border-violet/40 rounded-2xl p-5 flex items-center justify-between gap-4 text-left transition-colors w-full"
+                @click="payMethod = 'yape'; step = 'form'; failedError = null; selectedFailReason = -1"
+              >
+                <div>
+                  <div class="text-[13px] font-semibold text-white mb-0.5">Pagar con Yape</div>
+                  <p class="text-[11px] text-white/45">Escanea el QR directamente desde Yape.</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet/15 flex items-center justify-center">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h3M14 17h3M17 14v7M20 14v7"/>
+                  </svg>
+                </div>
+              </button>
+
+              <!-- Switch to Plin -->
+              <button
+                v-if="payMethod !== 'plin'"
+                class="bg-night-2 border border-border hover:border-violet/40 rounded-2xl p-5 flex items-center justify-between gap-4 text-left transition-colors w-full"
+                @click="payMethod = 'plin'; step = 'form'; failedError = null; selectedFailReason = -1"
+              >
+                <div>
+                  <div class="text-[13px] font-semibold text-white mb-0.5">Pagar con Plin</div>
+                  <p class="text-[11px] text-white/45">Alternativa rápida vía tu app bancaria.</p>
+                </div>
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet/15 flex items-center justify-center">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h3M14 17h3M17 14v7M20 14v7"/>
+                  </svg>
+                </div>
+              </button>
+
+            </div>
+          </div><!-- /LEFT -->
+
+          <!-- RIGHT: cart summary preserved -->
+          <div class="w-full lg:w-[360px] flex-shrink-0 order-1 lg:order-2 hidden lg:block sticky top-20">
+            <div class="bg-night-2 border border-border rounded-2xl overflow-hidden">
+              <div class="px-5 pt-5 pb-4 border-b border-border">
+                <div class="text-[11px] font-semibold tracking-[2px] uppercase text-red-400 mb-1">Pago fallido</div>
+                <div class="font-display font-bold text-[16px] text-white tracking-tight">{{ event?.name ?? 'Tu pedido' }}</div>
+              </div>
+              <div class="px-5 py-4">
+                <div class="text-[11px] text-white/30 mb-3">{{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }} reservada{{ cart.count !== 1 ? 's' : '' }}</div>
+                <div class="grid grid-cols-5 gap-2 mb-4">
+                  <div
+                    v-for="i in Math.min(4, cart.count)"
+                    :key="i"
+                    class="aspect-[3/4] rounded-lg border border-border bg-night overflow-hidden flex items-center justify-center opacity-50"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                  <div v-if="cart.count > 4" class="aspect-[3/4] rounded-lg border border-border bg-night flex items-center justify-center opacity-50">
+                    <span class="text-[11px] font-bold text-white/40">+{{ cart.count - 4 }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[14px] border-t border-border pt-3">
+                  <span class="text-white/50">Total</span>
+                  <span class="font-display font-bold text-white">{{ formattedTotal }}</span>
+                </div>
+              </div>
+              <div class="px-5 pb-5 pt-2">
+                <div class="flex items-start gap-2 text-[11px] text-white/30">
+                  <svg width="12" height="12" class="flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  Tu selección está guardada. Puedes reintentar el pago sin perder tus fotos.
+                </div>
+              </div>
+            </div>
+          </div><!-- /RIGHT -->
+
+        </div>
+      </section>
+
       <!-- ── MAIN CHECKOUT ──────────────────────────────────────────────────── -->
-      <section class="px-5 md:px-10 lg:px-12 pb-16">
+      <section v-show="step !== 'failed'" class="px-5 md:px-10 lg:px-12 pb-16">
         <div class="flex flex-col lg:flex-row gap-8 lg:items-start">
 
           <!-- ── LEFT: Form ───────────────────────────────────────────────── -->
@@ -524,7 +660,7 @@ const config = useRuntimeConfig()
 const showAuth = useAuthModal()
 const route = useRoute()
 
-type Step = 'form' | 'processing' | 'awaiting-qr' | 'success'
+type Step = 'form' | 'processing' | 'awaiting-qr' | 'success' | 'failed'
 type PayMethod = 'card' | 'yape' | 'plin'
 
 const step = ref<Step>('form')
@@ -538,6 +674,15 @@ const termsAccepted = ref(false)
 const couponOpen = ref(false)
 const couponCode = ref('')
 const orderError = ref<string | null>(null)
+const failedError = ref<string | null>(null)
+const selectedFailReason = ref(-1)
+
+const failReasons = [
+  'Fondos insuficientes en la cuenta',
+  'Datos de tarjeta incorrectos',
+  'Tarjeta bloqueada o vencida',
+  'Otro motivo',
+]
 
 const cardNumber = ref('')
 const cardExpiry = ref('')
@@ -709,8 +854,8 @@ async function handlePay() {
     }
   }
   catch (err: any) {
-    step.value = 'form'
-    orderError.value = err?.data?.error || err?.message || 'Error al procesar el pago. Intenta de nuevo.'
+    step.value = 'failed'
+    failedError.value = err?.data?.error || err?.message || 'Error al procesar el pago.'
   }
 }
 
