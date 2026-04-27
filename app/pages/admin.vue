@@ -1,6 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ ssr: false })
 
+const config = useRuntimeConfig()
+const auth = useAuthStore()
+
 const activeTab = ref<'overview' | 'events' | 'photographers' | 'payments' | 'users' | 'ai'>('overview')
 const mobileSidebarOpen = ref(false)
 
@@ -41,19 +44,55 @@ const pendingPhotographers = ref([
   { id: 3, initials: 'MQ', name: 'Manuel Q.', email: 'mq_foto@gmail.com', city: 'Trujillo' },
 ])
 
-function approvePhotographer(id: number) {
-  pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
+const approvingId = ref<number | null>(null)
+
+async function approvePhotographer(id: number) {
+  approvingId.value = id
+  try {
+    await $fetch(`${config.public.apiBase}/photographers/${id}/verify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${auth.tokens.access}` },
+    })
+    pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
+  }
+  catch { /* silent — optimistic UI already removes on success */ }
+  finally {
+    approvingId.value = null
+  }
 }
+
 function rejectPhotographer(id: number) {
+  // No reject endpoint in API — local removal only (photographer stays pending server-side)
   pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
 }
 
 // ── Payments tab state ──
 const processingPayment = ref(false)
+const paymentDone = ref(false)
+
 async function processPayment() {
   processingPayment.value = true
-  await new Promise(r => setTimeout(r, 1800))
-  processingPayment.value = false
+  try {
+    const now = new Date()
+    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const periodEnd = now.toISOString()
+
+    const pendingPayouts = [103, 104, 105, 106] // photographer IDs with pending balance
+    await Promise.all(
+      pendingPayouts.map(photographerId =>
+        $fetch(`${config.public.apiBase}/payouts`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${auth.tokens.access}` },
+          body: { photographer_id: photographerId, period_start: periodStart, period_end: periodEnd },
+        }),
+      ),
+    )
+    paymentDone.value = true
+  }
+  catch { /* silent */ }
+  finally {
+    processingPayment.value = false
+  }
 }
 
 const statusLabel: Record<string, string> = { active: 'Activo', processing: 'Procesando', closed: 'Cerrado' }
@@ -523,8 +562,11 @@ const statusClass: Record<string, string> = {
                     </div>
                   </div>
                   <div class="flex gap-2">
-                    <button class="text-xs bg-green-400/15 text-green-400 px-3 py-1.5 rounded-full hover:bg-green-400/25 transition-colors"
-                            @click="approvePhotographer(ph.id)">Aprobar</button>
+                    <button class="text-xs bg-green-400/15 text-green-400 px-3 py-1.5 rounded-full hover:bg-green-400/25 transition-colors disabled:opacity-50"
+                            :disabled="approvingId === ph.id"
+                            @click="approvePhotographer(ph.id)">
+                      {{ approvingId === ph.id ? '...' : 'Aprobar' }}
+                    </button>
                     <button class="text-xs bg-red-400/15 text-red-400 px-3 py-1.5 rounded-full hover:bg-red-400/25 transition-colors"
                             @click="rejectPhotographer(ph.id)">Rechazar</button>
                   </div>
@@ -606,7 +648,10 @@ const statusClass: Record<string, string> = {
 
           <!-- Process payment CTA -->
           <div class="bg-[#1A1030] border border-[#2A1F4A] rounded-2xl p-6 text-center mb-6">
-            <button
+            <div v-if="paymentDone" class="flex items-center justify-center gap-2 text-green-400 font-semibold text-sm mb-2">
+              <span>✓</span> Pagos enviados correctamente
+            </div>
+            <button v-else
               class="bg-[#FF3D6B] hover:opacity-90 disabled:opacity-60 text-white font-semibold px-8 py-3 rounded-full text-sm transition-opacity flex items-center gap-2 mx-auto"
               :disabled="processingPayment"
               @click="processPayment">

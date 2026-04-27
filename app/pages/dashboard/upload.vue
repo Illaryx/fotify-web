@@ -431,11 +431,10 @@ async function publishEvent() {
   publishing.value = true
   try {
     await $fetch(
-      `${config.public.apiBase}/events/${selectedEventId.value}`,
+      `${config.public.apiBase}/events/${selectedEventId.value}/publish`,
       {
-        method: 'PATCH',
+        method: 'POST',
         headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        body: { status: 'active' },
       },
     )
     published.value = true
