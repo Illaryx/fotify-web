@@ -1,3 +1,6 @@
+# Claude Code local settings (overrides — not committed)
+.claude/settings.local.json
+
 # Nuxt dev/build outputs
 .output
 .data
