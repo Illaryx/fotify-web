@@ -255,9 +255,8 @@
 </template>
 
 <script setup lang="ts">
+import { apiFetch } from '~/composables/useApi'
 import type { ListEnvelope, EventResponse } from '~/types'
-
-const config = useRuntimeConfig()
 
 // Hero slider
 const heroSlides = [
@@ -282,13 +281,21 @@ const searchQuery = ref('')
 const searchFocused = ref(false)
 
 // Fetch events
-const { data: eventsData, pending: eventsLoading } = await useFetch<ListEnvelope<EventResponse>>(
-  `${config.public.apiBase}/events`,
-  { query: { limit: 20 }, server: true },
-)
+const eventsLoading = ref(true)
+const eventsItems = ref<EventResponse[]>([])
 
-const events = computed(() => eventsData.value?.data?.items?.slice(0, 6) ?? [])
-const allEvents = computed(() => eventsData.value?.data?.items ?? [])
+onMounted(async () => {
+  try {
+    const res = await apiFetch<ListEnvelope<EventResponse>>('/events', { query: { limit: 20 } })
+    eventsItems.value = res.data?.items ?? []
+  }
+  finally {
+    eventsLoading.value = false
+  }
+})
+
+const events = computed(() => eventsItems.value.slice(0, 6))
+const allEvents = computed(() => eventsItems.value)
 
 const filteredEvents = computed(() => {
   if (!searchQuery.value.trim()) return allEvents.value

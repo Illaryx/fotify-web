@@ -349,7 +349,6 @@ import type { RegisterInput, SingleEnvelope, CreateProfileInput, PhotographerRes
 definePageMeta({ ssr: false })
 
 const auth = useAuthStore()
-const config = useRuntimeConfig()
 const showAuth = useAuthModal()
 
 const allSports = ['🏃 Running', '🏊 Triatlón', '🚴 Ciclismo', '🏔️ Trail', '🏋️ Crossfit', '🏊 Natación', '⚽ Fútbol', '🎓 Graduaciones', '🎉 Eventos sociales', 'Otro']
@@ -417,18 +416,15 @@ async function goNext() {
       if (step1.password !== step1.confirm) throw new Error('Las contraseñas no coinciden.')
       if (!step1.terms) throw new Error('Debes aceptar los términos para continuar.')
 
-      const res = await $fetch<{ data?: { id?: number } }>(
-        `${config.public.apiBase}/auth/register`,
-        {
-          method: 'POST',
-          body: {
-            full_name: `${step1.first_name.trim()} ${step1.last_name.trim()}`,
-            email: step1.email.trim(),
-            password: step1.password,
-            phone: step1.phone || undefined,
-          } as RegisterInput,
-        },
-      )
+      const res = await apiFetch<{ data?: { id?: number } }>('/auth/register', {
+        method: 'POST',
+        body: {
+          full_name: `${step1.first_name.trim()} ${step1.last_name.trim()}`,
+          email: step1.email.trim(),
+          password: step1.password,
+          phone: step1.phone || undefined,
+        } as RegisterInput,
+      })
       registeredUserId = res.data?.id ?? null
 
       await auth.login({ email: step1.email, password: step1.password })
@@ -436,18 +432,14 @@ async function goNext() {
 
     if (currentStep.value === 2) {
       const displayName = `${step1.first_name.trim()} ${step1.last_name.trim()}`
-      await $fetch<SingleEnvelope<PhotographerResponse>>(
-        `${config.public.apiBase}/photographers`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${auth.tokens.access}` },
-          body: {
-            display_name: displayName,
-            bio: step2.bio || undefined,
-            portfolio_url: undefined,
-          } as CreateProfileInput,
-        },
-      )
+      await apiFetch<SingleEnvelope<PhotographerResponse>>('/photographers', {
+        method: 'POST',
+        body: {
+          display_name: displayName,
+          bio: step2.bio || undefined,
+          portfolio_url: undefined,
+        } as CreateProfileInput,
+      })
     }
 
     if (currentStep.value === 3) {

@@ -266,40 +266,40 @@
 
 <script setup lang="ts">
 import { demoThumb } from '~/utils/demophotos'
+import { apiFetch } from '~/composables/useApi'
 import type { PhotographerResponse, PhotoResponse, EventResponse, ListEnvelope } from '~/types'
 
 const route = useRoute()
-const config = useRuntimeConfig()
 const id = route.params.id as string
-const base = config.public.apiBase
 
 type PhotographerEnvelope = { data?: PhotographerResponse; success?: boolean }
 
-const { data, pending } = await useAsyncData(`photographer-profile-${id}`, async () => {
+const pending = ref(true)
+const photographer = ref<PhotographerResponse | null>(null)
+const photos = ref<PhotoResponse[]>([])
+const events = ref<EventResponse[]>([])
+const photosTotal = ref(0)
+const eventsTotal = ref(0)
+
+onMounted(async () => {
   const [pResult, photosResult, eventsResult] = await Promise.allSettled([
-    $fetch<PhotographerEnvelope>(`${base}/photographers/${id}`),
-    $fetch<ListEnvelope<PhotoResponse>>(`${base}/photos`, {
+    apiFetch<PhotographerEnvelope>(`/photographers/${id}`),
+    apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
       query: { photographer_id: id, status: 'indexed', limit: 8 },
     }),
-    $fetch<ListEnvelope<EventResponse>>(`${base}/events`, {
+    apiFetch<ListEnvelope<EventResponse>>('/events', {
       query: { photographer_id: id, status: 'active', limit: 6 },
     }),
   ])
 
-  return {
-    photographer: pResult.status === 'fulfilled' ? (pResult.value.data ?? null) : null,
-    photos: photosResult.status === 'fulfilled' ? (photosResult.value.data?.items ?? []) : [],
-    events: eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.items ?? []) : [],
-    photosTotal: photosResult.status === 'fulfilled' ? (photosResult.value.data?.total ?? 0) : 0,
-    eventsTotal: eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.total ?? 0) : 0,
-  }
-})
+  photographer.value = pResult.status === 'fulfilled' ? (pResult.value.data ?? null) : null
+  photos.value = photosResult.status === 'fulfilled' ? (photosResult.value.data?.items ?? []) : []
+  events.value = eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.items ?? []) : []
+  photosTotal.value = photosResult.status === 'fulfilled' ? (photosResult.value.data?.total ?? 0) : 0
+  eventsTotal.value = eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.total ?? 0) : 0
 
-const photographer = computed(() => data.value?.photographer ?? null)
-const photos = computed(() => data.value?.photos ?? [])
-const events = computed(() => data.value?.events ?? [])
-const photosTotal = computed(() => data.value?.photosTotal ?? 0)
-const eventsTotal = computed(() => data.value?.eventsTotal ?? 0)
+  pending.value = false
+})
 
 const initials = computed(() => {
   const name = photographer.value?.display_name ?? ''

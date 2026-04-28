@@ -297,7 +297,6 @@ import type { EventResponse, InitUploadInput, InitUploadResponse, SingleEnvelope
 definePageMeta({ ssr: false, middleware: 'photographer' })
 
 const auth = useAuthStore()
-const config = useRuntimeConfig()
 const route = useRoute()
 
 interface UploadItem {
@@ -387,24 +386,21 @@ async function uploadOne(item: UploadItem) {
 
   try {
     const contentType = item.file.type as 'image/jpeg' | 'image/png' | 'image/webp'
-    const initRes = await $fetch<SingleEnvelope<InitUploadResponse>>(
-      `${config.public.apiBase}/photos/upload/init`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        body: {
-          event_id: selectedEventId.value,
-          file_name: item.file.name,
-          content_type: contentType,
-        } as InitUploadInput,
-      },
-    )
+    const initRes = await apiFetch<SingleEnvelope<InitUploadResponse>>('/photos/upload/init', {
+      method: 'POST',
+      body: {
+        event_id: selectedEventId.value,
+        file_name: item.file.name,
+        content_type: contentType,
+      } as InitUploadInput,
+    })
 
     const { upload_url, photo_id } = initRes.data ?? {}
     if (!upload_url || !photo_id) throw new Error('No upload URL')
     item.photoId = photo_id
     item.progress = 20
 
+    // PUT directo a S3 — no pasa por nuestra API, sin auth header propio
     await $fetch(upload_url, {
       method: 'PUT',
       body: item.file,
@@ -412,10 +408,7 @@ async function uploadOne(item: UploadItem) {
     })
     item.progress = 80
 
-    await $fetch(`${config.public.apiBase}/photos/upload/${photo_id}/confirm`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
-    })
+    await apiFetch(`/photos/${photo_id}/upload/confirm`, { method: 'POST' })
 
     item.progress = 100
     item.status = 'done'
@@ -430,13 +423,7 @@ async function publishEvent() {
   if (!selectedEventId.value) return
   publishing.value = true
   try {
-    await $fetch(
-      `${config.public.apiBase}/events/${selectedEventId.value}/publish`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-      },
-    )
+    await apiFetch(`/events/${selectedEventId.value}/publish`, { method: 'POST' })
     published.value = true
   }
   catch { /* silent */ }
@@ -453,10 +440,9 @@ onMounted(async () => {
   if (!auth.isAuthenticated) { await navigateTo('/dashboard'); return }
   loadingEvents.value = true
   try {
-    const res = await $fetch<ListEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` }, query: { my_events: true, limit: 50 } },
-    )
+    const res = await apiFetch<ListEnvelope<EventResponse>>('/events', {
+      query: { my_events: true, limit: 50 },
+    })
     events.value = res.data?.items ?? []
   }
   finally {

@@ -242,7 +242,6 @@ import type { OrderResponse, EventResponse, DownloadResponse, SingleEnvelope } f
 definePageMeta({ ssr: false, middleware: 'auth' })
 
 const route = useRoute()
-const config = useRuntimeConfig()
 const auth = useAuthStore()
 
 const orderId = computed(() => Number(route.params.orderId))
@@ -296,10 +295,7 @@ function loadStoredPhotoIds(oid: number): number[] {
 
 async function fetchDownloadUrl(photoId: number): Promise<string | null> {
   try {
-    const res = await $fetch<SingleEnvelope<DownloadResponse>>(
-      `${config.public.apiBase}/photos/${photoId}/download`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/photos/${photoId}/download`)
     return res.data?.download_url ?? null
   } catch {
     return null
@@ -364,14 +360,8 @@ onMounted(async () => {
 
   try {
     const [orderRes, meRes] = await Promise.allSettled([
-      $fetch<SingleEnvelope<OrderResponse>>(
-        `${config.public.apiBase}/orders/${oid}`,
-        { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-      ),
-      $fetch<{ data?: { email?: string } }>(
-        `${config.public.apiBase}/auth/me`,
-        { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-      ),
+      apiFetch<SingleEnvelope<OrderResponse>>(`/orders/${oid}`),
+      apiFetch<{ data?: { email?: string } }>('/auth/me'),
     ])
 
     if (orderRes.status === 'fulfilled') {
@@ -381,10 +371,7 @@ onMounted(async () => {
 
       if (o.event_id) {
         try {
-          const evRes = await $fetch<SingleEnvelope<EventResponse>>(
-            `${config.public.apiBase}/events/${o.event_id}`,
-            { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-          )
+          const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${o.event_id}`)
           event.value = evRes.data ?? null
         } catch { /* non-critical */ }
       }

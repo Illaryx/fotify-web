@@ -246,7 +246,6 @@ import type { CreateEventInput, EventResponse, PhotographerResponse, SingleEnvel
 definePageMeta({ ssr: false, middleware: 'photographer' })
 
 const auth = useAuthStore()
-const config = useRuntimeConfig()
 
 const sports = [
   { icon: '🏃', label: 'Running' },
@@ -333,14 +332,10 @@ async function createEvent(isDraft: boolean) {
       currency: 'PEN',
     }
 
-    const res = await $fetch<SingleEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        body,
-      },
-    )
+    const res = await apiFetch<SingleEnvelope<EventResponse>>('/events', {
+      method: 'POST',
+      body,
+    })
 
     const eventId = res.data?.id
     if (!eventId) throw new Error('No se recibió el ID del evento.')
@@ -359,10 +354,7 @@ async function createEvent(isDraft: boolean) {
 onMounted(async () => {
   if (!auth.isAuthenticated) { await navigateTo('/dashboard'); return }
   try {
-    const res = await $fetch<SingleEnvelope<PhotographerResponse>>(
-      `${config.public.apiBase}/photographers/me`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<SingleEnvelope<PhotographerResponse>>('/photographers/me')
     profile.value = res.data ?? null
   }
   catch { /* optional */ }

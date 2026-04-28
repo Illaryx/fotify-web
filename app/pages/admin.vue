@@ -1,8 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ ssr: false, middleware: 'admin' })
+import type { EventResponse, PayoutResponse, ListEnvelope } from '~/types'
 
-const config = useRuntimeConfig()
-const auth = useAuthStore()
+definePageMeta({ ssr: false, middleware: 'admin' })
 
 const activeTab = ref<'overview' | 'events' | 'photographers' | 'payments' | 'users' | 'ai'>('overview')
 const mobileSidebarOpen = ref(false)
@@ -12,38 +11,58 @@ function switchTab(tab: typeof activeTab.value) {
   mobileSidebarOpen.value = false
 }
 
-// ── Events tab state ──
+// ── Events tab ──────────────────────────────────────────────────────────────
+
+interface EventRow {
+  id: number; icon: string; name: string; date: string
+  city: string; photographer: string; photos: number; gmv: number
+  status: string; slug?: string
+}
+
 const eventSearch = ref('')
 const eventSportFilter = ref('all')
 const eventStatusFilter = ref('all')
+const loadingEvents = ref(false)
+const eventsRaw = ref<EventResponse[]>([])
+const eventsTotal = ref(0)
 
-const events = [
-  { id: 1, icon: '🏃', name: 'Maratón Lima 42K', date: '15 mar 2025', city: 'Lima', photographer: '@carlosrios', photos: 3900, gmv: 5133, status: 'active' },
-  { id: 2, icon: '🏊', name: 'Triatlón IronMan Lima', date: '8 mar 2025', city: 'Lunahuaná', photographer: '@trifotos_pe', photos: 4200, gmv: 7820, status: 'active' },
-  { id: 3, icon: '🚴', name: 'Ciclismo Miraflores Classic', date: '2 mar 2025', city: 'Lima', photographer: '@mphoto_pe', photos: 2100, gmv: 2987, status: 'processing' },
-  { id: 4, icon: '🏔️', name: 'Trail Larcomar 10K', date: '22 feb 2025', city: 'Lima', photographer: '@andresphoto', photos: 980, gmv: 1240, status: 'active' },
-  { id: 5, icon: '🏃', name: 'Media Maratón Miraflores', date: '14 feb 2025', city: 'Lima', photographer: '@carlosrios', photos: 2800, gmv: 3650, status: 'closed' },
-]
+const filteredEvents = computed<EventRow[]>(() =>
+  eventsRaw.value
+    .filter(e => {
+      if (eventSearch.value && !e.name?.toLowerCase().includes(eventSearch.value.toLowerCase())) return false
+      if (eventStatusFilter.value !== 'all' && e.status !== eventStatusFilter.value) return false
+      return true
+    })
+    .map(e => ({
+      id: e.id ?? 0,
+      icon: '📷',
+      name: e.name ?? '—',
+      date: formatDate(e.event_date),
+      city: e.location ?? '—',
+      photographer: e.photographer_id ? `#${e.photographer_id}` : '—',
+      photos: 0,
+      gmv: 0,
+      status: e.status ?? 'active',
+      slug: e.slug,
+    })),
+)
 
-const filteredEvents = computed(() => {
-  return events.filter(e => {
-    if (eventSearch.value && !e.name.toLowerCase().includes(eventSearch.value.toLowerCase())) return false
-    if (eventSportFilter.value !== 'all') {
-      const map: Record<string, string[]> = { running: ['🏃'], triathlon: ['🏊'], cycling: ['🚴'], trail: ['🏔️'] }
-      if (!map[eventSportFilter.value]?.includes(e.icon)) return false
-    }
-    if (eventStatusFilter.value !== 'all' && e.status !== eventStatusFilter.value) return false
-    return true
-  })
-})
+async function fetchEvents() {
+  loadingEvents.value = true
+  try {
+    const res = await apiFetch<ListEnvelope<EventResponse>>('/events', { query: { limit: 50, offset: 0 } })
+    eventsRaw.value = res.data?.items ?? []
+    eventsTotal.value = res.data?.total ?? 0
+  }
+  catch { /* silent */ }
+  finally { loadingEvents.value = false }
+}
 
-// ── Photographers tab state ──
-const pendingPhotographers = ref([
-  { id: 1, initials: 'JL', name: 'Juan López', email: 'juanl@gmail.com', city: 'Cusco' },
-  { id: 2, initials: 'PS', name: 'Patricia S.', email: 'patri@foto.pe', city: 'Arequipa' },
-  { id: 3, initials: 'MQ', name: 'Manuel Q.', email: 'mq_foto@gmail.com', city: 'Trujillo' },
-])
+// ── Photographers tab ────────────────────────────────────────────────────────
 
+// NOTE: GET /photographers?status=pending endpoint no existe aún — lista vacía al inicio.
+// approvePhotographer / rejectPhotographer sí llaman a la API real.
+const pendingPhotographers = ref<{ id: number; initials: string; name: string; email: string; city: string }[]>([])
 const approvingId = ref<number | null>(null)
 
 async function approvePhotographer(id: number) {
@@ -52,18 +71,13 @@ async function approvePhotographer(id: number) {
     await apiFetch(`/photographers/${id}/verify`, { method: 'POST' })
     pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
   }
-  catch { /* silent — optimistic UI already removes on success */ }
-  finally {
-    approvingId.value = null
-  }
+  catch { /* silent */ }
+  finally { approvingId.value = null }
 }
 
 async function rejectPhotographer(id: number) {
   try {
-    await apiFetch(`/photographers/${id}/reject`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
-    })
+    await apiFetch(`/photographers/${id}/reject`, { method: 'PATCH' })
   }
   catch { /* silent */ }
   finally {
@@ -71,41 +85,92 @@ async function rejectPhotographer(id: number) {
   }
 }
 
-// ── Payments tab state ──
+// ── Payments tab ─────────────────────────────────────────────────────────────
+
+interface PayoutRow {
+  id: number; initials: string; name: string
+  bank: string; events: string; amount: number; status: string
+}
+
+const loadingPayouts = ref(false)
+const payoutsRaw = ref<PayoutResponse[]>([])
 const processingPayment = ref(false)
 const paymentDone = ref(false)
 
+const pendingPayoutsList = computed(() =>
+  payoutsRaw.value.filter(p => p.status === 'pending' || p.status === 'processing'),
+)
+const paidPayoutsList = computed(() =>
+  payoutsRaw.value.filter(p => p.status === 'completed'),
+)
+const pendingPayoutAmount = computed(() =>
+  pendingPayoutsList.value.reduce((s, p) => s + (p.amount ?? 0), 0),
+)
+const paidPayoutAmount = computed(() =>
+  paidPayoutsList.value.reduce((s, p) => s + (p.amount ?? 0), 0),
+)
+const pendingPayoutsTable = computed<PayoutRow[]>(() =>
+  pendingPayoutsList.value.map(p => ({
+    id: p.id ?? 0,
+    initials: `#${String(p.photographer_id ?? '?').substring(0, 3)}`,
+    name: `Fotógrafo #${p.photographer_id ?? '—'}`,
+    bank: p.transfer_method ?? '—',
+    events: '—',
+    amount: p.amount ?? 0,
+    status: p.status ?? 'pending',
+  })),
+)
+
+async function fetchPayouts() {
+  loadingPayouts.value = true
+  try {
+    const res = await apiFetch<ListEnvelope<PayoutResponse>>('/payouts', { query: { limit: 100 } })
+    payoutsRaw.value = res.data?.items ?? []
+  }
+  catch { /* silent */ }
+  finally { loadingPayouts.value = false }
+}
+
 async function processPayment() {
+  const pending = pendingPayoutsList.value
+  if (!pending.length) return
   processingPayment.value = true
   try {
-    const now = new Date()
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const periodEnd = now.toISOString()
-
-    const pendingPayouts = [103, 104, 105, 106] // photographer IDs with pending balance
-    await Promise.all(
-      pendingPayouts.map(photographerId =>
-        $fetch(`${config.public.apiBase}/payouts`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${auth.tokens.access}` },
-          body: { photographer_id: photographerId, period_start: periodStart, period_end: periodEnd },
-        }),
-      ),
+    await Promise.allSettled(
+      pending.map(p => apiFetch(`/payouts/${p.id}/process`, { method: 'PATCH' })),
     )
+    await fetchPayouts()
     paymentDone.value = true
   }
   catch { /* silent */ }
-  finally {
-    processingPayment.value = false
-  }
+  finally { processingPayment.value = false }
 }
 
-const statusLabel: Record<string, string> = { active: 'Activo', processing: 'Procesando', closed: 'Cerrado' }
-const statusClass: Record<string, string> = {
-  active: 'bg-green-400/15 text-green-400',
-  processing: 'bg-blue-400/15 text-blue-400',
-  closed: 'bg-white/10 text-white/40',
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const statusLabel: Record<string, string> = {
+  draft: 'Borrador', active: 'Activo', published: 'Publicado',
+  closed: 'Cerrado', archived: 'Archivado',
 }
+const statusClass: Record<string, string> = {
+  draft: 'badge-blue', active: 'badge-green', published: 'badge-green',
+  closed: 'badge-gray', archived: 'badge-gray',
+}
+
+function formatDate(iso?: string): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function formatCurrency(amount: number): string {
+  return `S/ ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+// ── Mount ─────────────────────────────────────────────────────────────────────
+
+onMounted(async () => {
+  await Promise.allSettled([fetchEvents(), fetchPayouts()])
+})
 </script>
 
 <template>
@@ -159,7 +224,15 @@ const statusClass: Record<string, string> = {
             <button class="text-white/50 hover:text-white" @click="mobileSidebarOpen = false">✕</button>
           </div>
           <nav class="p-3">
-            <AdminNav :active="activeTab" @switch="switchTab"/>
+            <div class="text-[10px] text-white/25 uppercase tracking-widest px-3 py-2 mt-1">General</div>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'overview' }" @click="switchTab('overview')">Resumen</button>
+            <div class="text-[10px] text-white/25 uppercase tracking-widest px-3 py-2 mt-3">Gestión</div>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'events' }" @click="switchTab('events')">Eventos</button>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'photographers' }" @click="switchTab('photographers')">Fotógrafos</button>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'payments' }" @click="switchTab('payments')">Pagos</button>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'users' }" @click="switchTab('users')">Atletas</button>
+            <div class="text-[10px] text-white/25 uppercase tracking-widest px-3 py-2 mt-3">Sistema</div>
+            <button class="sidebar-link w-full text-left" :class="{ active: activeTab === 'ai' }" @click="switchTab('ai')">IA & Procesamiento</button>
           </nav>
         </aside>
       </div>
@@ -496,7 +569,14 @@ const statusClass: Record<string, string> = {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#2A1F4A]">
-                  <tr v-if="filteredEvents.length === 0">
+                  <tr v-if="loadingEvents">
+                    <td colspan="6" class="py-12 text-center text-white/30 text-sm">
+                      <svg class="w-5 h-5 animate-spin mx-auto text-[#7C3AED]" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="15"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr v-else-if="filteredEvents.length === 0">
                     <td colspan="6" class="py-12 text-center text-white/30 text-sm">No se encontraron eventos</td>
                   </tr>
                   <tr v-for="ev in filteredEvents" :key="ev.id"
@@ -518,7 +598,7 @@ const statusClass: Record<string, string> = {
                     </td>
                     <td class="py-4 px-4">
                       <div class="flex gap-3">
-                        <NuxtLink :to="`/events/${ev.id}`" class="text-xs text-[#7C3AED] hover:underline">Ver</NuxtLink>
+                        <NuxtLink :to="`/events/${ev.slug ?? ev.id}`" class="text-xs text-[#7C3AED] hover:underline">Ver</NuxtLink>
                         <button class="text-xs text-white/40 hover:text-white transition-colors">Editar</button>
                       </div>
                     </td>
@@ -527,7 +607,7 @@ const statusClass: Record<string, string> = {
               </table>
             </div>
             <div class="px-5 py-3 border-t border-[#2A1F4A] flex items-center justify-between text-xs text-white/40">
-              <span>Mostrando {{ filteredEvents.length }} de 247 eventos</span>
+              <span>Mostrando {{ filteredEvents.length }} de {{ eventsTotal }} eventos</span>
               <div class="flex gap-1.5">
                 <button class="px-2 py-1 rounded border border-[#2A1F4A] hover:text-white transition-colors">← Ant.</button>
                 <button class="px-2 py-1 rounded bg-[#7C3AED] text-white">1</button>
@@ -636,13 +716,13 @@ const statusClass: Record<string, string> = {
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-[#1A1030] border border-[#2A1F4A] rounded-2xl p-5">
               <div class="text-xs text-white/40 mb-2">Pendiente de pago</div>
-              <div class="font-display text-2xl text-yellow-400">S/ 24,800</div>
-              <div class="text-xs text-white/40 mt-1">18 fotógrafos · Lunes 14 abr</div>
+              <div class="font-display text-2xl text-yellow-400">{{ formatCurrency(pendingPayoutAmount) }}</div>
+              <div class="text-xs text-white/40 mt-1">{{ pendingPayoutsList.length }} fotógrafos</div>
             </div>
             <div class="bg-[#1A1030] border border-[#2A1F4A] rounded-2xl p-5">
               <div class="text-xs text-white/40 mb-2">Pagado este mes</div>
-              <div class="font-display text-2xl text-white">S/ 48,200</div>
-              <div class="text-xs text-green-400 mt-1">102 transferencias</div>
+              <div class="font-display text-2xl text-white">{{ formatCurrency(paidPayoutAmount) }}</div>
+              <div class="text-xs text-green-400 mt-1">{{ paidPayoutsList.length }} transferencias</div>
             </div>
             <div class="bg-[#1A1030] border border-[#2A1F4A] rounded-2xl p-5">
               <div class="text-xs text-white/40 mb-2">Reembolsos</div>
@@ -663,9 +743,9 @@ const statusClass: Record<string, string> = {
               <svg v-if="processingPayment" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="15"/>
               </svg>
-              {{ processingPayment ? 'Procesando...' : 'Procesar pago quincenal — S/ 24,800' }}
+              {{ processingPayment ? 'Procesando...' : `Procesar pago quincenal — ${formatCurrency(pendingPayoutAmount)}` }}
             </button>
-            <p class="text-xs text-white/30 mt-3">Transfiere automáticamente a las 18 cuentas bancarias configuradas</p>
+            <p class="text-xs text-white/30 mt-3">Transfiere automáticamente a las {{ pendingPayoutsList.length }} cuentas bancarias configuradas</p>
           </div>
 
           <!-- Payments table -->
@@ -685,12 +765,17 @@ const statusClass: Record<string, string> = {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#2A1F4A]">
-                  <tr v-for="pay in [
-                    { initials: 'CR', name: 'Carlos Ríos', bank: 'BCP', events: 12, amount: 3828, status: 'pending' },
-                    { initials: 'MP', name: 'María P.', bank: 'Interbank', events: 8, amount: 3374, status: 'pending' },
-                    { initials: 'AL', name: 'Andrés L.', bank: 'BBVA', events: 6, amount: 2240, status: 'pending' },
-                    { initials: 'RV', name: 'Ricardo V.', bank: 'BCP', events: 5, amount: 2058, status: 'pending' },
-                  ]" :key="pay.name"
+                  <tr v-if="loadingPayouts">
+                    <td colspan="5" class="py-12 text-center">
+                      <svg class="w-5 h-5 animate-spin mx-auto text-[#7C3AED]" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="15"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr v-else-if="pendingPayoutsTable.length === 0">
+                    <td colspan="5" class="py-12 text-center text-white/30 text-sm">No hay pagos pendientes</td>
+                  </tr>
+                  <tr v-for="pay in pendingPayoutsTable" :key="pay.id"
                   class="hover:bg-[#221840]/30 transition-colors">
                     <td class="py-3 px-5">
                       <div class="flex items-center gap-2">
@@ -700,8 +785,12 @@ const statusClass: Record<string, string> = {
                     </td>
                     <td class="py-3 px-4 text-white/50 hidden lg:table-cell">{{ pay.bank }}</td>
                     <td class="py-3 px-4 text-white/50 hidden lg:table-cell">{{ pay.events }}</td>
-                    <td class="py-3 px-4 font-semibold text-white">S/ {{ pay.amount.toLocaleString() }}</td>
-                    <td class="py-3 px-4"><span class="badge badge-yellow">Pendiente</span></td>
+                    <td class="py-3 px-4 font-semibold text-white">{{ formatCurrency(pay.amount) }}</td>
+                    <td class="py-3 px-4">
+                      <span :class="['badge', pay.status === 'processing' ? 'badge-blue' : 'badge-yellow']">
+                        {{ pay.status === 'processing' ? 'Procesando' : 'Pendiente' }}
+                      </span>
+                    </td>
                   </tr>
                 </tbody>
               </table>

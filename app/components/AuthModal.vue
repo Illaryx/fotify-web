@@ -227,12 +227,12 @@
 </template>
 
 <script setup lang="ts">
+import { apiFetch } from '~/composables/useApi'
 import type { LoginInput, RegisterInput, TokenPair, SingleEnvelope } from '~/types'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
-const config = useRuntimeConfig()
 const auth = useAuthStore()
 
 type View = 'login' | 'register' | 'forgot' | 'forgot-success' | 'register-success'
@@ -306,7 +306,7 @@ async function handleLogin() {
   }
   loginLoading.value = true
   try {
-    const res = await $fetch<SingleEnvelope<TokenPair>>(`${config.public.apiBase}/auth/login`, {
+    const res = await apiFetch<SingleEnvelope<TokenPair>>('/auth/login', {
       method: 'POST',
       body: { email: loginForm.email, password: loginForm.password },
     })
@@ -342,7 +342,7 @@ async function handleRegister() {
   }
   registerLoading.value = true
   try {
-    const res = await $fetch<SingleEnvelope<TokenPair>>(`${config.public.apiBase}/auth/register`, {
+    const res = await apiFetch<SingleEnvelope<TokenPair>>('/auth/register', {
       method: 'POST',
       body: { email: registerForm.email, full_name: registerForm.full_name, password: registerForm.password },
     })

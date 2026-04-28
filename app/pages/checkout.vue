@@ -650,13 +650,13 @@
 </template>
 
 <script setup lang="ts">
+import { apiFetch } from '~/composables/useApi'
 import type { EventResponse, OrderResponse, CreateOrderInput, ConfirmPaymentInput, SingleEnvelope } from '~/types'
 
 definePageMeta({ ssr: false, middleware: 'auth' })
 
 const auth = useAuthStore()
 const cart = useCartStore()
-const config = useRuntimeConfig()
 const showAuth = useAuthModal()
 const route = useRoute()
 
@@ -743,10 +743,7 @@ onUnmounted(() => {
 async function fetchEvent() {
   if (!cart.eventId) return
   try {
-    const res = await $fetch<SingleEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events/${cart.eventId}`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${cart.eventId}`)
     event.value = res.data ?? null
   }
   catch { /* optional context */ }
@@ -754,10 +751,7 @@ async function fetchEvent() {
 
 async function fetchUserEmail() {
   try {
-    const res = await $fetch<{ data?: { email?: string } }>(
-      `${config.public.apiBase}/auth/me`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<{ data?: { email?: string } }>('/auth/me')
     userEmail.value = res.data?.email ?? ''
   }
   catch { /* not critical */ }
@@ -813,29 +807,24 @@ async function handlePay() {
   successPhotoCount.value = cart.count
 
   try {
-    const orderRes = await $fetch<{ data?: OrderResponse }>(
-      `${config.public.apiBase}/orders`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        body: {
-          event_id: cart.eventId!,
-          payment_gateway: 'culqi',
-          photo_ids: [...cart.photoIds],
-          ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
-          type: 'single',
-        } as CreateOrderInput,
-      },
-    )
+    const orderRes = await apiFetch<{ data?: OrderResponse }>('/orders', {
+      method: 'POST',
+      body: {
+        event_id: cart.eventId!,
+        payment_gateway: 'culqi',
+        photo_ids: [...cart.photoIds],
+        ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
+        type: 'single',
+      } as CreateOrderInput,
+    })
 
     const oid = orderRes.data?.id!
     orderId.value = oid
 
     if (payMethod.value === 'card') {
       const token = await tokenizeCard()
-      await $fetch(`${config.public.apiBase}/orders/${oid}/confirm-payment`, {
+      await apiFetch(`/orders/${oid}/confirm-payment`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
         body: {
           payment_method: 'card',
           payment_ref: token,
@@ -901,10 +890,7 @@ function pollOrderStatus(oid: number) {
   if (pollInterval) clearInterval(pollInterval)
   pollInterval = setInterval(async () => {
     try {
-      const res = await $fetch<{ data?: OrderResponse }>(
-        `${config.public.apiBase}/orders/${oid}`,
-        { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-      )
+      const res = await apiFetch<{ data?: OrderResponse }>(`/orders/${oid}`)
       if (res.data?.status === 'paid') {
         clearInterval(pollInterval!)
         pollInterval = null
