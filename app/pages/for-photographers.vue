@@ -1,62 +1,126 @@
 <template>
   <div>
     <!-- HERO -->
-    <section class="pt-20 pb-28 px-5 lg:px-12 relative overflow-hidden" style="background: linear-gradient(135deg, #1A1030 0%, #0F0A1E 60%, #1A0A2E 100%);">
-      <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10 pointer-events-none" style="background: radial-gradient(circle, #7C3AED 0%, transparent 70%);" />
+    <section class="pt-20 pb-16 lg:pb-28 px-5 lg:px-16 xl:px-24 relative overflow-hidden" style="background: linear-gradient(135deg, #1A1030 0%, #0F0A1E 60%, #1A0A2E 100%);">
+      <div class="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none" style="background: radial-gradient(circle, #7C3AED 0%, transparent 70%);" />
       <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-[0.08] pointer-events-none" style="background: radial-gradient(circle, #FF3D6B 0%, transparent 70%);" />
 
-      <div class="max-w-4xl mx-auto text-center relative z-10">
-        <div class="inline-flex items-center gap-2 bg-violet/15 border border-violet/30 rounded-full px-4 py-1.5 text-sm text-violet font-medium mb-6">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#7C3AED"/><path d="M4 7.5L6 9.5L10 5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          +120 fotógrafos ya ganan en Fotify
-        </div>
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-16">
 
-        <h1 class="font-display font-bold text-3xl lg:text-5xl text-white leading-tight mb-6">
-          Convierte tus fotos deportivas<br>en <span class="text-violet">ingresos reales</span>
-        </h1>
-        <p class="text-white/60 text-lg lg:text-xl max-w-2xl mx-auto mb-10">
-          Sube tus fotos a cualquier evento. Nuestra IA las entrega a los atletas que aparecen en ellas. Tú cobras, sin perseguir a nadie.
-        </p>
+          <!-- LEFT: copy -->
+          <div class="flex-1 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 bg-violet/15 border border-violet/30 rounded-full px-4 py-1.5 text-sm text-violet font-medium mb-6">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#7C3AED"/><path d="M4 7.5L6 9.5L10 5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              +120 fotógrafos ya ganan en Fotify
+            </div>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            class="bg-coral hover:opacity-90 text-white font-semibold px-8 py-4 rounded-full text-base transition-opacity"
-            @click="showAuth = true"
-          >
-            Empezar a ganar — es gratis
-          </button>
-          <NuxtLink
-            to="/how-it-works"
-            class="border border-border hover:border-violet/60 text-white/80 hover:text-white font-medium px-8 py-4 rounded-full text-base transition-colors"
-          >
-            Ver cómo funciona
-          </NuxtLink>
-        </div>
+            <h1 class="font-display font-bold text-3xl lg:text-5xl xl:text-6xl text-white leading-tight mb-6">
+              Convierte tus fotos<br>deportivas en<br><span class="text-violet">ingresos reales</span>
+            </h1>
+            <p class="text-white/60 text-lg lg:text-xl max-w-lg mx-auto lg:mx-0 mb-10">
+              Sube tus fotos a cualquier evento. Nuestra IA las entrega a los atletas que aparecen en ellas. Tú cobras, sin perseguir a nadie.
+            </p>
 
-        <div class="flex flex-wrap items-center justify-center gap-6 mt-12 text-white/40 text-xs">
-          <span class="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.2L13 5.6L10 8.3L10.8 12.5L7 10.3L3.2 12.5L4 8.3L1 5.6L5.2 5.2L7 1Z" stroke="#7C3AED" stroke-width="1.2" fill="none"/></svg>
-            Sin costo inicial
-          </span>
-          <span class="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="#7C3AED" stroke-width="1.2"/><path d="M5 7L6.5 8.5L9 6" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
-            70% de cada venta es tuyo
-          </span>
-          <span class="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#7C3AED" stroke-width="1.2"/><path d="M7 4V7.5L9 9" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
-            Pago cada 15 días
-          </span>
-          <span class="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 4V8C13 11 10 13 7 13C4 13 1 11 1 8V4L7 1Z" stroke="#7C3AED" stroke-width="1.2" fill="none"/></svg>
-            Tus fotos protegidas
-          </span>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <button
+                class="bg-coral hover:opacity-90 text-white font-semibold px-8 py-4 rounded-full text-base transition-opacity"
+                @click="showAuth = true"
+              >
+                Empezar a ganar — es gratis
+              </button>
+              <NuxtLink
+                to="/how-it-works"
+                class="border border-border hover:border-violet/60 text-white/80 hover:text-white font-medium px-8 py-4 rounded-full text-base transition-colors"
+              >
+                Ver cómo funciona
+              </NuxtLink>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-5 mt-10 text-white/40 text-xs">
+              <span class="flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.8 5.2L13 5.6L10 8.3L10.8 12.5L7 10.3L3.2 12.5L4 8.3L1 5.6L5.2 5.2L7 1Z" stroke="#7C3AED" stroke-width="1.2" fill="none"/></svg>
+                Sin costo inicial
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="#7C3AED" stroke-width="1.2"/><path d="M5 7L6.5 8.5L9 6" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
+                70% de cada venta es tuyo
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#7C3AED" stroke-width="1.2"/><path d="M7 4V7.5L9 9" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
+                Pago cada 15 días
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 4V8C13 11 10 13 7 13C4 13 1 11 1 8V4L7 1Z" stroke="#7C3AED" stroke-width="1.2" fill="none"/></svg>
+                Tus fotos protegidas
+              </span>
+            </div>
+          </div>
+
+          <!-- RIGHT: dashboard preview (desktop only) -->
+          <div class="hidden lg:block w-[420px] xl:w-[480px] flex-shrink-0">
+            <div class="bg-night-2 border border-border rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(124,58,237,0.2)]">
+              <!-- Mini top bar -->
+              <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span class="text-xs text-white/50 font-medium">Dashboard · Maratón Lima 42K</span>
+                </div>
+                <span class="text-xs text-violet font-semibold">En vivo</span>
+              </div>
+              <!-- Revenue banner -->
+              <div class="px-5 pt-5 pb-4 border-b border-border">
+                <div class="text-xs text-white/30 mb-1">Ingresos este evento</div>
+                <div class="font-display text-3xl text-white font-bold">S/ 1,240.00</div>
+                <div class="text-xs text-green-400 mt-1 flex items-center gap-1">
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 9V3M3 6L6 3L9 6" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  +18% vs evento anterior
+                </div>
+              </div>
+              <!-- Mini photo grid -->
+              <div class="p-4 grid grid-cols-4 gap-1.5">
+                <div v-for="n in 8" :key="n" class="aspect-[3/4] rounded-lg overflow-hidden bg-night-3 relative">
+                  <img :src="`https://picsum.photos/seed/fp-${n}/120/160`" class="w-full h-full object-cover opacity-80" />
+                  <div v-if="n === 3 || n === 5 || n === 7" class="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-violet border border-white/30 flex items-center justify-center">
+                    <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                </div>
+              </div>
+              <!-- Stats row -->
+              <div class="px-4 pb-5 grid grid-cols-3 gap-3">
+                <div class="bg-night-3 rounded-xl p-3 text-center">
+                  <div class="font-display text-lg text-white font-bold">127</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">Ventas</div>
+                </div>
+                <div class="bg-night-3 rounded-xl p-3 text-center">
+                  <div class="font-display text-lg text-violet font-bold">2,400</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">Fotos</div>
+                </div>
+                <div class="bg-night-3 rounded-xl p-3 text-center">
+                  <div class="font-display text-lg text-coral font-bold">97%</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">IA match</div>
+                </div>
+              </div>
+            </div>
+            <!-- Floating notification -->
+            <div class="mt-3 ml-4 bg-night-2 border border-green-500/30 rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg w-fit">
+              <div class="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L6 10L11 4" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div>
+                <div class="text-xs text-white font-semibold">Nueva venta · S/ 18.00</div>
+                <div class="text-[10px] text-white/40">Atleta #4821 · hace 2 min</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
 
     <!-- STAT CARDS -->
-    <section class="px-5 lg:px-12 -mt-10 pb-16 relative z-10">
-      <div class="max-w-4xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <section class="px-5 lg:px-16 xl:px-24 -mt-10 pb-16 relative z-10">
+      <div class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-night-2 border border-border rounded-2xl p-5 text-center">
           <div class="font-display text-2xl lg:text-3xl text-white mb-1">S/ 3,800</div>
           <div class="text-xs text-white/50">Promedio mensual<br>fotógrafo activo</div>
@@ -77,14 +141,14 @@
     </section>
 
     <!-- CÓMO FUNCIONA -->
-    <section class="px-5 lg:px-12 py-16">
-      <div class="max-w-4xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-12">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Proceso simplificado</div>
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">Solo 4 pasos para empezar a ganar</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-4xl text-white">Solo 4 pasos para empezar a ganar</h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <div class="bg-night-2 border border-border rounded-2xl p-6">
             <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">1</div>
             <h3 class="font-semibold text-white text-base mb-3">Registra el evento</h3>
@@ -139,14 +203,14 @@
     </section>
 
     <!-- EARNINGS CALCULATOR -->
-    <section class="px-5 lg:px-12 py-16 bg-night-2 border-y border-border">
-      <div class="max-w-3xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16 bg-night-2 border-y border-border">
+      <div class="max-w-6xl mx-auto">
         <div class="text-center mb-10">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Calculadora de ganancias</div>
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">¿Cuánto puedes ganar?</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-4xl text-white">¿Cuánto puedes ganar?</h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div class="flex flex-col gap-6">
             <div>
               <div class="flex justify-between mb-2">
@@ -216,13 +280,13 @@
     </section>
 
     <!-- BENEFICIOS -->
-    <section class="px-5 lg:px-12 py-16">
-      <div class="max-w-4xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-12">
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">Por qué Fotify es diferente</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-4xl text-white">Por qué Fotify es diferente</h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           <div v-for="benefit in benefits" :key="benefit.title" class="bg-night-2 border border-border rounded-2xl p-6 flex gap-4">
             <div class="w-12 h-12 rounded-xl bg-violet/15 flex items-center justify-center flex-shrink-0" v-html="benefit.icon" />
             <div>
@@ -235,11 +299,11 @@
     </section>
 
     <!-- TESTIMONIALS -->
-    <section class="px-5 lg:px-12 py-16 bg-night-2 border-y border-border">
-      <div class="max-w-4xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16 bg-night-2 border-y border-border">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-12">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Fotógrafos reales</div>
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white">Ellos ya están ganando</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-4xl text-white">Ellos ya están ganando</h2>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -259,11 +323,11 @@
     </section>
 
     <!-- PLANES -->
-    <section class="px-5 lg:px-12 py-16">
-      <div class="max-w-3xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16">
+      <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Sin sorpresas</div>
-          <h2 class="font-display font-bold text-2xl lg:text-3xl text-white mb-3">Modelo simple y justo</h2>
+          <h2 class="font-display font-bold text-2xl lg:text-4xl text-white mb-3">Modelo simple y justo</h2>
           <p class="text-muted text-sm">Sin cuotas mensuales. Solo pagamos juntos cuando vendes.</p>
         </div>
 
@@ -314,8 +378,8 @@
     </section>
 
     <!-- FAQ -->
-    <section class="px-5 lg:px-12 py-16 bg-night-2 border-y border-border">
-      <div class="max-w-2xl mx-auto">
+    <section class="px-5 lg:px-16 xl:px-24 py-16 bg-night-2 border-y border-border">
+      <div class="max-w-3xl mx-auto">
         <div class="text-center mb-10">
           <h2 class="font-display font-bold text-2xl text-white">Preguntas frecuentes</h2>
         </div>
@@ -339,7 +403,7 @@
     </section>
 
     <!-- FINAL CTA -->
-    <section class="px-5 lg:px-12 py-24">
+    <section class="px-5 lg:px-16 xl:px-24 py-24">
       <div class="max-w-2xl mx-auto text-center">
         <div class="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style="background: linear-gradient(135deg, #7C3AED, #5B21B6);">
           <svg width="36" height="36" viewBox="0 0 44 44" fill="none">

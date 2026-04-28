@@ -150,14 +150,13 @@
 </template>
 
 <script setup lang="ts">
+import { apiFetch } from '~/composables/useApi'
 import type { EventResponse, ListEnvelope } from '~/types'
 
 useSeoMeta({
   title: 'Explorar eventos — Fotify',
   description: 'Descubre miles de eventos deportivos en Perú y LATAM. Maratones, triatlones, ciclismo y más.',
 })
-
-const config = useRuntimeConfig()
 
 const LIMIT = 24
 const CATEGORIES = ['Todos', 'Maratón', 'Triatlón', 'Ciclismo', 'Trail', 'Natación', 'Crossfit', 'Otro']
@@ -183,25 +182,7 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const page = ref(1)
 
-// Initial fetch — server: true enables SSR for prerender, lazy on client avoids blocking render
-const { data: initialData, error: initialError, pending: initialPending } = await useFetch<ListEnvelope<EventResponse>>(
-  `${config.public.apiBase}/events`,
-  { query: { status: 'active', limit: LIMIT, page: 1 }, server: true, lazy: true },
-)
-
-loading.value = initialPending.value
-
-watch(initialPending, (pending) => {
-  loading.value = pending
-  if (!pending) {
-    if (initialError.value) {
-      error.value = 'No se pudo cargar los eventos. Inténtalo de nuevo.'
-    } else {
-      events.value = initialData.value?.data?.items ?? []
-      total.value = initialData.value?.data?.total ?? 0
-    }
-  }
-}, { immediate: true })
+onMounted(() => { fetchEvents() })
 
 // Debounce search
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -234,7 +215,7 @@ async function fetchEvents() {
   error.value = null
   page.value = 1
   try {
-    const data = await $fetch<ListEnvelope<EventResponse>>(`${config.public.apiBase}/events`, {
+    const data = await apiFetch<ListEnvelope<EventResponse>>('/events', {
       query: buildQuery(1),
     })
     events.value = data?.data?.items ?? []
@@ -253,7 +234,7 @@ async function loadMore() {
   loadingMore.value = true
   try {
     const nextPage = page.value + 1
-    const data = await $fetch<ListEnvelope<EventResponse>>(`${config.public.apiBase}/events`, {
+    const data = await apiFetch<ListEnvelope<EventResponse>>('/events', {
       query: buildQuery(nextPage),
     })
     events.value.push(...(data?.data?.items ?? []))

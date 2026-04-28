@@ -900,7 +900,16 @@ async function saveProfile() {
 // ── mount ─────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  if (!auth.isAuthenticated || !auth.isPhotographer) {
+  if (!auth.isAuthenticated) {
+    await navigateTo('/')
+    return
+  }
+  // Admins have their own panel — redirect away from the photographer dashboard
+  if (auth.isAdmin) {
+    await navigateTo('/admin')
+    return
+  }
+  if (!auth.isPhotographer) {
     await navigateTo('/')
     return
   }

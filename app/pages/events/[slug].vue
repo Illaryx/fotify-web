@@ -1,7 +1,33 @@
 <template>
   <div>
-    <!-- Not found -->
-    <div v-if="!event" class="flex flex-col items-center justify-center py-32 px-5 text-center">
+    <!-- Loading skeleton (event still fetching) -->
+    <div v-if="eventLoading" class="px-5 lg:px-12">
+      <!-- Breadcrumb placeholder -->
+      <div class="pt-5 pb-0 flex items-center gap-2">
+        <div class="h-3 w-12 rounded bg-white/5 animate-pulse" />
+        <div class="h-3 w-2 rounded bg-white/5 animate-pulse" />
+        <div class="h-3 w-20 rounded bg-white/5 animate-pulse" />
+        <div class="h-3 w-2 rounded bg-white/5 animate-pulse" />
+        <div class="h-3 w-40 rounded bg-white/5 animate-pulse" />
+      </div>
+      <!-- Hero placeholder -->
+      <div class="pt-8 pb-10">
+        <div class="h-5 w-24 rounded-full bg-white/5 animate-pulse mb-4" />
+        <div class="h-10 w-2/3 rounded-xl bg-white/5 animate-pulse mb-3" />
+        <div class="h-10 w-1/2 rounded-xl bg-white/[0.03] animate-pulse mb-6" />
+        <div class="flex gap-4">
+          <div class="h-4 w-28 rounded bg-white/5 animate-pulse" />
+          <div class="h-4 w-20 rounded bg-white/5 animate-pulse" />
+        </div>
+      </div>
+      <!-- Grid placeholder -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-12">
+        <div v-for="n in 9" :key="n" class="rounded-xl bg-night-2 border border-border animate-pulse aspect-[3/4]" />
+      </div>
+    </div>
+
+    <!-- Not found (only after fetch completed) -->
+    <div v-else-if="!event" class="flex flex-col items-center justify-center py-32 px-5 text-center">
       <div class="font-display font-bold text-[28px] text-white mb-3">Evento no encontrado</div>
       <p class="text-muted mb-6">El evento que buscas no existe o fue removido.</p>
       <NuxtLink to="/events" class="bg-violet text-white font-semibold px-6 py-3 rounded-xl hover:bg-violet-deep transition-colors">
@@ -164,16 +190,12 @@
                 @click="handlePhotoClick(photo)"
               >
                 <div class="aspect-[3/4] bg-night-2 relative flex items-center justify-center">
-                  <NuxtImg
-                    v-if="photo.thumbnail_url"
-                    :src="photo.thumbnail_url"
+                  <img
+                    :src="getThumbUrl(photo)"
                     :alt="`Foto ${photoIndex + 1}`"
                     class="w-full h-full object-cover transition-all duration-300"
                     :class="!auth.isAuthenticated ? 'blur-sm scale-110' : ''"
                   />
-                  <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.15">
-                    <path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0" /><path d="M7.5 17.5 10 12l3 3 2-4 2.5 6.5" /><path d="M3 12h18" />
-                  </svg>
 
                   <!-- FOTIFY watermark -->
                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -196,10 +218,29 @@
                     </svg>
                   </div>
 
-                  <!-- Hover action label -->
-                  <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-end p-3">
-                    <div class="w-full bg-coral/90 backdrop-blur-sm text-white text-[11px] font-semibold py-2 rounded-lg text-center translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
-                      {{ auth.isAuthenticated ? (photo.id !== undefined && cart.has(photo.id) ? 'Quitar selección' : 'Seleccionar') : 'Iniciar sesión para ver' }}
+                  <!-- Expand (lightbox) button — always visible, top right -->
+                  <button
+                    v-if="auth.isAuthenticated"
+                    class="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white shadow-md flex items-center justify-center z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-150 hover:scale-110 active:scale-95"
+                    @click.stop="openLightbox(photo, photoIndex)"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                    </svg>
+                  </button>
+
+                  <!-- Hover select label -->
+                  <div v-if="auth.isAuthenticated" class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-end p-3">
+                    <div
+                      class="w-full backdrop-blur-sm text-white text-[11px] font-semibold py-2 rounded-lg text-center translate-y-1 group-hover:translate-y-0 transition-transform duration-200"
+                      :class="photo.id !== undefined && cart.has(photo.id) ? 'bg-violet/80' : 'bg-coral/80'"
+                    >
+                      {{ photo.id !== undefined && cart.has(photo.id) ? '✓ Quitar' : '+ Seleccionar' }}
+                    </div>
+                  </div>
+                  <div v-else class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-end p-3">
+                    <div class="w-full bg-night-2/80 backdrop-blur-sm text-white/60 text-[11px] font-semibold py-2 rounded-lg text-center">
+                      Iniciar sesión para seleccionar
                     </div>
                   </div>
                 </div>
@@ -277,6 +318,23 @@
               </div>
 
               <div class="px-4 pb-5 flex flex-col gap-2">
+                <!-- Pack applied badge -->
+                <Transition name="slide-up">
+                  <div v-if="packApplied && auth.isAuthenticated" class="bg-green-500/10 border border-green-500/25 rounded-xl px-3 py-2 flex items-center gap-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span class="text-[11px] text-green-400 font-semibold">Pack aplicado · ahorras {{ currency }} {{ packSaving }}</span>
+                  </div>
+                </Transition>
+
+                <!-- "N fotos más para el pack" nudge -->
+                <Transition name="slide-up">
+                  <div v-if="!packApplied && photosToNextPack > 0 && auth.isAuthenticated && cart.hasPhotos" class="bg-violet/10 border border-violet/20 rounded-xl px-3 py-2 text-[11px] text-violet/80 text-center">
+                    Selecciona {{ photosToNextPack }} foto{{ photosToNextPack > 1 ? 's' : '' }} más y activa el precio de pack
+                  </div>
+                </Transition>
+
                 <!-- Cart CTA (when photos selected) -->
                 <NuxtLink
                   v-if="auth.isAuthenticated && cart.hasPhotos && event.status !== 'closed'"
@@ -315,8 +373,14 @@
         <div v-if="auth.isAuthenticated && cart.hasPhotos && event.status !== 'closed'" class="lg:hidden fixed bottom-0 left-0 right-0 z-50">
           <div class="bg-night-2/95 backdrop-blur-xl border-t border-border px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] flex items-center gap-3">
             <div class="flex-1 min-w-0">
-              <div class="text-[13px] font-semibold text-white">{{ cart.count }} foto{{ cart.count > 1 ? 's' : '' }} seleccionada{{ cart.count > 1 ? 's' : '' }}</div>
-              <div class="text-[11px] text-white/40">{{ currency }} {{ cartTotal }}</div>
+              <div class="flex items-center gap-2">
+                <div class="text-[13px] font-semibold text-white">{{ cart.count }} foto{{ cart.count > 1 ? 's' : '' }}</div>
+                <span v-if="packApplied" class="text-[9px] font-bold text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pack</span>
+              </div>
+              <div class="text-[11px]" :class="packApplied ? 'text-green-400' : 'text-white/40'">{{ currency }} {{ cartTotal }}</div>
+              <div v-if="!packApplied && photosToNextPack > 0" class="text-[10px] text-violet/70 mt-0.5">
+                +{{ photosToNextPack }} para activar pack
+              </div>
             </div>
             <NuxtLink
               :to="`/checkout?event_slug=${route.params.slug}`"
@@ -347,48 +411,234 @@
         </div>
       </div>
     </template>
+
+    <!-- Lightbox -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div
+          v-if="lightboxPhoto"
+          class="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          @click.self="closeLightbox"
+        >
+          <!-- Close -->
+          <button
+            class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+            @click="closeLightbox"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          <!-- Prev arrow -->
+          <button
+            v-if="lightboxIndex > 0"
+            class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+            @click="lightboxPrev"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <!-- Next arrow -->
+          <button
+            v-if="lightboxIndex < photos.length - 1"
+            class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+            @click="lightboxNext"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          <!-- Photo + actions -->
+          <div class="flex flex-col items-center gap-4 px-16 sm:px-20 max-h-screen w-full">
+            <!-- Counter -->
+            <div class="text-[12px] text-white/40 font-medium">
+              {{ lightboxIndex + 1 }} / {{ photos.length }}
+            </div>
+
+            <!-- Image -->
+            <div class="relative rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl" style="min-width:280px;min-height:360px;max-height:75vh;">
+              <!-- Loading skeleton + Fotify logo -->
+              <Transition name="lightbox-fade">
+                <div
+                  v-if="lightboxImgLoading && !lightboxImgError"
+                  class="absolute inset-0 bg-night-2 flex flex-col items-center justify-center gap-3 z-10"
+                >
+                  <!-- Animated Fotify logo mark -->
+                  <div class="relative">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="animate-pulse">
+                      <circle cx="24" cy="24" r="22" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"/>
+                      <circle cx="24" cy="24" r="10" fill="#7C3AED" opacity="0.15"/>
+                      <path d="M18 24a6 6 0 1 1 12 0 6 6 0 0 1-12 0" fill="#7C3AED" opacity="0.5"/>
+                      <path d="M24 16v2M24 30v2M16 24h2M30 24h2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                    </svg>
+                  </div>
+                  <span class="font-display text-[11px] font-bold tracking-[4px] text-white/20 uppercase">FOTIFY</span>
+                </div>
+              </Transition>
+
+              <!-- Error state -->
+              <div
+                v-if="lightboxImgError"
+                class="absolute inset-0 bg-night-2 flex flex-col items-center justify-center gap-2"
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+                </svg>
+                <span class="text-[11px] text-white/25">No se pudo cargar la imagen</span>
+              </div>
+
+              <!-- Actual image -->
+              <img
+                :key="`lb-${lightboxPhoto?.id}-${lightboxIndex}`"
+                :src="lightboxPhoto ? getThumbUrl(lightboxPhoto, 800, 1200) : ''"
+                :alt="`Foto ${lightboxIndex + 1}`"
+                class="max-h-[75vh] max-w-full object-contain transition-opacity duration-300"
+                :class="lightboxImgLoading ? 'opacity-0' : 'opacity-100'"
+                @load="lightboxImgLoading = false"
+                @error="lightboxImgLoading = false; lightboxImgError = true"
+              />
+
+              <!-- FOTIFY watermark -->
+              <div v-if="!lightboxImgLoading && !lightboxImgError" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span class="font-display text-white/[0.06] text-[22px] font-bold -rotate-[30deg] select-none tracking-[10px]">FOTIFY</span>
+              </div>
+            </div>
+
+            <!-- Select / deselect button -->
+            <div v-if="event && event.status !== 'closed'" class="flex items-center gap-3">
+              <button
+                class="flex items-center gap-2 font-semibold text-[14px] px-6 py-3 rounded-xl transition-colors"
+                :class="lightboxPhoto.id !== undefined && cart.has(lightboxPhoto.id)
+                  ? 'bg-violet/20 border border-violet/40 text-violet hover:bg-violet/30'
+                  : 'bg-coral hover:bg-[#e62d5a] text-white'"
+                @click="toggleFromLightbox"
+              >
+                <svg v-if="lightboxPhoto.id !== undefined && cart.has(lightboxPhoto.id)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                {{ lightboxPhoto.id !== undefined && cart.has(lightboxPhoto.id) ? 'Quitar selección' : 'Seleccionar foto' }}
+              </button>
+            </div>
+
+            <!-- Price hint -->
+            <div v-if="event?.photo_price" class="text-[11px] text-white/25">
+              {{ currency }} {{ event.photo_price }} por foto · Sin marca de agua · Descarga HD
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
+import { apiFetch } from '~/composables/useApi'
+import { useDemoPhoto } from '~/composables/useDemoPhoto'
 import type { EventResponse, PhotoResponse, SingleEnvelope, ListEnvelope } from '~/types'
 
 const LIMIT = 24
 
 const route = useRoute()
-const config = useRuntimeConfig()
 const auth = useAuthStore()
 const cart = useCartStore()
 const showAuth = useAuthModal()
+const { getThumbUrl } = useDemoPhoto()
+
+// Lightbox state
+const lightboxPhoto = ref<PhotoResponse | null>(null)
+const lightboxIndex = ref(0)
+
+const lightboxImgLoading = ref(true)
+const lightboxImgError = ref(false)
+
+function openLightbox(photo: PhotoResponse, index: number) {
+  lightboxPhoto.value = photo
+  lightboxIndex.value = index
+  lightboxImgLoading.value = true
+  lightboxImgError.value = false
+}
+
+function closeLightbox() {
+  lightboxPhoto.value = null
+}
+
+function lightboxPrev() {
+  if (lightboxIndex.value > 0) {
+    lightboxIndex.value--
+    lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
+    lightboxImgLoading.value = true
+    lightboxImgError.value = false
+  }
+}
+
+function lightboxNext() {
+  if (lightboxIndex.value < photos.value.length - 1) {
+    lightboxIndex.value++
+    lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
+    lightboxImgLoading.value = true
+    lightboxImgError.value = false
+  }
+}
+
+// Keyboard navigation for lightbox
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
+function onKeydown(e: KeyboardEvent) {
+  if (!lightboxPhoto.value) return
+  if (e.key === 'Escape') closeLightbox()
+  if (e.key === 'ArrowLeft') lightboxPrev()
+  if (e.key === 'ArrowRight') lightboxNext()
+}
 
 const slug = route.params.slug as string
 
-// #1 — event_id as computed ref so useFetch query is reactive
-const { data: eventData } = await useFetch<SingleEnvelope<EventResponse>>(
-  `${config.public.apiBase}/events/slug/${slug}`,
-  { key: `event-${slug}` },
-)
-
-const event = computed(() => eventData.value?.data ?? null)
+const event = ref<EventResponse | null>(null)
 const eventId = computed(() => event.value?.id)
-
-// Sync cart to this event so selectedIds survive navigation to /checkout
-watch(eventId, (id) => { if (id) cart.setEvent(id) }, { immediate: true })
-
-// Initial SSR fetch — first page
-const { data: photosData, pending: photosLoading } = await useFetch<ListEnvelope<PhotoResponse>>(
-  `${config.public.apiBase}/photos`,
-  {
-    key: `event-photos-${slug}`,
-    query: { event_id: eventId, limit: LIMIT, offset: 0 },
-    immediate: !!eventId.value,
-  },
-)
-
-// #5 — Local state for pagination (load more appends to this)
-const photos = ref<PhotoResponse[]>(photosData.value?.data?.items ?? [])
-const totalPhotos = ref(photosData.value?.data?.total ?? event.value?.total_photos ?? 0)
+const eventLoading = ref(true)
+const photosLoading = ref(true)
+const photos = ref<PhotoResponse[]>([])
+const totalPhotos = ref(0)
 const loadingMore = ref(false)
+
+onMounted(async () => {
+  try {
+    const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/slug/${slug}`)
+    event.value = evRes.data ?? null
+    if (event.value?.id) cart.setEvent(event.value.id)
+  }
+  catch { /* not found state handled by template */ }
+  finally {
+    eventLoading.value = false
+  }
+
+  if (!event.value?.id) {
+    photosLoading.value = false
+    return
+  }
+
+  try {
+    const photosRes = await apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
+      query: { event_id: event.value.id, limit: LIMIT, offset: 0 },
+    })
+    photos.value = photosRes.data?.items ?? []
+    totalPhotos.value = photosRes.data?.total ?? event.value?.total_photos ?? 0
+  }
+  finally {
+    photosLoading.value = false
+  }
+})
 
 const hasMore = computed(() => photos.value.length < totalPhotos.value)
 
@@ -396,10 +646,9 @@ async function loadMore() {
   if (!eventId.value || loadingMore.value) return
   loadingMore.value = true
   try {
-    const res = await $fetch<ListEnvelope<PhotoResponse>>(
-      `${config.public.apiBase}/photos`,
-      { query: { event_id: eventId.value, limit: LIMIT, offset: photos.value.length } },
-    )
+    const res = await apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
+      query: { event_id: eventId.value, limit: LIMIT, offset: photos.value.length },
+    })
     photos.value = [...photos.value, ...(res.data?.items ?? [])]
     totalPhotos.value = res.data?.total ?? totalPhotos.value
   }
@@ -415,19 +664,46 @@ const hasPricing = computed(() =>
 )
 
 const packOriginalPrice = computed(() => {
-  if (!event.value?.pack_size || !event.value?.photo_price) return 0
-  return event.value.pack_size * event.value.photo_price
+  if (!event.value?.pack_size || !event.value?.photo_price) return '0.00'
+  return (event.value.pack_size * event.value.photo_price).toFixed(2)
 })
 
 const packSaving = computed(() => {
-  if (!event.value?.pack_price) return 0
-  return packOriginalPrice.value - event.value.pack_price
+  if (!event.value?.pack_price || !event.value?.pack_size || !event.value?.photo_price) return '0.00'
+  const original = event.value.pack_size * event.value.photo_price
+  return (original - event.value.pack_price).toFixed(2)
 })
 
-// #2 — Cart total based on individual photo_price × selected count
+// Cart total: apply pack pricing when possible.
+// e.g. pack_size=3, pack_price=47.9, photo_price=18
+//   5 photos → 1 pack (47.9) + 2 singles (36) = 83.9
 const cartTotal = computed(() => {
-  if (!event.value?.photo_price) return '0.00'
-  return (cart.count * event.value.photo_price).toFixed(2)
+  const price = event.value?.photo_price
+  if (!price) return '0.00'
+  const packSize = event.value?.pack_size
+  const packPrice = event.value?.pack_price
+  if (packSize && packPrice && cart.count >= packSize) {
+    const packs = Math.floor(cart.count / packSize)
+    const singles = cart.count % packSize
+    return (packs * packPrice + singles * price).toFixed(2)
+  }
+  return (cart.count * price).toFixed(2)
+})
+
+// True when at least one full pack is applied
+const packApplied = computed(() => {
+  const packSize = event.value?.pack_size
+  const packPrice = event.value?.pack_price
+  return !!(packSize && packPrice && cart.count >= packSize)
+})
+
+// How many photos until the next pack kicks in
+const photosToNextPack = computed(() => {
+  const packSize = event.value?.pack_size
+  const packPrice = event.value?.pack_price
+  if (!packSize || !packPrice) return 0
+  const remainder = cart.count % packSize
+  return remainder === 0 ? 0 : packSize - remainder
 })
 
 const formattedDate = computed(() => {
@@ -456,19 +732,28 @@ function handlePhotoClick(photo: PhotoResponse) {
   cart.toggle(photo.id)
 }
 
-// #4 — ogImage only when cover_image_url is defined
-if (event.value) {
-  useSeoMeta({
-    title: `${event.value.name} — Fotify`,
-    description: `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`,
-    ogTitle: `${event.value.name} — Fotify`,
-    ogDescription: `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.`,
-    ...(event.value.cover_image_url && { ogImage: event.value.cover_image_url }),
-  })
+function toggleFromLightbox() {
+  const photo = lightboxPhoto.value
+  if (!photo || photo.id === undefined || !eventId.value) return
+  cart.setEvent(eventId.value)
+  cart.toggle(photo.id)
 }
+
+useSeoMeta({
+  title: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
+  description: () => event.value
+    ? `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`
+    : '',
+  ogTitle: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
+  ogDescription: () => event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : '',
+  ogImage: () => event.value?.cover_image_url ?? undefined,
+})
 </script>
 
 <style scoped>
 .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+
+.lightbox-fade-enter-active, .lightbox-fade-leave-active { transition: opacity 0.2s ease; }
+.lightbox-fade-enter-from, .lightbox-fade-leave-to { opacity: 0; }
 </style>
