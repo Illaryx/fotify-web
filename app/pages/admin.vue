@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'admin' })
 
 const config = useRuntimeConfig()
 const auth = useAuthStore()
@@ -49,10 +49,7 @@ const approvingId = ref<number | null>(null)
 async function approvePhotographer(id: number) {
   approvingId.value = id
   try {
-    await $fetch(`${config.public.apiBase}/photographers/${id}/verify`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
-    })
+    await apiFetch(`/photographers/${id}/verify`, { method: 'POST' })
     pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
   }
   catch { /* silent — optimistic UI already removes on success */ }
@@ -61,9 +58,17 @@ async function approvePhotographer(id: number) {
   }
 }
 
-function rejectPhotographer(id: number) {
-  // No reject endpoint in API — local removal only (photographer stays pending server-side)
-  pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
+async function rejectPhotographer(id: number) {
+  try {
+    await apiFetch(`/photographers/${id}/reject`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${auth.tokens.access}` },
+    })
+  }
+  catch { /* silent */ }
+  finally {
+    pendingPhotographers.value = pendingPhotographers.value.filter(p => p.id !== id)
+  }
 }
 
 // ── Payments tab state ──

@@ -243,7 +243,7 @@
 <script setup lang="ts">
 import type { CreateEventInput, EventResponse, PhotographerResponse, SingleEnvelope } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'photographer' })
 
 const auth = useAuthStore()
 const config = useRuntimeConfig()

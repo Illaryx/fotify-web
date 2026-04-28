@@ -294,7 +294,7 @@
 <script setup lang="ts">
 import type { EventResponse, InitUploadInput, InitUploadResponse, SingleEnvelope, ListEnvelope } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'photographer' })
 
 const auth = useAuthStore()
 const config = useRuntimeConfig()

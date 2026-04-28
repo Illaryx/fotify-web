@@ -652,7 +652,7 @@
 <script setup lang="ts">
 import type { EventResponse, OrderResponse, CreateOrderInput, ConfirmPaymentInput, SingleEnvelope } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'auth' })
 
 const auth = useAuthStore()
 const cart = useCartStore()

@@ -196,12 +196,11 @@
 <script setup lang="ts">
 import type { OrderResponse, EventResponse, SingleEnvelope } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'auth' })
 
 useSeoMeta({ title: 'Mis compras — Fotify' })
 
 const auth = useAuthStore()
-const config = useRuntimeConfig()
 const showAuth = useAuthModal()
 
 const LIMIT = 25
@@ -292,10 +291,7 @@ function observeCard(el: HTMLElement, eventId: number) {
 
 async function fetchEventById(id: number) {
   try {
-    const res = await $fetch<SingleEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events/${id}`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${id}`)
     if (res.data) eventsMap.value = { ...eventsMap.value, [id]: res.data }
   }
   catch { /* optional context, fail silently */ }
@@ -305,12 +301,9 @@ async function fetchEventById(id: number) {
 async function fetchOrders() {
   fetchError.value = null
   try {
-    const res = await $fetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
-      `${config.public.apiBase}/orders`,
-      {
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        query: { limit: LIMIT, offset: 0 },
-      },
+    const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
+      '/orders',
+      { query: { limit: LIMIT, offset: 0 } },
     )
     orders.value = res.data?.items ?? []
     total.value = res.data?.total ?? 0
@@ -324,12 +317,9 @@ async function loadMoreOrders() {
   if (!hasMore.value || loadingMore.value) return
   loadingMore.value = true
   try {
-    const res = await $fetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
-      `${config.public.apiBase}/orders`,
-      {
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-        query: { limit: LIMIT, offset: orders.value.length },
-      },
+    const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
+      '/orders',
+      { query: { limit: LIMIT, offset: orders.value.length } },
     )
     orders.value = [...orders.value, ...(res.data?.items ?? [])]
     total.value = res.data?.total ?? total.value
@@ -342,10 +332,7 @@ async function loadMoreOrders() {
 
 async function fetchUserInfo() {
   try {
-    const res = await $fetch<{ data?: { email?: string; full_name?: string } }>(
-      `${config.public.apiBase}/auth/me`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
-    )
+    const res = await apiFetch<{ data?: { email?: string; full_name?: string } }>('/auth/me')
     userEmail.value = res.data?.email ?? ''
     userName.value = res.data?.full_name ?? ''
   }

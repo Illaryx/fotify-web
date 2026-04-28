@@ -605,7 +605,6 @@ import type { EventResponse, InitSearchResponse, SearchResponse, SearchResultRes
 type SearchStep = 'auth-gate' | 'consent' | 'upload' | 'searching' | 'results'
 
 const route = useRoute()
-const config = useRuntimeConfig()
 const auth = useAuthStore()
 const cart = useCartStore()
 const showAuth = useAuthModal()
@@ -623,10 +622,7 @@ const event = ref<EventResponse | null>(null)
 async function fetchEvent() {
   if (!eventId.value) return
   try {
-    const res = await $fetch<SingleEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events/${eventId.value}`,
-      auth.tokens.access ? { headers: { Authorization: `Bearer ${auth.tokens.access}` } } : {},
-    )
+    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${eventId.value}`)
     event.value = res.data ?? null
   }
   catch { /* event context is optional — fail silently */ }
@@ -640,10 +636,9 @@ async function acceptConsent() {
   consentLoading.value = true
   consentError.value = null
   try {
-    await $fetch(`${config.public.apiBase}/search/consent`, {
+    await apiFetch<void>('/search/consent', {
       method: 'POST',
       body: { accepted: true },
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
     })
     localStorage.setItem('fotify_consented', 'true')
     step.value = 'upload'
@@ -708,14 +703,10 @@ async function startSearch() {
 
   try {
     // 1. Get S3 presigned URL
-    const initRes = await $fetch<{ data: InitSearchResponse }>(
-      `${config.public.apiBase}/search/init`,
-      {
-        method: 'POST',
-        body: { event_id: eventId.value },
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-      },
-    )
+    const initRes = await apiFetch<{ data: InitSearchResponse }>('/search/init', {
+      method: 'POST',
+      body: { event_id: eventId.value },
+    })
     const initData = initRes.data
     if (!initData?.upload_url || !initData?.session_id) throw new Error('init_failed')
 
@@ -727,14 +718,10 @@ async function startSearch() {
     })
 
     // 3. Execute facial search
-    const searchRes = await $fetch<{ data: SearchResponse }>(
-      `${config.public.apiBase}/search/execute`,
-      {
-        method: 'POST',
-        body: { session_id: initData.session_id },
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-      },
-    )
+    const searchRes = await apiFetch<{ data: SearchResponse }>('/search/execute', {
+      method: 'POST',
+      body: { session_id: initData.session_id },
+    })
 
     searchResults.value = searchRes.data?.results ?? []
     matchesFound.value = searchRes.data?.matches_found ?? 0
@@ -840,14 +827,10 @@ async function searchByBib() {
   bibError.value = null
   bibResults.value = []
   try {
-    const res = await $fetch<{ data: { results: SearchResultResponse[] } }>(
-      `${config.public.apiBase}/search/bib`,
-      {
-        method: 'POST',
-        body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
-        headers: { Authorization: `Bearer ${auth.tokens.access}` },
-      },
-    )
+    const res = await apiFetch<{ data: { results: SearchResultResponse[] } }>('/search/bib', {
+      method: 'POST',
+      body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
+    })
     bibResults.value = res.data?.results ?? []
     if (bibResults.value.length === 0) bibError.value = 'No encontramos fotos para ese dorsal.'
     else if (eventId.value) cart.setEvent(eventId.value)

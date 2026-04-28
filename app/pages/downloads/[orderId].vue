@@ -239,7 +239,7 @@
 <script setup lang="ts">
 import type { OrderResponse, EventResponse, DownloadResponse, SingleEnvelope } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'auth' })
 
 const route = useRoute()
 const config = useRuntimeConfig()

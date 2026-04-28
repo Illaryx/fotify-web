@@ -205,7 +205,7 @@
           </div>
           <button
             class="mt-4 bg-violet hover:bg-violet-deep text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors"
-            @click="showToast('Preferencias guardadas')"
+            @click="saveNotifications"
           >
             Guardar preferencias
           </button>
@@ -266,10 +266,9 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'auth' })
 
 const auth = useAuthStore()
-const config = useRuntimeConfig()
 
 type TabKey = 'perfil' | 'seguridad' | 'notificaciones' | 'privacidad'
 
@@ -335,9 +334,8 @@ async function saveProfile() {
   savingProfile.value = true
   profileError.value = null
   try {
-    await $fetch(`${config.public.apiBase}/auth/me`, {
+    await apiFetch<void>('/auth/me', {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
       body: {
         full_name: `${profile.first_name} ${profile.last_name}`.trim(),
         phone: profile.phone || undefined,
@@ -353,6 +351,17 @@ async function saveProfile() {
   }
 }
 
+async function saveNotifications() {
+  try {
+    await apiFetch<void>('/auth/notification-preferences', {
+      method: 'PATCH',
+      body: { ...notifSettings },
+    })
+    showToast('Preferencias guardadas')
+  }
+  catch { showToast('Error al guardar preferencias') }
+}
+
 async function savePassword() {
   if (!passwordForm.current || !passwordForm.new) { passwordError.value = 'Completa todos los campos.'; return }
   if (passwordForm.new !== passwordForm.confirm) { passwordError.value = 'Las contraseñas no coinciden.'; return }
@@ -360,9 +369,8 @@ async function savePassword() {
   savingPassword.value = true
   passwordError.value = null
   try {
-    await $fetch(`${config.public.apiBase}/auth/password`, {
+    await apiFetch<void>('/auth/password', {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${auth.tokens.access}` },
       body: { current_password: passwordForm.current, new_password: passwordForm.new },
     })
     passwordForm.current = ''
@@ -381,9 +389,8 @@ async function savePassword() {
 onMounted(async () => {
   if (!auth.isAuthenticated) { await navigateTo('/'); return }
   try {
-    const res = await $fetch<{ data?: { email?: string; full_name?: string; phone?: string } }>(
-      `${config.public.apiBase}/auth/me`,
-      { headers: { Authorization: `Bearer ${auth.tokens.access}` } },
+    const res = await apiFetch<{ data?: { email?: string; full_name?: string; phone?: string } }>(
+      '/auth/me',
     )
     const data = res.data
     if (data) {

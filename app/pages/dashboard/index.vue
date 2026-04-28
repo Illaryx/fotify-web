@@ -614,7 +614,7 @@ import type {
   SingleEnvelope,
 } from '~/types'
 
-definePageMeta({ ssr: false })
+definePageMeta({ ssr: false, middleware: 'photographer' })
 
 // ── inline sub-components ────────────────────────────────────────────────────
 
@@ -650,7 +650,6 @@ const IconUpload = defineComponent({
 
 // ── stores & config ──────────────────────────────────────────────────────────
 
-const config = useRuntimeConfig()
 const auth = useAuthStore()
 
 // ── state ────────────────────────────────────────────────────────────────────
@@ -810,22 +809,17 @@ async function switchSection(section: Section) {
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
-const authHeader = computed(() => ({ Authorization: `Bearer ${auth.tokens.access}` }))
-
 async function fetchProfile() {
-  const res = await $fetch<SingleEnvelope<PhotographerResponse>>(
-    `${config.public.apiBase}/photographers/me`,
-    { headers: authHeader.value },
-  )
+  const res = await apiFetch<SingleEnvelope<PhotographerResponse>>('/photographers/me')
   profile.value = res.data ?? null
 }
 
 async function fetchEvents() {
   loadingEvents.value = true
   try {
-    const res = await $fetch<ListEnvelope<EventResponse>>(
-      `${config.public.apiBase}/events`,
-      { headers: authHeader.value, query: { my_events: true, limit: 50 } },
+    const res = await apiFetch<ListEnvelope<EventResponse>>(
+      '/events',
+      { query: { my_events: true, limit: 50 } },
     )
     events.value = res.data?.items ?? []
     if (events.value.length > 0) {
@@ -840,9 +834,9 @@ async function fetchPayouts() {
   if (!profile.value?.id) return
   loadingPayouts.value = true
   try {
-    const res = await $fetch<ListEnvelope<PayoutResponse>>(
-      `${config.public.apiBase}/payouts/mine`,
-      { headers: authHeader.value, query: { photographer_id: profile.value.id, limit: 50 } },
+    const res = await apiFetch<ListEnvelope<PayoutResponse>>(
+      '/payouts/mine',
+      { query: { photographer_id: profile.value.id, limit: 50 } },
     )
     payouts.value = res.data?.items ?? []
   } finally {
@@ -854,9 +848,9 @@ async function loadPhotos() {
   if (!photoEventId.value) return
   loadingPhotos.value = true
   try {
-    const res = await $fetch<ListEnvelope<PhotoResponse>>(
-      `${config.public.apiBase}/photos`,
-      { headers: authHeader.value, query: { event_id: photoEventId.value, limit: 48 } },
+    const res = await apiFetch<ListEnvelope<PhotoResponse>>(
+      '/photos',
+      { query: { event_id: photoEventId.value, limit: 48 } },
     )
     photos.value = res.data?.items ?? []
   } finally {
@@ -889,9 +883,9 @@ async function saveProfile() {
         phone: bankForm.phone || undefined,
       } : undefined,
     }
-    const res = await $fetch<SingleEnvelope<PhotographerResponse>>(
-      `${config.public.apiBase}/photographers/me`,
-      { method: 'PUT', headers: authHeader.value, body },
+    const res = await apiFetch<SingleEnvelope<PhotographerResponse>>(
+      '/photographers/me',
+      { method: 'PUT', body },
     )
     profile.value = res.data ?? profile.value
     profileSaved.value = true
