@@ -400,6 +400,11 @@ async function uploadOne(item: UploadItem) {
     item.photoId = photo_id
     item.progress = 20
 
+    const bitmap = await createImageBitmap(item.file)
+    const imgWidth = bitmap.width
+    const imgHeight = bitmap.height
+    bitmap.close()
+
     // PUT directo a S3 — no pasa por nuestra API, sin auth header propio
     await $fetch(upload_url, {
       method: 'PUT',
@@ -408,7 +413,14 @@ async function uploadOne(item: UploadItem) {
     })
     item.progress = 80
 
-    await apiFetch(`/photos/${photo_id}/upload/confirm`, { method: 'POST' })
+    await apiFetch(`/photos/${photo_id}/upload/confirm`, {
+      method: 'POST',
+      body: {
+        width: imgWidth,
+        height: imgHeight,
+        file_size_kb: Math.round(item.file.size / 1024),
+      },
+    })
 
     item.progress = 100
     item.status = 'done'
