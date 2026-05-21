@@ -2977,6 +2977,7 @@ export interface components {
             event_id?: number;
             height?: number;
             id?: number;
+            original_url?: string;
             status?: components["schemas"]["github_com_Illaryx_fotify-api_internal_domain_entity.PhotoStatus"];
             taken_at?: string;
             thumbnail_url?: string;

@@ -88,7 +88,7 @@
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
-              <NuxtLink to="/for-photographers" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
+              <NuxtLink to="/photographers/register" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
             </p>
           </div>
 
@@ -171,7 +171,7 @@
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
-              <NuxtLink to="/for-photographers" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
+              <NuxtLink to="/photographers/register" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
             </p>
           </div>
 

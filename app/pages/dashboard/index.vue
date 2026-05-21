@@ -361,7 +361,7 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-3 flex-shrink-0">
-                  <NuxtLink v-if="event.status === 'active'" to="/dashboard/upload" class="text-xs text-violet hover:underline">+ fotos</NuxtLink>
+                  <button v-if="event.status === 'active'" class="text-xs text-violet hover:underline" @click="viewEventPhotos(event.id)">Ver fotos</button>
                   <NuxtLink v-if="event.slug" :to="`/events/${event.slug}`" class="text-xs text-white/40 hover:text-white">Ver →</NuxtLink>
                 </div>
               </div>
@@ -453,6 +453,7 @@
                   :key="photo.id"
                   class="aspect-square rounded-xl relative group overflow-hidden cursor-pointer"
                   :style="photoCardStyle(idx)"
+                  @click="openPhotoPreview(idx)"
                 >
                   <NuxtImg v-if="photo.thumbnail_url" :src="photo.thumbnail_url" class="w-full h-full object-cover" />
                   <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -600,6 +601,64 @@
       </div>
 
     </template>
+
+    <!-- ── PHOTO PREVIEW MODAL ──────────────────────────────────────────── -->
+    <Transition name="fade">
+      <div v-if="photoPreviewOpen" class="fixed inset-0 z-300 flex items-center justify-center p-4"
+           style="background:rgba(10,6,20,.9);backdrop-filter:blur(6px);"
+           @click.self="closePhotoPreview">
+
+        <div class="relative w-full max-w-3xl bg-night-2 border border-border rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
+            <div class="flex items-center gap-3">
+              <button class="text-white/40 hover:text-white disabled:opacity-20 transition-colors"
+                      :disabled="previewIndex === 0" @click="previewIndex--">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="text-xs text-white/40">{{ previewIndex + 1 }} / {{ photos.length }}</span>
+              <button class="text-white/40 hover:text-white disabled:opacity-20 transition-colors"
+                      :disabled="previewIndex === photos.length - 1" @click="previewIndex++">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span v-if="previewPhoto" class="text-[10px] text-white/25 hidden sm:block">
+                ID {{ previewPhoto.id }} · {{ previewPhoto.status }}
+                <span v-if="previewPhoto.width && previewPhoto.height"> · {{ previewPhoto.width }}×{{ previewPhoto.height }}</span>
+              </span>
+            </div>
+            <button class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors text-sm"
+                    @click="closePhotoPreview">✕</button>
+          </div>
+
+          <!-- 3 image columns -->
+          <div v-if="previewPhoto" class="grid grid-cols-3 gap-3 p-4 overflow-y-auto">
+
+            <div v-for="col in previewColumns" :key="col.label" class="flex flex-col gap-2">
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-xs font-medium text-white/70">{{ col.label }}</span>
+                <span class="text-[10px] text-white/30">{{ col.sub }}</span>
+              </div>
+              <div class="aspect-square bg-night rounded-xl overflow-hidden border border-border flex items-center justify-center">
+                <img v-if="col.url" :src="col.url" :alt="col.label" class="w-full h-full object-cover" />
+                <div v-else class="flex flex-col items-center gap-1.5 text-white/20 p-3 text-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M3 17L8 12L12 16L16 12L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="text-[10px]">{{ col.empty }}</span>
+                </div>
+              </div>
+              <a v-if="col.url" :href="col.url" target="_blank"
+                 class="text-[10px] text-violet hover:underline text-center">Abrir →</a>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -625,27 +684,24 @@ const SidebarLink = defineComponent({
     active: Boolean,
   },
   emits: ['click'],
-  template: `
-    <button
-      :class="[
+  setup(props, { emit }) {
+    return () => h('button', {
+      class: [
         'flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl text-sm transition-colors text-left',
-        active ? 'bg-violet/15 text-violet font-medium' : 'text-white/55 hover:bg-night-3 hover:text-white'
-      ]"
-      @click="$emit('click')"
-    >
-      <slot />
-      {{ label }}
-    </button>
-  `,
+        props.active ? 'bg-violet/15 text-violet font-medium' : 'text-white/55 hover:bg-night-3 hover:text-white',
+      ],
+      onClick: () => emit('click'),
+    }, props.label)
+  },
 })
 
 const IconUpload = defineComponent({
-  template: `
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M7 2V9M7 2L4.5 4.5M7 2L9.5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M2 11H12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-    </svg>
-  `,
+  setup() {
+    return () => h('svg', { width: '14', height: '14', viewBox: '0 0 14 14', fill: 'none' }, [
+      h('path', { d: 'M7 2V9M7 2L4.5 4.5M7 2L9.5 4.5', stroke: 'currentColor', 'stroke-width': '1.4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+      h('path', { d: 'M2 11H12', stroke: 'currentColor', 'stroke-width': '1.4', 'stroke-linecap': 'round' }),
+    ])
+  },
 })
 
 // ── stores & config ──────────────────────────────────────────────────────────
@@ -807,6 +863,14 @@ async function switchSection(section: Section) {
   }
 }
 
+async function viewEventPhotos(eventId: number) {
+  photoEventId.value = eventId
+  photos.value = []
+  activeSection.value = 'photos'
+  mobileSidebarOpen.value = false
+  await loadPhotos()
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 async function fetchProfile() {
@@ -849,8 +913,8 @@ async function loadPhotos() {
   loadingPhotos.value = true
   try {
     const res = await apiFetch<ListEnvelope<PhotoResponse>>(
-      '/photos',
-      { query: { event_id: photoEventId.value, limit: 48 } },
+      `/events/${photoEventId.value}/photos`,
+      { query: { limit: 48 } },
     )
     photos.value = res.data?.items ?? []
   } finally {
@@ -895,6 +959,32 @@ async function saveProfile() {
   } finally {
     savingProfile.value = false
   }
+}
+
+// ── photo preview modal ────────────────────────────────────────────────────────
+
+const photoPreviewOpen = ref(false)
+const previewIndex = ref(0)
+
+const previewPhoto = computed(() => photos.value[previewIndex.value] ?? null)
+
+const previewColumns = computed(() => {
+  const p = previewPhoto.value
+  if (!p) return []
+  return [
+    { label: 'Thumbnail', sub: 'preview', url: p.thumbnail_url ?? null, empty: 'Worker pendiente' },
+    { label: 'Comprimida', sub: 'vista ampliada', url: p.compressed_url ?? null, empty: 'Worker pendiente' },
+    { label: 'Original', sub: 'alta res', url: p.original_url ?? null, empty: 'Sin acceso' },
+  ]
+})
+
+function openPhotoPreview(idx: number) {
+  previewIndex.value = idx
+  photoPreviewOpen.value = true
+}
+
+function closePhotoPreview() {
+  photoPreviewOpen.value = false
 }
 
 // ── mount ─────────────────────────────────────────────────────────────────────

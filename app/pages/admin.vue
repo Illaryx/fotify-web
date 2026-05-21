@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EventResponse, PayoutResponse, ListEnvelope } from '~/types'
+import type { EventResponse, PayoutResponse, PhotoResponse, ListEnvelope } from '~/types'
 
 definePageMeta({ ssr: false, middleware: 'admin' })
 
@@ -164,6 +164,47 @@ function formatDate(iso?: string): string {
 
 function formatCurrency(amount: number): string {
   return `S/ ${amount.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+// ── Photo preview modal ────────────────────────────────────────────────────────
+
+const photoModal = ref(false)
+const photoModalEventName = ref('')
+const photoModalEventId = ref<number | null>(null)
+const loadingModalPhotos = ref(false)
+const modalPhotos = ref<PhotoResponse[]>([])
+const modalPhotoIndex = ref(0)
+
+const modalCurrentPhoto = computed(() => modalPhotos.value[modalPhotoIndex.value] ?? null)
+
+async function openPhotoModal(ev: EventRow) {
+  photoModal.value = true
+  photoModalEventName.value = ev.name
+  photoModalEventId.value = ev.id
+  modalPhotoIndex.value = 0
+  modalPhotos.value = []
+  loadingModalPhotos.value = true
+  try {
+    const res = await apiFetch<{ data: { items: PhotoResponse[]; total: number } }>(
+      `/events/${ev.id}/photos`,
+      { query: { limit: 50 } },
+    )
+    modalPhotos.value = res.data?.items ?? []
+  }
+  catch { /* silent */ }
+  finally { loadingModalPhotos.value = false }
+}
+
+function closePhotoModal() {
+  photoModal.value = false
+}
+
+function prevPhoto() {
+  if (modalPhotoIndex.value > 0) modalPhotoIndex.value--
+}
+
+function nextPhoto() {
+  if (modalPhotoIndex.value < modalPhotos.value.length - 1) modalPhotoIndex.value++
 }
 
 // ── Mount ─────────────────────────────────────────────────────────────────────
@@ -599,6 +640,7 @@ onMounted(async () => {
                     <td class="py-4 px-4">
                       <div class="flex gap-3">
                         <NuxtLink :to="`/events/${ev.slug ?? ev.id}`" class="text-xs text-[#7C3AED] hover:underline">Ver</NuxtLink>
+                        <button class="text-xs text-white/40 hover:text-white transition-colors" @click="openPhotoModal(ev)">Ver fotos</button>
                         <button class="text-xs text-white/40 hover:text-white transition-colors">Editar</button>
                       </div>
                     </td>
@@ -906,6 +948,171 @@ onMounted(async () => {
 
       </main>
     </div>
+
+    <!-- ════════ PHOTO PREVIEW MODAL ════════ -->
+    <Transition name="fade">
+      <div v-if="photoModal" class="fixed inset-0 z-[300] flex items-center justify-center p-4"
+           style="background: rgba(10, 6, 20, 0.8); backdrop-filter: blur(6px);"
+           @click.self="closePhotoModal">
+
+        <div class="relative w-full max-w-4xl bg-night-2 border border-border rounded-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+            <div>
+              <div class="text-sm font-semibold text-white">Fotos del evento</div>
+              <div class="text-xs text-white/40 mt-0.5">{{ photoModalEventName }}</div>
+            </div>
+            <div class="flex items-center gap-4">
+              <span v-if="!loadingModalPhotos" class="text-xs text-white/40">
+                {{ modalPhotos.length }} foto{{ modalPhotos.length !== 1 ? 's' : '' }}
+              </span>
+              <button class="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors text-sm"
+                      @click="closePhotoModal">✕</button>
+            </div>
+          </div>
+
+          <!-- Loading state -->
+          <div v-if="loadingModalPhotos" class="flex-1 flex items-center justify-center py-20">
+            <svg class="w-8 h-8 animate-spin text-violet" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="15"/>
+            </svg>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else-if="modalPhotos.length === 0" class="flex-1 flex flex-col items-center justify-center py-20 text-white/30">
+            <svg class="w-10 h-10 mb-3" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="8.5" cy="10.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M3 17L8 12L12 16L16 12L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="text-sm">No hay fotos para este evento</span>
+          </div>
+
+          <!-- Photo viewer -->
+          <div v-else class="flex-1 overflow-y-auto">
+
+            <!-- Navigator -->
+            <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
+              <button class="text-xs px-3 py-1.5 rounded-full border border-border text-white/50 hover:text-white hover:border-white/30 disabled:opacity-30 transition-colors"
+                      :disabled="modalPhotoIndex === 0"
+                      @click="prevPhoto">← Anterior</button>
+              <span class="text-xs text-white/40">{{ modalPhotoIndex + 1 }} / {{ modalPhotos.length }}</span>
+              <button class="text-xs px-3 py-1.5 rounded-full border border-border text-white/50 hover:text-white hover:border-white/30 disabled:opacity-30 transition-colors"
+                      :disabled="modalPhotoIndex === modalPhotos.length - 1"
+                      @click="nextPhoto">Siguiente →</button>
+            </div>
+
+            <!-- 3 versions side by side -->
+            <div v-if="modalCurrentPhoto" class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-5">
+
+              <!-- Thumbnail -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold text-white/80">Thumbnail</span>
+                  <span class="text-[10px] text-white/30">Preview rápido</span>
+                </div>
+                <div class="aspect-square bg-night rounded-xl overflow-hidden flex items-center justify-center border border-border">
+                  <img v-if="modalCurrentPhoto.thumbnail_url"
+                       :src="modalCurrentPhoto.thumbnail_url"
+                       alt="thumbnail"
+                       class="w-full h-full object-cover"/>
+                  <div v-else class="flex flex-col items-center gap-2 text-white/20 p-4 text-center">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                      <path d="M3 17L8 12L12 16L16 12L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="text-xs">Sin thumbnail</span>
+                    <span class="text-[10px] text-white/15">Worker pendiente</span>
+                  </div>
+                </div>
+                <a v-if="modalCurrentPhoto.thumbnail_url"
+                   :href="modalCurrentPhoto.thumbnail_url" target="_blank"
+                   class="text-[10px] text-violet hover:underline text-center">Abrir en nueva pestaña</a>
+              </div>
+
+              <!-- Compressed -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold text-white/80">Comprimida</span>
+                  <span class="text-[10px] text-white/30">Vista ampliada</span>
+                </div>
+                <div class="aspect-square bg-night rounded-xl overflow-hidden flex items-center justify-center border border-border">
+                  <img v-if="modalCurrentPhoto.compressed_url"
+                       :src="modalCurrentPhoto.compressed_url"
+                       alt="compressed"
+                       class="w-full h-full object-cover"/>
+                  <div v-else class="flex flex-col items-center gap-2 text-white/20 p-4 text-center">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                      <path d="M3 17L8 12L12 16L16 12L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="text-xs">Sin versión comprimida</span>
+                    <span class="text-[10px] text-white/15">Worker pendiente</span>
+                  </div>
+                </div>
+                <a v-if="modalCurrentPhoto.compressed_url"
+                   :href="modalCurrentPhoto.compressed_url" target="_blank"
+                   class="text-[10px] text-violet hover:underline text-center">Abrir en nueva pestaña</a>
+              </div>
+
+              <!-- Original -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold text-white/80">Original</span>
+                  <span class="text-[10px] text-white/30">Alta resolución</span>
+                </div>
+                <div class="aspect-square bg-night rounded-xl overflow-hidden flex items-center justify-center border border-border">
+                  <img v-if="modalCurrentPhoto.original_url"
+                       :src="modalCurrentPhoto.original_url"
+                       alt="original"
+                       class="w-full h-full object-cover"/>
+                  <div v-else class="flex flex-col items-center gap-2 text-white/20 p-4 text-center">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                      <path d="M3 17L8 12L12 16L16 12L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="text-xs">Sin original</span>
+                  </div>
+                </div>
+                <a v-if="modalCurrentPhoto.original_url"
+                   :href="modalCurrentPhoto.original_url" target="_blank"
+                   class="text-[10px] text-violet hover:underline text-center">Abrir en nueva pestaña</a>
+              </div>
+
+            </div>
+
+            <!-- Metadata strip -->
+            <div v-if="modalCurrentPhoto" class="px-5 pb-5 flex flex-wrap gap-x-6 gap-y-1 text-xs text-white/40 border-t border-border pt-4">
+              <span>ID: <span class="text-white/60">{{ modalCurrentPhoto.id }}</span></span>
+              <span>Estado: <span :class="modalCurrentPhoto.status === 'indexed' ? 'text-green-400' : modalCurrentPhoto.status === 'failed' ? 'text-red-400' : 'text-yellow-400'">{{ modalCurrentPhoto.status }}</span></span>
+              <span v-if="modalCurrentPhoto.width && modalCurrentPhoto.height">
+                Resolución: <span class="text-white/60">{{ modalCurrentPhoto.width }}×{{ modalCurrentPhoto.height }}</span>
+              </span>
+              <span>Descargas: <span class="text-white/60">{{ modalCurrentPhoto.download_count ?? 0 }}</span></span>
+              <span v-if="modalCurrentPhoto.taken_at">
+                Tomada: <span class="text-white/60">{{ formatDate(modalCurrentPhoto.taken_at) }}</span>
+              </span>
+            </div>
+
+            <!-- Thumbnail strip -->
+            <div v-if="modalPhotos.length > 1" class="px-5 pb-5">
+              <div class="text-xs text-white/30 mb-2">Todas las fotos</div>
+              <div class="flex gap-2 overflow-x-auto pb-1">
+                <button v-for="(ph, i) in modalPhotos" :key="ph.id"
+                        class="shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors"
+                        :class="i === modalPhotoIndex ? 'border-violet' : 'border-transparent opacity-50 hover:opacity-80'"
+                        @click="modalPhotoIndex = i">
+                  <img v-if="ph.thumbnail_url" :src="ph.thumbnail_url" :alt="`foto ${ph.id}`" class="w-full h-full object-cover"/>
+                  <div v-else class="w-full h-full bg-night-3 flex items-center justify-center text-[10px] text-white/30">{{ ph.id }}</div>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 

@@ -344,7 +344,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RegisterInput, SingleEnvelope, CreateProfileInput, PhotographerResponse } from '~/types'
+import type { RegisterInput, SingleEnvelope, TokenPair, CreateProfileInput, PhotographerResponse } from '~/types'
 
 definePageMeta({ ssr: false })
 
@@ -392,8 +392,6 @@ const step3 = reactive({
   cci: '',
 })
 
-let registeredUserId: number | null = null
-
 function toggleSport(sport: string) {
   if (selectedSports.has(sport)) selectedSports.delete(sport)
   else selectedSports.add(sport)
@@ -416,29 +414,28 @@ async function goNext() {
       if (step1.password !== step1.confirm) throw new Error('Las contraseñas no coinciden.')
       if (!step1.terms) throw new Error('Debes aceptar los términos para continuar.')
 
-      const res = await apiFetch<{ data?: { id?: number } }>('/auth/register', {
+      const res = await apiFetch<SingleEnvelope<TokenPair>>('/auth/register', {
         method: 'POST',
         body: {
           full_name: `${step1.first_name.trim()} ${step1.last_name.trim()}`,
           email: step1.email.trim(),
           password: step1.password,
           phone: step1.phone || undefined,
+          role: 'photographer',
         } as RegisterInput,
       })
-      registeredUserId = res.data?.id ?? null
-
-      await auth.login({ email: step1.email, password: step1.password })
+      if (res.data) auth.setTokens(res.data)
     }
 
     if (currentStep.value === 2) {
-      const displayName = `${step1.first_name.trim()} ${step1.last_name.trim()}`
-      await apiFetch<SingleEnvelope<PhotographerResponse>>('/photographers', {
-        method: 'POST',
+      await apiFetch<SingleEnvelope<PhotographerResponse>>('/photographers/me', {
+        method: 'PUT',
         body: {
-          display_name: displayName,
           bio: step2.bio || undefined,
-          portfolio_url: undefined,
-        } as CreateProfileInput,
+          username: step2.username || undefined,
+          sports: [...selectedSports],
+          cities: [...selectedCities],
+        },
       })
     }
 
