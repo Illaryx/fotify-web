@@ -2912,6 +2912,7 @@ export interface components {
             event_id?: number;
             id?: number;
             item_count?: number;
+            photo_ids?: number[];
             paid_at?: string;
             payment_gateway?: string;
             payment_method?: string;

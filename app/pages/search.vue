@@ -524,7 +524,12 @@
                   </div>
                   <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.photo_price }}</div>
                 </div>
-                <div v-if="event?.pack_size && event?.pack_price" class="border border-border rounded-xl p-3.5 flex items-center gap-3">
+                <button
+                  v-if="event?.pack_size && event?.pack_price"
+                  class="border rounded-xl p-3.5 flex items-center gap-3 w-full text-left transition-colors"
+                  :class="cart.orderType === 'pack' ? 'border-violet bg-violet/10' : 'border-border hover:border-violet/40'"
+                  @click="selectPack"
+                >
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-white">Pack {{ event.pack_size }}</div>
                     <div class="text-[11px] text-green-400/70 mt-0.5">ahorras {{ currency }} {{ packSaving }}</div>
@@ -533,15 +538,20 @@
                     <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.pack_price }}</div>
                     <div class="text-[10px] text-white/25 line-through">{{ currency }} {{ packOriginalPrice }}</div>
                   </div>
-                </div>
-                <div v-if="event?.full_event_price" class="border border-coral/30 bg-coral/5 rounded-xl p-3.5 flex items-center gap-3 relative mt-1">
+                </button>
+                <button
+                  v-if="event?.full_event_price"
+                  class="border rounded-xl p-3.5 flex items-center gap-3 relative mt-1 w-full text-left transition-colors"
+                  :class="cart.orderType === 'full_event' ? 'border-coral bg-coral/10' : 'border-coral/30 bg-coral/5 hover:border-coral/60'"
+                  @click="selectFullEvent"
+                >
                   <div class="absolute -top-2.5 left-3 bg-coral text-white text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full">Mejor valor</div>
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-white">Todas las mías</div>
                     <div class="text-[11px] text-muted mt-0.5">fotos del evento</div>
                   </div>
                   <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.full_event_price }}</div>
-                </div>
+                </button>
               </div>
 
               <div class="px-4 pb-5 flex flex-col gap-2">
@@ -794,6 +804,23 @@ function toggleSelectAll() {
   }
 }
 
+function selectPack() {
+  if (!eventId.value || !event.value?.pack_size) return
+  const eligible = searchResults.value
+    .filter(r => !r.already_purchased && r.photo_id !== undefined)
+    .slice(0, event.value!.pack_size)
+    .map(r => r.photo_id!)
+  cart.setPack(eligible, eventId.value)
+}
+
+function selectFullEvent() {
+  if (!eventId.value) return
+  const eligible = searchResults.value
+    .filter(r => !r.already_purchased && r.photo_id !== undefined)
+    .map(r => r.photo_id!)
+  cart.setFullEvent(eligible, eventId.value)
+}
+
 // ── Pricing ───────────────────────────────────────────────────────────────────
 const hasPricing = computed(() =>
   !!(event.value?.photo_price || searchResults.value.some(r => r.price)),
@@ -856,6 +883,20 @@ const searchingMessages = [
   'Calculando similitud...',
 ]
 
+async function resolveConsentStep() {
+  // Check server-side consent; fall back to localStorage cache on error.
+  try {
+    const res = await apiFetch<{ data?: { accepted: boolean } }>('/search/consent')
+    const accepted = res.data?.accepted ?? false
+    if (accepted) localStorage.setItem('fotify_consented', 'true')
+    step.value = accepted ? 'upload' : 'consent'
+  }
+  catch {
+    const cached = localStorage.getItem('fotify_consented') === 'true'
+    step.value = cached ? 'upload' : 'consent'
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await fetchEvent()
@@ -865,15 +906,13 @@ onMounted(async () => {
     return
   }
 
-  const hasConsented = localStorage.getItem('fotify_consented') === 'true'
-  step.value = hasConsented ? 'upload' : 'consent'
+  await resolveConsentStep()
 })
 
 // React to login while on page (auth modal closed after login)
 watch(() => auth.isAuthenticated, async (val) => {
   if (val && step.value === 'auth-gate') {
-    const hasConsented = localStorage.getItem('fotify_consented') === 'true'
-    step.value = hasConsented ? 'upload' : 'consent'
+    await resolveConsentStep()
   }
 })
 

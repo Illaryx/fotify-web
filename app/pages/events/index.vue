@@ -53,14 +53,14 @@
         <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
             v-for="cat in CATEGORIES"
-            :key="cat"
+            :key="cat.id ?? 'all'"
             class="flex-shrink-0 text-[12px] font-medium px-3.5 py-1.5 rounded-full border transition-all duration-150"
-            :class="categoryFilter === cat
+            :class="categoryFilter === cat.id
               ? 'bg-violet border-violet text-white'
               : 'bg-transparent border-border text-white/50 hover:border-white/30 hover:text-white/70'"
-            @click="categoryFilter = cat"
+            @click="categoryFilter = cat.id"
           >
-            {{ cat }}
+            {{ cat.name }}
           </button>
         </div>
       </div>
@@ -159,8 +159,15 @@ useSeoMeta({
 })
 
 const LIMIT = 24
-const CATEGORIES = ['Todos', 'Maratón', 'Triatlón', 'Ciclismo', 'Trail', 'Natación', 'Crossfit', 'Otro']
 const CITIES = ['Todas', 'Lima', 'Arequipa', 'Cusco']
+
+interface EventCategory { id: number; name: string; slug: string }
+const config = useRuntimeConfig()
+const rawCategories = ref<EventCategory[]>([])
+const CATEGORIES = computed(() => [
+  { id: null as number | null, name: 'Todos' },
+  ...rawCategories.value.map(c => ({ id: c.id as number | null, name: c.name })),
+])
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Más recientes' },
   { value: 'photos', label: 'Más fotos' },
@@ -171,7 +178,7 @@ const SORT_OPTIONS = [
 const query = ref('')
 const debouncedQuery = ref('')
 const cityFilter = ref('Todas')
-const categoryFilter = ref('Todos')
+const categoryFilter = ref<number | null>(null)
 const sortBy = ref('newest')
 
 // Data state
@@ -182,7 +189,14 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const page = ref(1)
 
-onMounted(() => { fetchEvents() })
+onMounted(async () => {
+  try {
+    const res = await $fetch<{ data: EventCategory[] }>('/event-categories', { baseURL: config.public.apiBase })
+    rawCategories.value = res.data ?? []
+  }
+  catch { /* use empty list */ }
+  fetchEvents()
+})
 
 // Debounce search
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -194,11 +208,15 @@ watch(query, (val) => {
 // Re-fetch when API-level filters change
 watch([debouncedQuery, cityFilter, sortBy], () => { fetchEvents() })
 
-// Client-side category filter (API has no sport field)
+// Client-side category filter by category_id when available, name-based fallback
 const displayedEvents = computed(() => {
-  if (categoryFilter.value === 'Todos') return events.value
-  const cat = categoryFilter.value.toLowerCase()
-  return events.value.filter(e => e.name?.toLowerCase().includes(cat))
+  if (categoryFilter.value === null) return events.value
+  const selectedName = CATEGORIES.value.find(c => c.id === categoryFilter.value)?.name.toLowerCase() ?? ''
+  return events.value.filter(e => {
+    const ev = e as any
+    if (ev.category_id != null) return ev.category_id === categoryFilter.value
+    return ev.name?.toLowerCase().includes(selectedName)
+  })
 })
 
 const hasMore = computed(() => events.value.length < total.value)
@@ -252,7 +270,7 @@ function clearFilters() {
   query.value = ''
   debouncedQuery.value = ''
   cityFilter.value = 'Todas'
-  categoryFilter.value = 'Todos'
+  categoryFilter.value = null
   sortBy.value = 'newest'
 }
 </script>

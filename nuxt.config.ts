@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:8080/api/v1',
       culqiKey: process.env.NUXT_PUBLIC_CULQI_KEY ?? '',
+      dashboardBase: process.env.NUXT_PUBLIC_DASHBOARD_BASE ?? 'http://localhost:3001',
     },
   },
 
@@ -43,8 +44,6 @@ export default defineNuxtConfig({
     '/checkout': { ssr: false },
     '/purchases': { ssr: false },
     '/downloads/**': { ssr: false },
-    '/dashboard/**': { ssr: false },
-    '/admin/**': { ssr: false },
   },
 
   image: {

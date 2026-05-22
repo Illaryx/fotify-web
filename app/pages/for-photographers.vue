@@ -25,7 +25,7 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <button
                 class="bg-coral hover:opacity-90 text-white font-semibold px-8 py-4 rounded-full text-base transition-opacity"
-                @click="navigateTo('/photographers/register')"
+                @click="navigateTo(`${dashboardBase}/photographers/register`)"
               >
                 Empezar a ganar — es gratis
               </button>
@@ -270,7 +270,7 @@
 
             <button
               class="mt-6 w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity"
-              @click="navigateTo('/photographers/register')"
+              @click="navigateTo(`${dashboardBase}/photographers/register`)"
             >
               Quiero ganar así — Registrarme
             </button>
@@ -343,7 +343,7 @@
                 {{ f.text }}
               </li>
             </ul>
-            <button class="w-full border border-violet text-violet hover:bg-violet hover:text-white font-semibold py-3 rounded-full text-sm transition-colors" @click="navigateTo('/photographers/register')">
+            <button class="w-full border border-violet text-violet hover:bg-violet hover:text-white font-semibold py-3 rounded-full text-sm transition-colors" @click="navigateTo(`${dashboardBase}/photographers/register`)">
               Empezar gratis
             </button>
           </div>
@@ -364,7 +364,7 @@
                 <span class="text-violet">✓</span>{{ f }}
               </li>
             </ul>
-            <button class="w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity" @click="navigateTo('/photographers/register')">
+            <button class="w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity" @click="navigateTo(`${dashboardBase}/photographers/register`)">
               Probar Pro — 30 días gratis
             </button>
           </div>
@@ -416,7 +416,7 @@
         <p class="text-muted text-base mb-8 max-w-lg mx-auto">Únete a los fotógrafos que ya monetizan su trabajo sin esfuerzo extra. El registro toma menos de 2 minutos.</p>
         <button
           class="bg-coral hover:opacity-90 text-white font-semibold px-10 py-4 rounded-full text-base transition-opacity"
-          @click="navigateTo('/photographers/register')"
+          @click="navigateTo(`${dashboardBase}/photographers/register`)"
         >
           Crear mi cuenta gratis →
         </button>
@@ -427,6 +427,8 @@
 </template>
 
 <script setup lang="ts">
+const dashboardBase = useRuntimeConfig().public.dashboardBase
+
 useSeoMeta({
   title: 'Para fotógrafos — Fotify',
   description: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende. 70% de cada venta es tuyo.',

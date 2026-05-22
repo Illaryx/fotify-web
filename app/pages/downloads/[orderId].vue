@@ -293,6 +293,13 @@ function loadStoredPhotoIds(oid: number): number[] {
   }
 }
 
+function resolvePhotoIds(o: OrderResponse, oid: number): number[] {
+  // Prefer server-provided photo_ids (available on all devices).
+  // Fall back to localStorage (set at checkout time on same device).
+  if (o.photo_ids && o.photo_ids.length > 0) return o.photo_ids
+  return loadStoredPhotoIds(oid)
+}
+
 async function fetchDownloadUrl(photoId: number): Promise<string | null> {
   try {
     const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/photos/${photoId}/download`)
@@ -356,8 +363,6 @@ onMounted(async () => {
     return
   }
 
-  photoIds.value = loadStoredPhotoIds(oid)
-
   try {
     const [orderRes, meRes] = await Promise.allSettled([
       apiFetch<SingleEnvelope<OrderResponse>>(`/orders/${oid}`),
@@ -368,6 +373,7 @@ onMounted(async () => {
       const o = orderRes.value.data
       if (!o) { error.value = 'Orden no encontrada.'; loading.value = false; return }
       order.value = o
+      photoIds.value = resolvePhotoIds(o, oid)
 
       if (o.event_id) {
         try {

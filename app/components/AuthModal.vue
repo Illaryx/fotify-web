@@ -88,7 +88,7 @@
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
-              <NuxtLink to="/photographers/register" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
+              <a :href="`${dashboardBase}/photographers/register`" class="text-violet hover:underline" @click="close">Regístrate aquí →</a>
             </p>
           </div>
 
@@ -171,7 +171,7 @@
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
-              <NuxtLink to="/photographers/register" class="text-violet hover:underline" @click="close">Regístrate aquí →</NuxtLink>
+              <a :href="`${dashboardBase}/photographers/register`" class="text-violet hover:underline" @click="close">Regístrate aquí →</a>
             </p>
           </div>
 
@@ -220,6 +220,27 @@
               Explorar eventos →
             </button>
           </div>
+
+          <!-- ─── PANEL REDIRECT ─── -->
+          <div v-else-if="view === 'panel-redirect'" class="text-center py-4">
+            <div class="pop-in w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style="background:rgba(124,58,237,.15);border:2px solid rgba(124,58,237,.35);">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14L11 19L22 9" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 class="font-display text-base text-white mb-2">¡Hola de nuevo!</h3>
+            <p class="text-sm text-white/50 mb-6 leading-relaxed">¿A dónde quieres ir?</p>
+            <div class="flex flex-col gap-3">
+              <a
+                :href="dashboardBase"
+                class="block w-full bg-violet hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity"
+                @click="close"
+              >
+                Ir al Panel de Fotify →
+              </a>
+              <button class="block w-full border border-border text-white/60 hover:text-white py-3 rounded-full text-sm transition-colors" @click="close">
+                Ver mis compras
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </Transition>
@@ -234,8 +255,9 @@ const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
 const auth = useAuthStore()
+const dashboardBase = useRuntimeConfig().public.dashboardBase
 
-type View = 'login' | 'register' | 'forgot' | 'forgot-success' | 'register-success'
+type View = 'login' | 'register' | 'forgot' | 'forgot-success' | 'register-success' | 'panel-redirect'
 const view = ref<View>('login')
 const shaking = ref(false)
 
@@ -310,7 +332,13 @@ async function handleLogin() {
       method: 'POST',
       body: { email: loginForm.email, password: loginForm.password },
     })
-    if (res.data) auth.setTokens(res.data)
+    if (res.data) {
+      auth.setTokens(res.data)
+      if (auth.isPhotographer || auth.isAdmin) {
+        view.value = 'panel-redirect'
+        return
+      }
+    }
     close()
   }
   catch (e: unknown) {

@@ -48,7 +48,7 @@ echo -e "${BLUE}Region:  ${REGION}${NC}\n"
 
 # ── 1. Build ──────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}[1/4] Construyendo aplicación...${NC}"
-npm run build
+npm run generate
 echo -e "${GREEN}✓ Build completado — .output/public/${NC}"
 
 # ── 2. Sync S3 ────────────────────────────────────────────────────────────────

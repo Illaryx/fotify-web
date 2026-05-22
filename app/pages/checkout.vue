@@ -814,7 +814,7 @@ async function handlePay() {
         payment_gateway: 'culqi',
         photo_ids: [...cart.photoIds],
         ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
-        type: 'single',
+        type: cart.orderType,
       } as CreateOrderInput,
     })
 

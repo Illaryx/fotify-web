@@ -27,8 +27,11 @@
 
       <div class="hidden lg:flex items-center gap-3">
         <template v-if="auth.isAuthenticated">
-          <NuxtLink v-if="auth.isPhotographer" to="/dashboard" class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors">
+          <a v-if="auth.isPhotographer || auth.isAdmin" :href="dashboardBase" class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors">
             Mi panel
+          </a>
+          <NuxtLink to="/purchases" class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors">
+            Mis fotos
           </NuxtLink>
           <button class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors" @click="auth.logout">
             Salir
@@ -86,15 +89,31 @@
           <NuxtLink to="/how-it-works" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium text-white/65 hover:bg-violet/10 hover:text-white transition-colors" @click="drawerOpen = false">
             Cómo funciona
           </NuxtLink>
+          <template v-if="auth.isAuthenticated">
+            <div class="h-px bg-border my-1" />
+            <a v-if="auth.isPhotographer || auth.isAdmin" :href="dashboardBase" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium text-white/65 hover:bg-violet/10 hover:text-white transition-colors" @click="drawerOpen = false">
+              Mi panel
+            </a>
+            <NuxtLink to="/purchases" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium text-white/65 hover:bg-violet/10 hover:text-white transition-colors" @click="drawerOpen = false">
+              Mis fotos
+            </NuxtLink>
+          </template>
         </div>
 
         <div class="flex flex-col gap-2.5 p-4 border-t border-border">
-          <button class="block text-center text-[14px] text-white/60 py-3 rounded-xl border border-border hover:text-white hover:border-white/20 transition-colors" @click="showAuth = true; drawerOpen = false">
-            Iniciar sesión
-          </button>
-          <button class="block text-center text-[14px] font-semibold bg-coral text-white py-3.5 rounded-xl hover:bg-[#e62d5a] transition-colors" @click="showAuth = true; drawerOpen = false">
-            Crear cuenta
-          </button>
+          <template v-if="auth.isAuthenticated">
+            <button class="block text-center text-[14px] text-white/60 py-3 rounded-xl border border-border hover:text-white hover:border-white/20 transition-colors" @click="auth.logout(); drawerOpen = false">
+              Cerrar sesión
+            </button>
+          </template>
+          <template v-else>
+            <button class="block text-center text-[14px] text-white/60 py-3 rounded-xl border border-border hover:text-white hover:border-white/20 transition-colors" @click="showAuth = true; drawerOpen = false">
+              Iniciar sesión
+            </button>
+            <button class="block text-center text-[14px] font-semibold bg-coral text-white py-3.5 rounded-xl hover:bg-[#e62d5a] transition-colors" @click="showAuth = true; drawerOpen = false">
+              Crear cuenta
+            </button>
+          </template>
         </div>
       </div>
     </Transition>
@@ -156,6 +175,7 @@
 const auth = useAuthStore()
 const drawerOpen = ref(false)
 const showAuth = useAuthModal()
+const dashboardBase = useRuntimeConfig().public.dashboardBase
 </script>
 
 <style scoped>
