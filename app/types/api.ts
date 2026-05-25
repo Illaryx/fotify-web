@@ -2858,24 +2858,30 @@ export interface components {
             full_event_price?: number;
             location?: string;
             name: string;
-            pack_price?: number;
-            pack_size?: number;
+            packs?: components["schemas"]["github_com_Illaryx_fotify-api_internal_application_event.PackInput"][];
+            photographer_own_pricing?: boolean;
             photo_price: number;
+            photo_price_sd?: number;
             slug: string;
         };
         "github_com_Illaryx_fotify-api_internal_application_event.EventResponse": {
+            category_id?: number;
             cover_image_url?: string;
             created_at?: string;
+            creator_role?: string;
             currency?: string;
             description?: string;
             event_date?: string;
             full_event_price?: number;
             id?: number;
+            join_policy?: string;
             location?: string;
             name?: string;
-            pack_price?: number;
-            pack_size?: number;
+            packs?: components["schemas"]["github_com_Illaryx_fotify-api_internal_application_event.PackResponse"][];
+            photographer_count?: number;
+            photographer_own_pricing?: boolean;
             photo_price?: number;
+            photo_price_sd?: number;
             published_at?: string;
             slug?: string;
             status?: components["schemas"]["github_com_Illaryx_fotify-api_internal_domain_entity.EventStatus"];
@@ -2883,14 +2889,24 @@ export interface components {
             total_revenue?: number;
             total_sales?: number;
         };
+        "github_com_Illaryx_fotify-api_internal_application_event.PackInput": {
+            price: number;
+            quantity: number;
+        };
+        "github_com_Illaryx_fotify-api_internal_application_event.PackResponse": {
+            id?: number;
+            price?: number;
+            quantity?: number;
+        };
         "github_com_Illaryx_fotify-api_internal_application_event.UpdateEventInput": {
             description?: string;
             full_event_price?: number;
             location?: string;
             name?: string;
-            pack_price?: number;
-            pack_size?: number;
+            packs?: components["schemas"]["github_com_Illaryx_fotify-api_internal_application_event.PackInput"][];
+            photographer_own_pricing?: boolean;
             photo_price?: number;
+            photo_price_sd?: number;
         };
         "github_com_Illaryx_fotify-api_internal_application_order.ConfirmPaymentInput": {
             payment_method: string;

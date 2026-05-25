@@ -123,7 +123,7 @@
             <!-- AI CTA card -->
             <div v-if="event.status !== 'closed'" class="bg-gradient-to-br from-violet/12 to-violet-deep/8 border border-violet/30 rounded-2xl p-5 sm:p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-violet/20 border border-violet/30 flex items-center justify-center flex-shrink-0">
+                <div class="w-12 h-12 rounded-xl bg-violet/20 border border-violet/30 flex items-center justify-center shrink-0">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
@@ -136,7 +136,7 @@
               </div>
               <NuxtLink
                 :to="`/search?event_id=${event.id}`"
-                class="flex-shrink-0 w-full sm:w-auto text-center bg-coral hover:bg-[#e62d5a] text-white font-semibold text-[14px] px-6 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+                class="shrink-0 w-full sm:w-auto text-center bg-coral hover:bg-[#e62d5a] text-white font-semibold text-[14px] px-6 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -149,15 +149,19 @@
             <div v-if="hasPricing && event.status !== 'closed'" class="block lg:hidden mb-6">
               <div class="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-2">Precios disponibles</div>
               <div class="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-                <div class="flex-shrink-0 bg-night-2 border border-border rounded-xl px-4 py-3 text-center min-w-[90px]">
+                <div class="shrink-0 bg-night-2 border border-border rounded-xl px-4 py-3 text-center min-w-22.5">
                   <div class="font-display font-bold text-[14px] text-white">{{ currency }} {{ event.photo_price }}</div>
-                  <div class="text-[10px] text-white/35 mt-0.5">1 foto</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">1 foto HD</div>
                 </div>
-                <div v-if="event.pack_size && event.pack_price" class="flex-shrink-0 bg-night-2 border border-border rounded-xl px-4 py-3 text-center min-w-[110px]">
-                  <div class="font-display font-bold text-[14px] text-white">{{ currency }} {{ event.pack_price }}</div>
-                  <div class="text-[10px] text-white/35 mt-0.5">Pack {{ event.pack_size }}</div>
+                <div v-if="event.photo_price_sd" class="shrink-0 bg-night-2 border border-border rounded-xl px-4 py-3 text-center min-w-22.5">
+                  <div class="font-display font-bold text-[14px] text-white">{{ currency }} {{ event.photo_price_sd }}</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">1 foto SD</div>
                 </div>
-                <div v-if="event.full_event_price" class="flex-shrink-0 border border-coral/30 bg-coral/5 rounded-xl px-4 py-3 text-center min-w-[120px] relative">
+                <div v-for="pack in sortedPacks" :key="pack.quantity" class="shrink-0 bg-night-2 border border-border rounded-xl px-4 py-3 text-center min-w-27.5">
+                  <div class="font-display font-bold text-[14px] text-white">{{ currency }} {{ pack.price }}</div>
+                  <div class="text-[10px] text-white/35 mt-0.5">Pack {{ pack.quantity }}</div>
+                </div>
+                <div v-if="event.full_event_price && event.photographer_count === 1" class="shrink-0 border border-coral/30 bg-coral/5 rounded-xl px-4 py-3 text-center min-w-30 relative">
                   <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-coral text-white text-[8px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full whitespace-nowrap">Mejor valor</div>
                   <div class="font-display font-bold text-[14px] text-white">{{ currency }} {{ event.full_event_price }}</div>
                   <div class="text-[10px] text-white/35 mt-0.5">Todas las fotos</div>
@@ -276,7 +280,7 @@
           </div>
 
           <!-- RIGHT: Sticky pricing panel -->
-          <div v-if="hasPricing" class="hidden lg:block w-[280px] flex-shrink-0 sticky top-[84px]">
+          <div v-if="hasPricing" class="hidden lg:block w-[280px] shrink-0 sticky top-21">
             <div class="bg-night-2 border border-border rounded-2xl overflow-hidden">
               <div class="px-5 pt-5 pb-3 border-b border-border">
                 <div class="text-[11px] font-semibold tracking-[2px] uppercase text-violet mb-1">Precios</div>
@@ -285,29 +289,38 @@
               </div>
 
               <div class="p-4 flex flex-col gap-2.5">
-                <!-- Single -->
+                <!-- Single HD -->
                 <div class="border border-border rounded-xl p-3.5 flex items-center gap-3">
                   <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-white">1 foto</div>
-                    <div class="text-[11px] text-muted mt-0.5">precio por unidad</div>
+                    <div class="text-[13px] font-semibold text-white">1 foto HD</div>
+                    <div class="text-[11px] text-muted mt-0.5">alta calidad</div>
                   </div>
                   <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.photo_price }}</div>
                 </div>
 
-                <!-- Pack -->
-                <div v-if="event.pack_size && event.pack_price" class="border border-border rounded-xl p-3.5 flex items-center gap-3">
+                <!-- Single SD (optional) -->
+                <div v-if="event.photo_price_sd" class="border border-border rounded-xl p-3.5 flex items-center gap-3">
                   <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-white">Pack {{ event.pack_size }}</div>
-                    <div class="text-[11px] text-green-400/70 mt-0.5">ahorras {{ currency }} {{ packSaving }}</div>
+                    <div class="text-[13px] font-semibold text-white">1 foto SD</div>
+                    <div class="text-[11px] text-muted mt-0.5">calidad estándar</div>
+                  </div>
+                  <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.photo_price_sd }}</div>
+                </div>
+
+                <!-- Dynamic packs -->
+                <div v-for="pack in sortedPacks" :key="pack.quantity" class="border border-border rounded-xl p-3.5 flex items-center gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[13px] font-semibold text-white">Pack {{ pack.quantity }}</div>
+                    <div class="text-[11px] text-green-400/70 mt-0.5">ahorras {{ currency }} {{ packSavingFor(pack) }}</div>
                   </div>
                   <div class="text-right">
-                    <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.pack_price }}</div>
-                    <div class="text-[10px] text-white/25 line-through">{{ currency }} {{ packOriginalPrice }}</div>
+                    <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ pack.price }}</div>
+                    <div class="text-[10px] text-white/25 line-through">{{ currency }} {{ packOriginalFor(pack) }}</div>
                   </div>
                 </div>
 
-                <!-- Full event -->
-                <div v-if="event.full_event_price" class="border border-coral/30 bg-coral/5 rounded-xl p-3.5 flex items-center gap-3 relative mt-1">
+                <!-- Full event (solo cuando hay un único fotógrafo) -->
+                <div v-if="event.full_event_price && event.photographer_count === 1" class="border border-coral/30 bg-coral/5 rounded-xl p-3.5 flex items-center gap-3 relative mt-1">
                   <div class="absolute -top-2.5 left-3 bg-coral text-white text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full">Mejor valor</div>
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] font-semibold text-white">Todas las fotos</div>
@@ -320,17 +333,17 @@
               <div class="px-4 pb-5 flex flex-col gap-2">
                 <!-- Pack applied badge -->
                 <Transition name="slide-up">
-                  <div v-if="packApplied && auth.isAuthenticated" class="bg-green-500/10 border border-green-500/25 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <div v-if="bestPackApplied && auth.isAuthenticated" class="bg-green-500/10 border border-green-500/25 rounded-xl px-3 py-2 flex items-center gap-2">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <span class="text-[11px] text-green-400 font-semibold">Pack aplicado · ahorras {{ currency }} {{ packSaving }}</span>
+                    <span class="text-[11px] text-green-400 font-semibold">Pack aplicado · ahorras {{ currency }} {{ currentPackSaving }}</span>
                   </div>
                 </Transition>
 
                 <!-- "N fotos más para el pack" nudge -->
                 <Transition name="slide-up">
-                  <div v-if="!packApplied && photosToNextPack > 0 && auth.isAuthenticated && cart.hasPhotos" class="bg-violet/10 border border-violet/20 rounded-xl px-3 py-2 text-[11px] text-violet/80 text-center">
+                  <div v-if="!bestPackApplied && photosToNextPack > 0 && auth.isAuthenticated && cart.hasPhotos" class="bg-violet/10 border border-violet/20 rounded-xl px-3 py-2 text-[11px] text-violet/80 text-center">
                     Selecciona {{ photosToNextPack }} foto{{ photosToNextPack > 1 ? 's' : '' }} más y activa el precio de pack
                   </div>
                 </Transition>
@@ -375,16 +388,16 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
                 <div class="text-[13px] font-semibold text-white">{{ cart.count }} foto{{ cart.count > 1 ? 's' : '' }}</div>
-                <span v-if="packApplied" class="text-[9px] font-bold text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pack</span>
+                <span v-if="bestPackApplied" class="text-[9px] font-bold text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Pack</span>
               </div>
-              <div class="text-[11px]" :class="packApplied ? 'text-green-400' : 'text-white/40'">{{ currency }} {{ cartTotal }}</div>
-              <div v-if="!packApplied && photosToNextPack > 0" class="text-[10px] text-violet/70 mt-0.5">
+              <div class="text-[11px]" :class="bestPackApplied ? 'text-green-400' : 'text-white/40'">{{ currency }} {{ cartTotal }}</div>
+              <div v-if="!bestPackApplied && photosToNextPack > 0" class="text-[10px] text-violet/70 mt-0.5">
                 +{{ photosToNextPack }} para activar pack
               </div>
             </div>
             <NuxtLink
               :to="`/checkout?event_slug=${route.params.slug}`"
-              class="flex-shrink-0 bg-violet hover:bg-violet-deep text-white font-semibold text-[14px] px-6 py-3 rounded-xl flex items-center gap-2 transition-colors"
+              class="shrink-0 bg-violet hover:bg-violet-deep text-white font-semibold text-[14px] px-6 py-3 rounded-xl flex items-center gap-2 transition-colors"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
@@ -460,7 +473,7 @@
             </div>
 
             <!-- Image -->
-            <div class="relative rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl" style="min-width:280px;min-height:360px;max-height:75vh;">
+            <div class="relative rounded-2xl overflow-hidden shrink-0 shadow-2xl" style="min-width:280px;min-height:360px;max-height:75vh;">
               <!-- Loading skeleton + Fotify logo -->
               <Transition name="lightbox-fade">
                 <div
@@ -660,50 +673,66 @@ async function loadMore() {
 const currency = computed(() => event.value?.currency ?? 'S/')
 
 const hasPricing = computed(() =>
-  !!(event.value?.photo_price || event.value?.pack_price || event.value?.full_event_price),
+  !!(event.value?.photo_price || event.value?.packs?.length || event.value?.full_event_price),
 )
 
-const packOriginalPrice = computed(() => {
-  if (!event.value?.pack_size || !event.value?.photo_price) return '0.00'
-  return (event.value.pack_size * event.value.photo_price).toFixed(2)
+const sortedPacks = computed(() =>
+  [...(event.value?.packs ?? [])].sort((a, b) => a.quantity - b.quantity),
+)
+
+function packOriginalFor(pack: { quantity: number; price: number }): string {
+  const price = event.value?.photo_price
+  if (!price) return '0.00'
+  return (pack.quantity * price).toFixed(2)
+}
+
+function packSavingFor(pack: { quantity: number; price: number }): string {
+  const price = event.value?.photo_price
+  if (!price) return '0.00'
+  return (pack.quantity * price - pack.price).toFixed(2)
+}
+
+// Best pack to apply: highest-quantity pack whose threshold the cart meets.
+const bestPack = computed(() => {
+  const count = cart.count
+  let best: { quantity: number; price: number } | null = null
+  for (const pack of sortedPacks.value) {
+    if (count >= pack.quantity) best = pack
+  }
+  return best
 })
 
-const packSaving = computed(() => {
-  if (!event.value?.pack_price || !event.value?.pack_size || !event.value?.photo_price) return '0.00'
-  const original = event.value.pack_size * event.value.photo_price
-  return (original - event.value.pack_price).toFixed(2)
+const bestPackApplied = computed(() => bestPack.value !== null)
+
+const currentPackSaving = computed(() => {
+  const pack = bestPack.value
+  const price = event.value?.photo_price
+  if (!pack || !price) return '0.00'
+  const numPacks = Math.floor(cart.count / pack.quantity)
+  const singles = cart.count % pack.quantity
+  return (cart.count * price - (numPacks * pack.price + singles * price)).toFixed(2)
 })
 
-// Cart total: apply pack pricing when possible.
-// e.g. pack_size=3, pack_price=47.9, photo_price=18
-//   5 photos → 1 pack (47.9) + 2 singles (36) = 83.9
+// Cart total: apply best matching pack pricing when possible.
 const cartTotal = computed(() => {
   const price = event.value?.photo_price
   if (!price) return '0.00'
-  const packSize = event.value?.pack_size
-  const packPrice = event.value?.pack_price
-  if (packSize && packPrice && cart.count >= packSize) {
-    const packs = Math.floor(cart.count / packSize)
-    const singles = cart.count % packSize
-    return (packs * packPrice + singles * price).toFixed(2)
+  const pack = bestPack.value
+  if (pack) {
+    const numPacks = Math.floor(cart.count / pack.quantity)
+    const singles = cart.count % pack.quantity
+    return (numPacks * pack.price + singles * price).toFixed(2)
   }
   return (cart.count * price).toFixed(2)
 })
 
-// True when at least one full pack is applied
-const packApplied = computed(() => {
-  const packSize = event.value?.pack_size
-  const packPrice = event.value?.pack_price
-  return !!(packSize && packPrice && cart.count >= packSize)
-})
-
-// How many photos until the next pack kicks in
+// Photos needed to reach the next pack threshold.
 const photosToNextPack = computed(() => {
-  const packSize = event.value?.pack_size
-  const packPrice = event.value?.pack_price
-  if (!packSize || !packPrice) return 0
-  const remainder = cart.count % packSize
-  return remainder === 0 ? 0 : packSize - remainder
+  const count = cart.count
+  for (const pack of sortedPacks.value) {
+    if (count < pack.quantity) return pack.quantity - count
+  }
+  return 0
 })
 
 const formattedDate = computed(() => {

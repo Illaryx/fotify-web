@@ -23,12 +23,12 @@
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button
-                class="bg-coral hover:opacity-90 text-white font-semibold px-8 py-4 rounded-full text-base transition-opacity"
-                @click="navigateTo(`${dashboardBase}/photographers/register`)"
+              <a
+                :href="`${dashboardBase}/photographers/register`"
+                class="bg-coral hover:opacity-90 text-white font-semibold px-8 py-4 rounded-full text-base transition-opacity inline-block text-center"
               >
                 Empezar a ganar — es gratis
-              </button>
+              </a>
               <NuxtLink
                 to="/how-it-works"
                 class="border border-border hover:border-violet/60 text-white/80 hover:text-white font-medium px-8 py-4 rounded-full text-base transition-colors"
@@ -268,12 +268,12 @@
               </div>
             </div>
 
-            <button
-              class="mt-6 w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity"
-              @click="navigateTo(`${dashboardBase}/photographers/register`)"
+            <a
+              :href="`${dashboardBase}/photographers/register`"
+              class="mt-6 w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity block text-center"
             >
               Quiero ganar así — Registrarme
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -343,9 +343,12 @@
                 {{ f.text }}
               </li>
             </ul>
-            <button class="w-full border border-violet text-violet hover:bg-violet hover:text-white font-semibold py-3 rounded-full text-sm transition-colors" @click="navigateTo(`${dashboardBase}/photographers/register`)">
+            <a
+              :href="`${dashboardBase}/photographers/register`"
+              class="w-full border border-violet text-violet hover:bg-violet hover:text-white font-semibold py-3 rounded-full text-sm transition-colors block text-center"
+            >
               Empezar gratis
-            </button>
+            </a>
           </div>
 
           <!-- Pro -->
@@ -364,9 +367,12 @@
                 <span class="text-violet">✓</span>{{ f }}
               </li>
             </ul>
-            <button class="w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity" @click="navigateTo(`${dashboardBase}/photographers/register`)">
+            <a
+              :href="`${dashboardBase}/photographers/register`"
+              class="w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity block text-center"
+            >
               Probar Pro — 30 días gratis
-            </button>
+            </a>
           </div>
         </div>
 
@@ -414,12 +420,12 @@
         </div>
         <h2 class="font-display font-bold text-2xl lg:text-4xl text-white mb-4">¿Listo para empezar?</h2>
         <p class="text-muted text-base mb-8 max-w-lg mx-auto">Únete a los fotógrafos que ya monetizan su trabajo sin esfuerzo extra. El registro toma menos de 2 minutos.</p>
-        <button
-          class="bg-coral hover:opacity-90 text-white font-semibold px-10 py-4 rounded-full text-base transition-opacity"
-          @click="navigateTo(`${dashboardBase}/photographers/register`)"
+        <a
+          :href="`${dashboardBase}/photographers/register`"
+          class="bg-coral hover:opacity-90 text-white font-semibold px-10 py-4 rounded-full text-base transition-opacity inline-block"
         >
           Crear mi cuenta gratis →
-        </button>
+        </a>
         <p class="text-xs text-white/30 mt-4">Sin tarjeta de crédito · Sin compromisos · Cancela cuando quieras</p>
       </div>
     </section>
