@@ -2917,7 +2917,7 @@ export interface components {
         "github_com_Illaryx_fotify-api_internal_application_order.CreateOrderInput": {
             event_id: number;
             /** @enum {string} */
-            payment_gateway: "culqi" | "mercadopago";
+            payment_gateway: "izipay";
             photo_ids: number[];
             search_session_id?: number;
             /** @enum {string} */

@@ -19,8 +19,19 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:8080/api/v1',
-      culqiKey: process.env.NUXT_PUBLIC_CULQI_KEY ?? '',
       dashboardBase: process.env.NUXT_PUBLIC_DASHBOARD_BASE ?? 'http://localhost:3001',
+    },
+  },
+
+  app: {
+    head: {
+      script: [
+        {
+          src: 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js',
+          defer: true,
+        },
+      ],
+      link: [],
     },
   },
 

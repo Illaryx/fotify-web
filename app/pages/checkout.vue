@@ -387,62 +387,52 @@
                   </button>
                 </div>
 
-                <!-- Card form -->
-                <div v-if="payMethod === 'card'">
-                  <div class="mb-4">
-                    <label class="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Número de tarjeta</label>
-                    <div class="relative">
-                      <input
-                        :value="cardNumber"
-                        type="text"
-                        placeholder="0000  0000  0000  0000"
-                        maxlength="19"
-                        class="w-full bg-night-2 border border-border rounded-xl px-4 py-[14px] text-[14px] text-white placeholder-white/20 outline-none focus:border-violet/60 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)] transition-all pr-20 tracking-[2px]"
-                        @input="onCardNumberInput"
-                      />
-                      <div class="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1.5">
-                        <div class="w-8 h-5 bg-[#1A6FBF]/80 rounded text-[6px] font-bold text-white flex items-center justify-center tracking-wide">VISA</div>
+                <!-- Izipay custom card fields (shown after handlePay creates the order) -->
+                <div v-if="step === 'payment-form' && payMethod === 'card'" class="space-y-3">
+                  <div class="kr-embedded" v-bind="krPublicKey ? {'kr-public-key': krPublicKey} : {}" style="display:contents">
+                    <!-- Card number -->
+                    <div>
+                      <p class="text-[11px] text-white/40 mb-1.5 font-medium">Número de tarjeta</p>
+                      <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60 focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.10)]">
+                        <div class="kr-pan"></div>
+                      </div>
+                    </div>
+                    <!-- Expiry + CVV -->
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <p class="text-[11px] text-white/40 mb-1.5 font-medium">Vencimiento</p>
+                        <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
+                          <div class="kr-expiry"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="text-[11px] text-white/40 mb-1.5 font-medium">CVV</p>
+                        <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
+                          <div class="kr-security-code"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Cardholder name -->
+                    <div>
+                      <p class="text-[11px] text-white/40 mb-1.5 font-medium">Nombre del titular</p>
+                      <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
+                        <div class="kr-card-holder-name"></div>
                       </div>
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <label class="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Vencimiento</label>
-                      <input
-                        :value="cardExpiry"
-                        type="text"
-                        placeholder="MM / AA"
-                        maxlength="7"
-                        class="w-full bg-night-2 border border-border rounded-xl px-4 py-[14px] text-[14px] text-white placeholder-white/20 outline-none focus:border-violet/60 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)] transition-all"
-                        @input="onExpiryInput"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">CVV</label>
-                      <input
-                        v-model="cardCvv"
-                        type="text"
-                        placeholder="•••"
-                        maxlength="4"
-                        class="w-full bg-night-2 border border-border rounded-xl px-4 py-[14px] text-[14px] text-white placeholder-white/20 outline-none focus:border-violet/60 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)] transition-all"
-                      />
-                    </div>
+                  <!-- Security note -->
+                  <div class="flex items-center gap-2 pt-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <p class="text-[11px] text-white/25">Cifrado TLS 1.3 · Nunca almacenamos datos de tu tarjeta</p>
                   </div>
-                  <div class="mb-4">
-                    <label class="block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Nombre en la tarjeta</label>
-                    <input
-                      v-model="cardName"
-                      type="text"
-                      placeholder="NOMBRE APELLIDO"
-                      class="w-full bg-night-2 border border-border rounded-xl px-4 py-[14px] text-[14px] text-white placeholder-white/20 outline-none focus:border-violet/60 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)] transition-all"
-                    />
-                  </div>
-                  <div class="flex items-center gap-2 bg-night-2/60 border border-border rounded-xl px-4 py-3">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-                    </svg>
-                    <p class="text-[11px] text-white/40">Puedes pagar en <span class="text-violet font-medium">hasta 3 cuotas sin intereses</span> con Visa o Mastercard.</p>
-                  </div>
+                </div>
+
+                <!-- Card hint (before order is created) -->
+                <div v-else-if="payMethod === 'card'" class="flex items-center gap-2 bg-night-2/60 border border-border rounded-xl px-4 py-3">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  <p class="text-[11px] text-white/40">Al continuar se mostrarán los campos de tarjeta. <span class="text-violet font-medium">Visa, Mastercard y Amex</span> aceptados.</p>
                 </div>
 
                 <!-- Yape / Plin instruction -->
@@ -499,8 +489,9 @@
               <!-- Error -->
               <p v-if="orderError" class="text-[13px] text-coral text-center mb-4">{{ orderError }}</p>
 
-              <!-- Pay CTA -->
+              <!-- Pay CTA: initial flow -->
               <button
+                v-if="step !== 'payment-form'"
                 :disabled="step === 'processing'"
                 class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[16px] py-4 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-coral/25 active:scale-[.98] disabled:opacity-60 disabled:cursor-not-allowed"
                 @click="handlePay"
@@ -513,7 +504,26 @@
                 </svg>
                 {{ payLabel }}
               </button>
-              <p class="text-[11px] text-white/20 text-center mt-3">Procesado por Culqi · Datos encriptados TLS 1.3</p>
+
+              <!-- Confirm CTA: shown when card fields are rendered -->
+              <template v-else>
+                <p v-if="krError" class="text-[13px] text-coral text-center mb-3">{{ krError }}</p>
+                <button
+                  :disabled="krSubmitting"
+                  class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[16px] py-4 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-coral/25 active:scale-[.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                  @click="handleCardSubmit"
+                >
+                  <svg v-if="krSubmitting" class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                  <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  {{ krSubmitting ? 'Procesando...' : `Pagar ${formattedTotal} de forma segura` }}
+                </button>
+              </template>
+
+              <p class="text-[11px] text-white/20 text-center mt-3">Procesado por Izipay · Datos encriptados TLS 1.3</p>
 
             </template>
           </div><!-- /LEFT -->
@@ -628,7 +638,7 @@
               <div class="px-5 pb-4 flex items-center gap-3 flex-wrap">
                 <span class="text-[10px] text-white/20">Procesado por</span>
                 <div class="flex items-center gap-2">
-                  <div class="h-5 px-2 bg-night border border-border rounded flex items-center text-[9px] font-bold text-white/30 tracking-widest">CULQI</div>
+                  <div class="h-5 px-2 bg-night border border-border rounded flex items-center text-[9px] font-bold text-white/30 tracking-widest">IZIPAY</div>
                   <div class="h-5 w-8 bg-[#1A6FBF]/40 border border-[#1A6FBF]/30 rounded flex items-center justify-center text-[7px] font-bold text-white/40">VISA</div>
                   <div class="h-5 w-10 bg-[#EB001B]/10 border border-[#EB001B]/20 rounded flex items-center justify-center">
                     <div class="flex">
@@ -651,7 +661,7 @@
 
 <script setup lang="ts">
 import { apiFetch } from '~/composables/useApi'
-import type { EventResponse, OrderResponse, CreateOrderInput, ConfirmPaymentInput, SingleEnvelope } from '~/types'
+import type { EventResponse, OrderResponse, CreateOrderInput, SingleEnvelope } from '~/types'
 
 definePageMeta({ ssr: false, middleware: 'auth' })
 
@@ -659,8 +669,9 @@ const auth = useAuthStore()
 const cart = useCartStore()
 const showAuth = useAuthModal()
 const route = useRoute()
+const izipay = useIzipay()
 
-type Step = 'form' | 'processing' | 'awaiting-qr' | 'success' | 'failed'
+type Step = 'form' | 'processing' | 'payment-form' | 'awaiting-qr' | 'success' | 'failed'
 type PayMethod = 'card' | 'yape' | 'plin'
 
 const step = ref<Step>('form')
@@ -676,6 +687,9 @@ const couponCode = ref('')
 const orderError = ref<string | null>(null)
 const failedError = ref<string | null>(null)
 const selectedFailReason = ref(-1)
+const krSubmitting = ref(false)
+const krError = ref<string | null>(null)
+const krPublicKey = ref('')
 
 const failReasons = [
   'Fondos insuficientes en la cuenta',
@@ -683,11 +697,6 @@ const failReasons = [
   'Tarjeta bloqueada o vencida',
   'Otro motivo',
 ]
-
-const cardNumber = ref('')
-const cardExpiry = ref('')
-const cardCvv = ref('')
-const cardName = ref('')
 
 const qrSeconds = ref(600)
 let qrInterval: ReturnType<typeof setInterval> | null = null
@@ -710,7 +719,7 @@ const qrTimerDisplay = computed(() => {
 })
 
 const payLabel = computed(() => {
-  if (step.value === 'processing') return 'Procesando...'
+  if (step.value === 'processing') return 'Preparando pago...'
   if (payMethod.value === 'yape') return 'Confirmar pago con Yape'
   if (payMethod.value === 'plin') return 'Confirmar pago con Plin'
   return `Pagar ${formattedTotal.value} de forma segura`
@@ -738,6 +747,7 @@ onMounted(async () => {
 onUnmounted(() => {
   if (qrInterval) clearInterval(qrInterval)
   if (pollInterval) clearInterval(pollInterval)
+izipay.destroy()
 })
 
 async function fetchEvent() {
@@ -761,16 +771,6 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function onCardNumberInput(e: Event) {
-  const v = (e.target as HTMLInputElement).value.replace(/\D/g, '').substring(0, 16)
-  cardNumber.value = v.replace(/(.{4})/g, '$1  ').trim()
-}
-
-function onExpiryInput(e: Event) {
-  let v = (e.target as HTMLInputElement).value.replace(/\D/g, '').substring(0, 4)
-  if (v.length >= 3) v = `${v.substring(0, 2)} / ${v.substring(2)}`
-  cardExpiry.value = v
-}
 
 function startQrTimer() {
   qrSeconds.value = 600
@@ -797,10 +797,6 @@ async function handlePay() {
     orderError.value = 'Ingresa un correo válido.'
     return
   }
-  if (payMethod.value === 'card' && !isCardValid()) {
-    orderError.value = 'Completa los datos de la tarjeta correctamente.'
-    return
-  }
 
   orderError.value = null
   step.value = 'processing'
@@ -811,7 +807,7 @@ async function handlePay() {
       method: 'POST',
       body: {
         event_id: cart.eventId!,
-        payment_gateway: 'culqi',
+        payment_gateway: 'izipay',
         photo_ids: [...cart.photoIds],
         ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
         type: cart.orderType,
@@ -822,18 +818,41 @@ async function handlePay() {
     orderId.value = oid
 
     if (payMethod.value === 'card') {
-      const token = await tokenizeCard()
-      await apiFetch(`/orders/${oid}/confirm-payment`, {
+      // Get Izipay form token from backend
+      const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(`/orders/${oid}/payment-token`, {
         method: 'POST',
-        body: {
-          payment_method: 'card',
-          payment_ref: token,
-          status: 'paid',
-        } as ConfirmPaymentInput,
       })
-      persistOrderPhotos(oid, [...cart.photoIds])
-      cart.clear()
-      step.value = 'success'
+
+      const { form_token, public_key } = tokenRes.data!
+
+      // Set the key before the div appears in the DOM so Krypton's
+      // MutationObserver finds kr-public-key immediately and skips CLIENT_501.
+      krPublicKey.value = public_key
+
+      // Render the Krypton embedded form
+      step.value = 'payment-form'
+
+      // Wait one tick so the kr-embedded div is in the DOM
+      await nextTick()
+      await izipay.initForm(form_token, public_key)
+
+      // Krypton calls this when the user submits the card form
+      izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
+        krSubmitting.value = false
+        try {
+          await apiFetch(`/orders/${oid}/confirm-payment`, {
+            method: 'POST',
+            body: { kr_answer: krAnswer, kr_hash: krHash },
+          })
+          persistOrderPhotos(oid, [...cart.photoIds])
+          cart.clear()
+          step.value = 'success'
+        }
+        catch (err: any) {
+          step.value = 'failed'
+          failedError.value = err?.data?.error || err?.message || 'Pago no completado.'
+        }
+      })
     }
     else {
       // Yape / Plin: show QR + poll
@@ -848,42 +867,17 @@ async function handlePay() {
   }
 }
 
-function isCardValid(): boolean {
-  const num = cardNumber.value.replace(/\s+/g, '')
-  const parts = cardExpiry.value.split('/')
-  return (
-    num.length === 16
-    && cardCvv.value.length >= 3
-    && parts.length === 2
-    && parts[0].trim().length === 2
-    && parts[1].trim().length === 2
-    && !!cardName.value.trim()
-  )
-}
-
-// Culqi v4 card tokenization
-async function tokenizeCard(): Promise<string> {
-  const win = window as any
-  if (!win.Culqi) throw new Error('Culqi SDK no cargado. Recarga la página.')
-  const culqiKey = config.public.culqiKey as string
-  if (!culqiKey) throw new Error('Pasarela de pago no configurada.')
-
-  win.Culqi.publicKey = culqiKey
-
-  return new Promise((resolve, reject) => {
-    win.culqi = (token: any) => {
-      if (token.object === 'error') reject(new Error(token.user_message || 'Tarjeta inválida'))
-      else resolve(token.id as string)
-    }
-    const [month, rawYear] = cardExpiry.value.split('/').map((s: string) => s.trim())
-    win.Culqi.createToken({
-      card_number: cardNumber.value.replace(/\s+/g, ''),
-      cvv: cardCvv.value,
-      expiration_month: month.padStart(2, '0'),
-      expiration_year: rawYear.length === 2 ? `20${rawYear}` : rawYear,
-      email: userEmail.value,
-    })
-  })
+async function handleCardSubmit() {
+  krError.value = null
+  krSubmitting.value = true
+  try {
+    await izipay.submit()
+    // onPaymentResult callback takes over from here
+  }
+  catch (err: any) {
+    krError.value = err?.message || 'Revisa los datos de la tarjeta e intenta de nuevo.'
+    krSubmitting.value = false
+  }
 }
 
 function pollOrderStatus(oid: number) {
@@ -928,4 +922,54 @@ function navigateToDownloads() {
 
 .qr-ring { animation: spin-slow 10s linear infinite; }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* ── Krypton injected elements ────────────────────────────────────────── */
+
+/* Hide the default Krypton pay button — we use our own */
+:deep(.kr-payment-button) {
+  display: none !important;
+}
+
+/* Reset Krypton's wrapper styling for installments and deferred payment */
+:deep(.kr-installment-count),
+:deep(.kr-do-register) {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Style the selects to match the other card fields */
+:deep(.kr-installment-count select),
+:deep(.kr-do-register select) {
+  width: 100%;
+  background-color: #1A1030;
+  border: 1px solid #2A1F4A;
+  border-radius: 0.75rem;
+  padding: 0.8125rem 2.5rem 0.8125rem 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:deep(.kr-installment-count select:focus),
+:deep(.kr-do-register select:focus) {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.10);
+}
+
+:deep(.kr-installment-count select option),
+:deep(.kr-do-register select option) {
+  background-color: #1A1030;
+  color: white;
+}
 </style>

@@ -140,7 +140,7 @@
             <h3>2.3 Datos de transacciones</h3>
             <ul>
               <li>Historial de compras y eventos consultados.</li>
-              <li>Último 4 dígitos de tarjeta de crédito/débito (nunca el número completo; procesado por <strong>Culqi</strong>).</li>
+              <li>Último 4 dígitos de tarjeta de crédito/débito (nunca el número completo; procesado por <strong>Izipay</strong>).</li>
               <li>Registros de pagos Yape/Plin (código de operación, monto, fecha).</li>
             </ul>
             <h3>2.4 Datos de uso</h3>
@@ -189,7 +189,7 @@
 
             <h2>7. Terceros Receptores de Datos</h2>
             <ul>
-              <li><strong>Culqi</strong> (procesador de pagos) — Lima, Perú</li>
+              <li><strong>Izipay</strong> (procesador de pagos) — Lima, Perú</li>
               <li><strong>Amazon Web Services</strong> (infraestructura cloud) — región us-east-1, con cláusulas contractuales estándar</li>
               <li><strong>SendGrid</strong> (correos transaccionales) — bajo DPA conforme a GDPR/Ley 29733</li>
               <li><strong>Google Analytics</strong> (analítica) — datos anonimizados</li>
@@ -420,7 +420,7 @@ const complianceBadges = [
   'Ley 29733 (Perú)',
   'ANPDP registrado',
   'TLS 1.3 + AES-256',
-  'Pagos via Culqi PCI-DSS',
+  'Pagos via Izipay PCI-DSS',
   'Biométricos eliminados en 24h',
 ]
 </script>
