@@ -76,43 +76,72 @@
 
 1. Usuario selecciona fotos desde search o event detail
 2. Cart almacena: eventId, photoIds, sessionId, orderType
-3. State se persiste en sessionStorage
+3. State se persiste en localStorage
 4. Al ir a checkout, cart provee los datos de la orden
 
 ### Gaps
 
 | # | Gap | Severidad | Estado | Notas |
 |---|-----|-----------|--------|-------|
-| CART-01 | **sessionStorage se pierde al cerrar tab** — carrito desaparece si usuario cierra pestana | ALTA | [ ] | `cart.ts:14-24` — Deberia usar localStorage para persistir entre sesiones |
-| CART-02 | **Sin validacion de fotos stale** — si admin elimina fotos despues de agregarlas al carrito, checkout falla con error generico | MEDIA | [ ] | No hay pre-check de existencia de fotos antes de crear orden |
+| CART-01 | **sessionStorage se pierde al cerrar tab** — carrito desaparece si usuario cierra pestana | ALTA | [x] | `cart.ts` — Migrado a localStorage. Resuelto 2026-06-07 |
+| CART-02 | **Sin validacion de fotos stale** — si admin elimina fotos despues de agregarlas al carrito, checkout falla con error generico | MEDIA | [x] | `checkout.vue:onMounted` valida con `POST /events/{id}/photos/validate`; fotos invalidas se muestran opacadas en zona separada, pago bloqueado hasta descartarlas. Resuelto 2026-06-07 |
+| CART-02a | ~~Fotos invalidas se remueven automaticamente~~ | MEDIA | [x] | Corregido: se muestran opacadas con grayscale + X, zona "no disponibles" separada, boton "Descartar". Resuelto 2026-06-07 |
+| CART-02b | ~~`isValidating` no se resetea en early returns~~ | BAJA | [x] | Corregido: early returns ahora hacen `isValidating.value = false`. Resuelto 2026-06-07 |
+| CART-02c | ~~Redirect de carrito vacio usa eventId en vez de slug~~ | BAJA | [x] | Corregido: usa `backLink` computed que resuelve a slug via query param. Resuelto 2026-06-07 |
 
 ---
 
 ## 4. CHECKOUT Y PAGOS
 
-**Archivos**: `pages/checkout.vue`, `composables/useIzipay.ts`, `stores/cart.ts`
+**Archivos**: `pages/checkout.vue`, `pages/checkout/index.vue`, `composables/useCheckout.ts`, `composables/useIzipay.ts`, `stores/cart.ts`
 
-### Flujo actual
+### Flujo actual (refactorizado 2026-06-07)
 
-1. Auth check + cart validation
-2. Mostrar progress steps (Seleccionar -> Checkout -> Descargar)
-3. Confirmar/ingresar email
-4. Seleccionar metodo de pago (Tarjeta, Yape, Plin)
-5. **Tarjeta**: aceptar terms -> POST `/orders` -> init Izipay Krypton form -> pago -> callback
-6. **QR (Yape/Plin)**: aceptar terms -> POST `/orders` -> mostrar QR -> polling cada 3s por 10min
-7. Exito: overlay con opcion de descarga
-8. Error: mensaje con opcion de reintentar
+> Simplificado a un solo paso. Se elimino la pagina de pago separada (`payment.vue`), el selector de metodo de pago (solo se usa tarjeta/Izipay), el campo de email (se obtiene de `/auth/me`), y QR/Yape/Plin.
+
+**Estructura de archivos:**
+- `checkout.vue` — Parent route: guards, progress steps, success overlay (teleport), failed state, NuxtPage
+- `checkout/index.vue` — Child: grid de fotos + sidebar resumen + form Izipay Krypton
+- `useCheckout.ts` — Composable con provide/inject para compartir estado entre parent e hijo
+
+**Steps:** `detail` → `processing` → `payment-form` → `success` | `failed`
+
+**Flujo:**
+1. **Guard**: si no autenticado muestra modal login; si carrito vacio redirige a `/events` (excepto si hay fotos no disponibles mostrándose)
+2. **Init**: carga en paralelo evento (`GET /events/{id}`) y email (`GET /auth/me`)
+3. **Validacion CART-02**: `POST /events/{id}/photos/validate` → fotos invalidas se muestran en zona separada con grayscale
+   - Si algunas invalidas: boton "Entendido" las descarta y continua con las validas
+   - Si todas invalidas: muestra zona y link "Entendido, volver al evento →"
+4. **Detail** (paso unico): grid de fotos con remove buttons + sidebar con precio, TyC checkbox, boton "Pagar de forma segura"
+5. **handlePay()**: valida TyC → `step = processing` → crea orden `POST /orders` (o reutiliza orderId existente si es retry) → pide token `POST /orders/{id}/payment-token`
+6. **payment-form**: renderiza form Izipay Krypton (kr-pan, kr-expiry, kr-security-code, kr-card-holder-name). Boton "Volver al detalle" disponible.
+7. **handleCardSubmit()**: llama `izipay.submit()` → callback `onPaymentResult` confirma con `POST /orders/{id}/confirm-payment`
+8. **Success**: `step = success` (ANTES de `cart.clear()` para evitar race condition con watch) → overlay teleported con boton "Descargar mis fotos"
+9. **Failed**: pantalla con razones seleccionables + "Reintentar →" (vuelve a detail, reutiliza orderId)
+
+**UI responsive:**
+- Desktop: grid izquierda + sidebar sticky derecha
+- Mobile: resumen colapsado arriba + grid + terms/pay abajo
+- Card form: reemplaza grid via v-if/v-else
 
 ### Gaps
 
 | # | Gap | Severidad | Estado | Notas |
 |---|-----|-----------|--------|-------|
-| CHECKOUT-01 | **Sin idempotencia en creacion de orden** — boton "Pagar" no se deshabilita inmediatamente, posible doble cobro | ALTA | [ ] | `checkout.vue` — `step` cambia a 'processing' DESPUES del POST, no antes; sin idempotency key |
-| CHECKOUT-02 | **QR expirado sin recovery** — timer de 10min llega a 0 pero no pasa nada, usuario atrapado en pantalla de QR muerto | ALTA | [ ] | Timer `qrSeconds` llega a 0, interval se limpia, pero no hay cambio de estado ni CTA de retry |
-| CHECKOUT-03 | **Izipay CDN caido = checkout muerto** — si script Krypton no carga, error duro sin fallback | MEDIA | [ ] | `useIzipay.ts:38` — `window.KR` check lanza error sin retry ni degradacion |
-| CHECKOUT-04 | **Cierre de browser durante pago = orden perdida** — orderId solo se guarda en localStorage tras exito | MEDIA | [ ] | No hay mecanismo de recovery; usuario debe re-buscar y re-ordenar |
-| CHECKOUT-05 | **Email solo validacion de formato** — sin verificacion real antes de crear orden | MEDIA | [ ] | Regex basico; typo = confirmacion va a inbox equivocado, usuario no puede descargar |
-| CHECKOUT-06 | **Sin loading guard especifico** — guard muestra spinner si !auth o !cart pero no dice cual fallo | BAJA | [ ] | `checkout.vue:5-9` — Mismo spinner para "no logueado" y "carrito vacio" |
+| CHECKOUT-01 | **Sin idempotencia en creacion de orden** — sin idempotency key en header del POST | MEDIA | [ ] | El boton se deshabilita con `step = processing` antes del POST. Riesgo reducido pero no eliminado. Ideal: enviar `Idempotency-Key` header |
+| CHECKOUT-02 | ~~QR expirado sin recovery~~ | — | N/A | QR/Yape/Plin eliminados del flujo |
+| CHECKOUT-03 | **Izipay CDN caido = checkout muerto** — si script Krypton no carga, error duro sin fallback | MEDIA | [ ] | `useIzipay.ts` — No hay retry ni degradacion graciosa |
+| CHECKOUT-04 | **Cierre de browser durante pago = orden perdida** — orderId solo se persiste en success | MEDIA | [ ] | Mejora posible: guardar orderId en localStorage al crearlo para recovery |
+| CHECKOUT-05 | ~~Email solo validacion de formato~~ | — | N/A | Email ya no es input del usuario; se obtiene de `/auth/me` |
+| CHECKOUT-06 | **Sin loading guard especifico** — guard muestra spinner si !auth o !cart pero no dice cual fallo | BAJA | [ ] | `checkout.vue:5` — Mismo spinner para ambos casos |
+| CHECKOUT-07 | ~~QR timer arranca al seleccionar metodo~~ | — | N/A | QR eliminado |
+| CHECKOUT-08 | ~~Polling no se detiene si QR expira~~ | — | N/A | QR eliminado |
+| CHECKOUT-09 | **Orden huerfana si usuario cierra tab** — orden queda pendiente en backend | MEDIA | [ ] | Depende de TTL/cleanup en backend |
+| CHECKOUT-10 | **Reintentar crea orden duplicada** | MEDIA | [x] | Resuelto 2026-06-07: `handlePay` reutiliza `ck.orderId.value` existente |
+| CHECKOUT-11 | **`krSubmitting` se resetea antes de confirmar pago** — spinner desaparece durante `confirm-payment` | BAJA | [ ] | `onPaymentResult` hace `krSubmitting = false` al inicio del callback |
+| CHECKOUT-12 | ~~Cupon sin funcionalidad~~ | — | N/A | Cupon eliminado de la UI |
+| CHECKOUT-13 | **Race condition success/redirect** — `cart.clear()` disparaba watch antes de `step = success` | ALTA | [x] | Resuelto 2026-06-07: se invirtio orden (`step = success` antes de `cart.clear()`) |
+| CHECKOUT-14 | **NuxtLink en label togglea checkbox** — click en TyC/Privacidad activaba/desactivaba checkbox | BAJA | [x] | Resuelto 2026-06-07: agregado `@click.stop` a NuxtLinks dentro de labels |
 
 ---
 
@@ -203,32 +232,46 @@
 1. ~~`AUTH-10` Forgot password simulado~~ ✅ 2026-06-07
 2. ~~`AUTH-04` Logout no invalida token en backend~~ ✅ 2026-06-07
 3. ~~`AUTH-03` Race condition en token refresh~~ ✅ 2026-06-07
-4. `CHECKOUT-01` Doble cobro por falta de idempotencia
-5. `CHECKOUT-02` QR expirado sin recovery
-6. `AUTH-01` Registro sin verificacion de email — pendiente decision cliente
-7. `CART-01` Carrito en sessionStorage
+4. ~~`CHECKOUT-13` Race condition success/redirect~~ ✅ 2026-06-07
+5. ~~`CART-01` Carrito en sessionStorage~~ ✅ 2026-06-07
+6. `CHECKOUT-01` Idempotency key en creacion de orden
+7. `AUTH-01` Registro sin verificacion de email — pendiente decision cliente
 
 ### Importantes (segunda ronda)
 8. ~~`AUTH-05` Rate limiting en login~~ ✅ 2026-06-07
-9. ~~`AUTH-07` Middleware auth incompleto~~ ✅ 2026-06-07 (ya estaba resuelto)
-10. `ACCOUNT-01` Eliminar cuenta solo UI
-11. `ACCOUNT-02` Eliminar datos biometricos solo UI
-12. `SEARCH-01` Timeout en busqueda
-13. `CHECKOUT-03` Fallback cuando Izipay CDN falla
-14. `DOWNLOAD-03` Acceso cross-device
+9. ~~`AUTH-07` Middleware auth incompleto~~ ✅ 2026-06-07
+10. ~~`CHECKOUT-10` Reintentar crea orden duplicada~~ ✅ 2026-06-07
+11. ~~`CART-02` Validacion de fotos stale~~ ✅ 2026-06-07
+12. `ACCOUNT-01` Eliminar cuenta solo UI
+13. `ACCOUNT-02` Eliminar datos biometricos solo UI
+14. `SEARCH-01` Timeout en busqueda
+15. `CHECKOUT-03` Fallback cuando Izipay CDN falla
+16. `CHECKOUT-09` Ordenes huerfanas sin cleanup (backend TTL)
+17. `CHECKOUT-04` Recovery de orden si se cierra browser
+18. `DOWNLOAD-03` Acceso cross-device
 
 ### Mejoras (tercera ronda)
-15. ~~`AUTH-06` Feedback de sesion expirada~~ ✅ 2026-06-07
-16. ~~`AUTH-08` Sync cross-tab~~ ✅ 2026-06-07
-17. ~~`AUTH-09` Validacion de password mas fuerte~~ ✅ 2026-06-07 (frontend + API)
-18. `EVENTS-01` Share en redes sociales
-19. `EVENTS-02` SEO structured data
-20. `INFRA-01` Analytics
-21. `INFRA-02` Accesibilidad
+19. ~~`AUTH-06` Feedback de sesion expirada~~ ✅ 2026-06-07
+20. ~~`AUTH-08` Sync cross-tab~~ ✅ 2026-06-07
+21. ~~`AUTH-09` Validacion de password mas fuerte~~ ✅ 2026-06-07
+22. ~~`CHECKOUT-14` NuxtLink togglea checkbox~~ ✅ 2026-06-07
+23. `CHECKOUT-11` krSubmitting se resetea antes de confirmar
+24. `CHECKOUT-06` Loading guard sin feedback especifico
+25. `EVENTS-01` Share en redes sociales
+26. `EVENTS-02` SEO structured data
+27. `INFRA-01` Analytics
+28. `INFRA-02` Accesibilidad
 
 ### Fase 2
-22. `AUTH-02` Login social (Google OAuth) — requiere AUTH-11
-23. `AUTH-11` Pagina `/login` dedicada — deep linking, OAuth callbacks, redirects de middleware
+29. `AUTH-02` Login social (Google OAuth) — requiere AUTH-11
+30. `AUTH-11` Pagina `/login` dedicada — deep linking, OAuth callbacks, redirects de middleware
+
+### Eliminados (N/A por refactor checkout 2026-06-07)
+- ~~`CHECKOUT-02` QR expirado~~ — QR/Yape/Plin eliminados
+- ~~`CHECKOUT-05` Email validacion~~ — Email ya no es input
+- ~~`CHECKOUT-07` QR timer~~ — QR eliminado
+- ~~`CHECKOUT-08` Polling QR~~ — QR eliminado
+- ~~`CHECKOUT-12` Cupon~~ — Cupon eliminado de UI
 
 ---
 

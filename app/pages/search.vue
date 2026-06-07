@@ -617,12 +617,14 @@ import type {
 	SearchResultResponse,
 	SingleEnvelope,
 } from "~/types"
+import { useDemoPhoto } from "~/composables/useDemoPhoto"
 
 type SearchStep = "auth-gate" | "consent" | "upload" | "searching" | "results"
 
 const route = useRoute()
 const auth = useAuthStore()
 const cart = useCartStore()
+const { getThumbUrl } = useDemoPhoto()
 const showAuth = useAuthModal()
 
 // ── Query params ─────────────────────────────────────────────────────────────
@@ -795,10 +797,14 @@ const allSelected = computed(() => {
 	)
 })
 
+function toCartPhoto(r: SearchResultResponse) {
+	return { id: r.photo_id as number, thumbnailUrl: getThumbUrl({ id: r.photo_id, thumbnail_url: r.thumbnail_url }) }
+}
+
 function handleResultClick(result: SearchResultResponse) {
 	if (result.already_purchased || result.photo_id === undefined) return
 	if (eventId.value) cart.setEvent(eventId.value)
-	cart.toggle(result.photo_id)
+	cart.toggle(toCartPhoto(result))
 }
 
 function toggleSelectAll() {
@@ -807,12 +813,12 @@ function toggleSelectAll() {
 	)
 	if (allSelected.value) {
 		eligible.forEach((r) => {
-			if (r.photo_id !== undefined) cart.toggle(r.photo_id)
+			if (r.photo_id !== undefined) cart.toggle(toCartPhoto(r))
 		})
 	} else {
 		if (eventId.value) cart.setEvent(eventId.value)
 		eligible.forEach((r) => {
-			if (r.photo_id !== undefined && !cart.has(r.photo_id)) cart.toggle(r.photo_id)
+			if (r.photo_id !== undefined && !cart.has(r.photo_id)) cart.toggle(toCartPhoto(r))
 		})
 	}
 }
@@ -822,7 +828,7 @@ function selectPack() {
 	const eligible = searchResults.value
 		.filter((r) => !r.already_purchased && r.photo_id !== undefined)
 		.slice(0, packSize.value)
-		.map((r) => r.photo_id as number)
+		.map(toCartPhoto)
 	cart.setPack(eligible, eventId.value)
 }
 
@@ -830,7 +836,7 @@ function selectFullEvent() {
 	if (!eventId.value) return
 	const eligible = searchResults.value
 		.filter((r) => !r.already_purchased && r.photo_id !== undefined)
-		.map((r) => r.photo_id as number)
+		.map(toCartPhoto)
 	cart.setFullEvent(eligible, eventId.value)
 }
 

@@ -765,14 +765,14 @@ function handlePhotoClick(photo: PhotoResponse) {
 	}
 	if (photo.id === undefined || !eventId.value) return
 	cart.setEvent(eventId.value)
-	cart.toggle(photo.id)
+	cart.toggle({ id: photo.id, thumbnailUrl: getThumbUrl(photo) })
 }
 
 function toggleFromLightbox() {
 	const photo = lightboxPhoto.value
 	if (!photo || photo.id === undefined || !eventId.value) return
 	cart.setEvent(eventId.value)
-	cart.toggle(photo.id)
+	cart.toggle({ id: photo.id, thumbnailUrl: getThumbUrl(photo) })
 }
 
 useSeoMeta({

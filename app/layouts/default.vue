@@ -33,7 +33,7 @@
           <NuxtLink to="/purchases" class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors">
             Mis fotos
           </NuxtLink>
-          <button class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors" @click="auth.logout">
+          <button class="text-sm text-white/55 hover:text-white px-4 py-2 transition-colors" @click="() => auth.logout()">
             Salir
           </button>
         </template>

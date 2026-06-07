@@ -374,7 +374,12 @@ useSeoMeta({
 		"Términos de uso, política de privacidad y acuerdo de fotógrafo de Fotify. Cumplimiento Ley 29733 Perú.",
 })
 
-const activeTab = ref<"terminos" | "privacidad" | "fotografo">("terminos")
+const route = useRoute()
+const validTabs = ["terminos", "privacidad", "fotografo"] as const
+const initialTab = validTabs.includes(route.query.tab as any)
+  ? (route.query.tab as typeof validTabs[number])
+  : "terminos"
+const activeTab = ref<"terminos" | "privacidad" | "fotografo">(initialTab)
 
 const tabs = [
 	{ key: "terminos" as const, label: "Términos de Uso" },

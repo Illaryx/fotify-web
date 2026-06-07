@@ -33,3 +33,10 @@ export async function apiFetch<T>(
 		throw err
 	}
 }
+
+export async function validateCartPhotos(eventId: number, photoIds: number[]) {
+	return apiFetch<{ valid: number[]; invalid: number[] }>(
+		`/events/${eventId}/photos/validate`,
+		{ method: "POST", body: { photo_ids: photoIds } },
+	)
+}

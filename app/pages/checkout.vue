@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-[70vh]">
 
-    <!-- Loading guard (before onMounted resolves) -->
-    <div v-if="!auth.isAuthenticated || !cart.hasPhotos" class="flex items-center justify-center py-32">
+    <!-- Loading guard -->
+    <div v-if="!auth.isAuthenticated || (!cart.hasPhotos && ck.unavailablePhotos.value.length === 0)" class="flex items-center justify-center py-32">
       <svg class="animate-spin text-violet/40" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
       </svg>
@@ -13,7 +13,7 @@
       <!-- ── SUCCESS OVERLAY ───────────────────────────────────────────────── -->
       <Teleport to="body">
         <Transition name="fade">
-          <div v-if="step === 'success'" class="fixed inset-0 bg-night/95 backdrop-blur-md z-[300] flex items-center justify-center p-5">
+          <div v-if="ck.step.value === 'success'" class="fixed inset-0 bg-night/95 backdrop-blur-md z-[300] flex items-center justify-center p-5">
             <div class="bg-night-2 border border-border rounded-3xl p-8 max-w-sm w-full text-center">
               <div class="w-20 h-20 rounded-full bg-green-500/15 border-2 border-green-500/30 flex items-center justify-center mx-auto mb-6">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -22,8 +22,8 @@
               </div>
               <div class="font-display font-bold text-[22px] text-white mb-2 tracking-tight">¡Pago exitoso!</div>
               <p class="text-[13px] text-white/40 mb-6 leading-relaxed">
-                Tus <strong class="text-white">{{ successPhotoCount }} foto{{ successPhotoCount !== 1 ? 's' : '' }} en HD</strong> están listas.
-                Revisa tu correo <strong class="text-violet">{{ userEmail }}</strong> o descarga directamente.
+                Tus <strong class="text-white">{{ ck.successPhotoCount.value }} foto{{ ck.successPhotoCount.value !== 1 ? 's' : '' }} en HD</strong> están listas.
+                Revisa tu correo <strong class="text-violet">{{ ck.userEmail.value }}</strong> o descarga directamente.
               </p>
               <button
                 class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors mb-3 flex items-center justify-center gap-2"
@@ -44,7 +44,7 @@
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                Confirmación enviada a {{ userEmail }}
+                Confirmación enviada a {{ ck.userEmail.value }}
               </div>
             </div>
           </div>
@@ -52,7 +52,7 @@
       </Teleport>
 
       <!-- ── PROGRESS STEPS ─────────────────────────────────────────────────── -->
-      <div v-show="step !== 'failed'" class="px-5 md:px-10 lg:px-12 py-5">
+      <div v-show="ck.step.value !== 'failed'" class="px-5 md:px-10 lg:px-12 py-5">
         <div class="flex items-center max-w-sm mx-auto lg:mx-0">
           <div class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-full bg-violet flex items-center justify-center flex-shrink-0">
@@ -78,7 +78,7 @@
       </div>
 
       <!-- ── FAILED STATE ──────────────────────────────────────────────────── -->
-      <section v-if="step === 'failed'" class="px-5 md:px-10 lg:px-12 pb-16">
+      <section v-if="ck.step.value === 'failed'" class="px-5 md:px-10 lg:px-12 pb-16">
         <div class="flex flex-col lg:flex-row gap-8 lg:items-start">
 
           <!-- LEFT: error + reasons + actions -->
@@ -92,7 +92,7 @@
                 </svg>
               </div>
               <h2 class="font-display font-bold text-[20px] text-white mb-2 tracking-tight">Pago no procesado</h2>
-              <p v-if="failedError" class="inline-block bg-red-500/10 text-red-400 text-[12px] font-medium px-3 py-1.5 rounded-full">{{ failedError }}</p>
+              <p v-if="ck.failedError.value" class="inline-block bg-red-500/10 text-red-400 text-[12px] font-medium px-3 py-1.5 rounded-full">{{ ck.failedError.value }}</p>
             </div>
 
             <!-- What happened? -->
@@ -117,55 +117,19 @@
             <div class="text-[13px] font-semibold text-white mb-3">¿Qué puedes hacer?</div>
             <div class="flex flex-col gap-3">
 
-              <!-- Retry same method -->
+              <!-- Retry -->
               <div class="bg-night-2 border border-border rounded-2xl p-5 flex items-center justify-between gap-4">
                 <div>
-                  <div class="text-[13px] font-semibold text-white mb-0.5">Reintentar con {{ payMethod === 'card' ? 'la misma tarjeta' : payMethod === 'yape' ? 'Yape' : 'Plin' }}</div>
-                  <p class="text-[11px] text-white/45">Vuelve al formulario y revisa los datos.</p>
+                  <div class="text-[13px] font-semibold text-white mb-0.5">Reintentar el pago</div>
+                  <p class="text-[11px] text-white/45">Vuelve al detalle y revisa los datos de tu tarjeta.</p>
                 </div>
                 <button
                   class="flex-shrink-0 bg-violet hover:bg-violet-deep text-white font-semibold text-[13px] px-4 py-2.5 rounded-xl transition-colors"
-                  @click="step = 'form'; failedError = null; selectedFailReason = -1"
+                  @click="retryPayment"
                 >
                   Reintentar →
                 </button>
               </div>
-
-              <!-- Switch to Yape -->
-              <button
-                v-if="payMethod !== 'yape'"
-                class="bg-night-2 border border-border hover:border-violet/40 rounded-2xl p-5 flex items-center justify-between gap-4 text-left transition-colors w-full"
-                @click="payMethod = 'yape'; step = 'form'; failedError = null; selectedFailReason = -1"
-              >
-                <div>
-                  <div class="text-[13px] font-semibold text-white mb-0.5">Pagar con Yape</div>
-                  <p class="text-[11px] text-white/45">Escanea el QR directamente desde Yape.</p>
-                </div>
-                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet/15 flex items-center justify-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                    <path d="M14 14h3M14 17h3M17 14v7M20 14v7"/>
-                  </svg>
-                </div>
-              </button>
-
-              <!-- Switch to Plin -->
-              <button
-                v-if="payMethod !== 'plin'"
-                class="bg-night-2 border border-border hover:border-violet/40 rounded-2xl p-5 flex items-center justify-between gap-4 text-left transition-colors w-full"
-                @click="payMethod = 'plin'; step = 'form'; failedError = null; selectedFailReason = -1"
-              >
-                <div>
-                  <div class="text-[13px] font-semibold text-white mb-0.5">Pagar con Plin</div>
-                  <p class="text-[11px] text-white/45">Alternativa rápida vía tu app bancaria.</p>
-                </div>
-                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet/15 flex items-center justify-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                    <path d="M14 14h3M14 17h3M17 14v7M20 14v7"/>
-                  </svg>
-                </div>
-              </button>
 
             </div>
           </div><!-- /LEFT -->
@@ -175,20 +139,17 @@
             <div class="bg-night-2 border border-border rounded-2xl overflow-hidden">
               <div class="px-5 pt-5 pb-4 border-b border-border">
                 <div class="text-[11px] font-semibold tracking-[2px] uppercase text-red-400 mb-1">Pago fallido</div>
-                <div class="font-display font-bold text-[16px] text-white tracking-tight">{{ event?.name ?? 'Tu pedido' }}</div>
+                <div class="font-display font-bold text-[16px] text-white tracking-tight">{{ ck.event.value?.name ?? 'Tu pedido' }}</div>
               </div>
               <div class="px-5 py-4">
                 <div class="text-[11px] text-white/30 mb-3">{{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }} reservada{{ cart.count !== 1 ? 's' : '' }}</div>
                 <div class="grid grid-cols-5 gap-2 mb-4">
                   <div
-                    v-for="i in Math.min(4, cart.count)"
-                    :key="i"
-                    class="aspect-[3/4] rounded-lg border border-border bg-night overflow-hidden flex items-center justify-center opacity-50"
+                    v-for="photo in cart.photos.slice(0, 4)"
+                    :key="photo.id"
+                    class="aspect-[3/4] rounded-lg border border-border bg-night overflow-hidden opacity-50"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
+                    <img v-if="photo.thumbnailUrl" :src="photo.thumbnailUrl" :alt="`Foto ${photo.id}`" class="w-full h-full object-cover" />
                   </div>
                   <div v-if="cart.count > 4" class="aspect-[3/4] rounded-lg border border-border bg-night flex items-center justify-center opacity-50">
                     <span class="text-[11px] font-bold text-white/40">+{{ cart.count - 4 }}</span>
@@ -196,7 +157,7 @@
                 </div>
                 <div class="flex items-center justify-between text-[14px] border-t border-border pt-3">
                   <span class="text-white/50">Total</span>
-                  <span class="font-display font-bold text-white">{{ formattedTotal }}</span>
+                  <span class="font-display font-bold text-white">{{ ck.formattedTotal.value }}</span>
                 </div>
               </div>
               <div class="px-5 pb-5 pt-2">
@@ -213,446 +174,9 @@
         </div>
       </section>
 
-      <!-- ── MAIN CHECKOUT ──────────────────────────────────────────────────── -->
-      <section v-show="step !== 'failed'" class="px-5 md:px-10 lg:px-12 pb-16">
-        <div class="flex flex-col lg:flex-row gap-8 lg:items-start">
-
-          <!-- ── LEFT: Form ───────────────────────────────────────────────── -->
-          <div class="w-full lg:flex-1 order-2 lg:order-1">
-
-            <!-- Mobile order summary -->
-            <div class="lg:hidden mb-6 bg-night-2 border border-border rounded-2xl overflow-hidden">
-              <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-                <span class="text-[12px] font-semibold text-white/50">Tu pedido</span>
-                <span class="font-display font-bold text-[16px] text-white">{{ formattedTotal }}</span>
-              </div>
-              <div class="px-4 py-3 text-[12px] text-white/40">
-                {{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }} seleccionada{{ cart.count !== 1 ? 's' : '' }}<span v-if="event"> · {{ event.name }}</span>
-              </div>
-            </div>
-
-            <!-- ── QR AWAITING STATE (Yape / Plin) ────────────────────────── -->
-            <div v-if="step === 'awaiting-qr'" class="flex flex-col items-center py-4">
-              <div class="relative w-48 h-48 bg-white rounded-2xl flex items-center justify-center mb-4 p-3">
-                <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
-                  <rect x="5" y="5" width="30" height="30" rx="3" fill="#0F0A1E"/>
-                  <rect x="9" y="9" width="22" height="22" rx="1" fill="white"/>
-                  <rect x="13" y="13" width="14" height="14" rx="1" fill="#0F0A1E"/>
-                  <rect x="65" y="5" width="30" height="30" rx="3" fill="#0F0A1E"/>
-                  <rect x="69" y="9" width="22" height="22" rx="1" fill="white"/>
-                  <rect x="73" y="13" width="14" height="14" rx="1" fill="#0F0A1E"/>
-                  <rect x="5" y="65" width="30" height="30" rx="3" fill="#0F0A1E"/>
-                  <rect x="9" y="69" width="22" height="22" rx="1" fill="white"/>
-                  <rect x="13" y="73" width="14" height="14" rx="1" fill="#0F0A1E"/>
-                  <rect x="43" y="5" width="7" height="7" fill="#0F0A1E"/>
-                  <rect x="53" y="5" width="7" height="7" fill="#0F0A1E"/>
-                  <rect x="43" y="15" width="4" height="4" fill="#0F0A1E"/>
-                  <rect x="50" y="20" width="10" height="4" fill="#0F0A1E"/>
-                  <rect x="43" y="43" width="14" height="4" fill="#0F0A1E"/>
-                  <rect x="60" y="43" width="10" height="7" fill="#0F0A1E"/>
-                  <rect x="75" y="43" width="4" height="4" fill="#0F0A1E"/>
-                  <rect x="83" y="43" width="12" height="7" fill="#0F0A1E"/>
-                  <rect x="43" y="53" width="4" height="10" fill="#0F0A1E"/>
-                  <rect x="50" y="57" width="7" height="4" fill="#0F0A1E"/>
-                  <rect x="60" y="55" width="4" height="10" fill="#0F0A1E"/>
-                  <rect x="67" y="55" width="10" height="4" fill="#0F0A1E"/>
-                  <rect x="80" y="53" width="15" height="4" fill="#0F0A1E"/>
-                  <rect x="43" y="67" width="7" height="4" fill="#0F0A1E"/>
-                  <rect x="53" y="67" width="4" height="10" fill="#0F0A1E"/>
-                  <rect x="60" y="72" width="10" height="4" fill="#0F0A1E"/>
-                  <rect x="73" y="65" width="4" height="7" fill="#0F0A1E"/>
-                  <rect x="80" y="65" width="15" height="4" fill="#0F0A1E"/>
-                  <rect x="73" y="75" width="22" height="7" fill="#0F0A1E"/>
-                  <rect x="5" y="43" width="30" height="4" fill="#0F0A1E"/>
-                  <rect x="5" y="50" width="14" height="4" fill="#0F0A1E"/>
-                  <rect x="22" y="50" width="10" height="7" fill="#0F0A1E"/>
-                  <rect x="5" y="58" width="7" height="7" fill="#0F0A1E"/>
-                  <rect x="15" y="60" width="7" height="5" fill="#0F0A1E"/>
-                  <rect x="25" y="58" width="10" height="4" fill="#0F0A1E"/>
-                  <rect x="42" y="42" width="16" height="16" rx="3" :fill="payMethod === 'plin' ? '#22C55E' : '#7C3AED'"/>
-                  <circle cx="50" cy="50" r="4" fill="white" opacity="0.9"/>
-                  <circle cx="50" cy="50" r="2" :fill="payMethod === 'plin' ? '#22C55E' : '#7C3AED'"/>
-                </svg>
-                <!-- Yape countdown ring -->
-                <svg v-if="payMethod === 'yape'" class="absolute inset-0 w-full h-full qr-ring" viewBox="0 0 192 192" fill="none">
-                  <circle cx="96" cy="96" r="90" stroke="#7C3AED" stroke-width="3" stroke-dasharray="565" stroke-dashoffset="420" stroke-linecap="round" opacity="0.4"/>
-                </svg>
-              </div>
-              <div class="font-display font-bold text-[22px] text-white mb-1">{{ formattedTotal }}</div>
-              <div class="text-[12px] text-white/40 mb-3">
-                {{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }}<span v-if="event"> · {{ event.name }}</span>
-              </div>
-              <div :class="['flex items-center gap-1.5 text-[12px] font-medium', payMethod === 'plin' ? 'text-green-400' : 'text-violet']">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                </svg>
-                {{ qrTimerDisplay }}
-              </div>
-              <div class="mt-5 bg-night-2 border border-border rounded-xl px-4 py-3 max-w-xs text-center">
-                <p class="text-[12px] text-white/40 leading-relaxed">
-                  Abre <span class="text-white font-medium">{{ payMethod === 'yape' ? 'Yape' : 'Plin' }}</span>,
-                  {{ payMethod === 'yape' ? 'toca el ícono de QR' : 'selecciona pagar con QR' }} y apunta al código.
-                  El pago se confirma en segundos.
-                </p>
-              </div>
-              <div class="mt-4 flex items-center gap-2 text-[12px] text-white/30">
-                <svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                Esperando confirmación de pago...
-              </div>
-            </div>
-
-            <!-- ── PAYMENT FORM ─────────────────────────────────────────────── -->
-            <template v-else>
-
-              <!-- Contact -->
-              <div class="mb-6">
-                <h2 class="font-display font-bold text-[15px] text-white tracking-tight mb-1">Contacto</h2>
-                <p class="text-[12px] text-white/35 mb-4">Te enviaremos el link de descarga a este correo</p>
-                <div class="relative">
-                  <input
-                    v-model="userEmail"
-                    type="email"
-                    placeholder="tu@email.com"
-                    :class="[
-                      'w-full bg-night-2 border rounded-xl px-4 py-[14px] text-[14px] text-white placeholder-white/20 outline-none transition-all pr-12',
-                      emailValid ? 'border-green-500/40' : 'border-border focus:border-violet/60 focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)]'
-                    ]"
-                  />
-                  <div v-if="emailValid" class="absolute right-4 top-1/2 -translate-y-1/2">
-                    <div class="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.9)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <p class="text-[11px] text-white/25 mt-2 flex items-center gap-1.5">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                  No compartimos tu email con nadie
-                </p>
-              </div>
-
-              <!-- Payment method -->
-              <div class="mb-5">
-                <h2 class="font-display font-bold text-[15px] text-white tracking-tight mb-4">Método de pago</h2>
-                <div class="grid grid-cols-3 gap-3 mb-5">
-                  <!-- Card -->
-                  <button
-                    :class="['border rounded-xl px-4 py-[14px] cursor-pointer transition-all flex items-center gap-2.5', payMethod === 'card' ? 'border-violet bg-violet/[0.08]' : 'border-border hover:border-white/15']"
-                    @click="payMethod = 'card'"
-                  >
-                    <div class="w-8 h-6 bg-night-2 border border-border/60 rounded flex items-center justify-center flex-shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" :stroke="payMethod === 'card' ? 'rgba(124,58,237,0.8)' : 'rgba(255,255,255,0.3)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                      </svg>
-                    </div>
-                    <div class="text-left min-w-0">
-                      <div class="text-[12px] font-semibold text-white leading-tight">Tarjeta</div>
-                      <div class="text-[10px] text-white/35">Visa · MC · Amex</div>
-                    </div>
-                  </button>
-                  <!-- Yape -->
-                  <button
-                    :class="['border rounded-xl px-4 py-[14px] cursor-pointer transition-all flex items-center gap-2.5', payMethod === 'yape' ? 'border-violet bg-violet/[0.08]' : 'border-border hover:border-white/15']"
-                    @click="payMethod = 'yape'"
-                  >
-                    <div class="w-8 h-6 bg-[#4B0082]/30 border border-purple-800/40 rounded flex items-center justify-center flex-shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(180,100,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                      </svg>
-                    </div>
-                    <div class="text-left min-w-0">
-                      <div class="text-[12px] font-semibold text-white leading-tight">Yape</div>
-                      <div class="text-[10px] text-white/35">QR · Rápido</div>
-                    </div>
-                  </button>
-                  <!-- Plin -->
-                  <button
-                    :class="['border rounded-xl px-4 py-[14px] cursor-pointer transition-all flex items-center gap-2.5', payMethod === 'plin' ? 'border-violet bg-violet/[0.08]' : 'border-border hover:border-white/15']"
-                    @click="payMethod = 'plin'"
-                  >
-                    <div class="w-8 h-6 bg-[#006400]/20 border border-green-800/40 rounded flex items-center justify-center flex-shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(74,222,128,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M15 21V9"/>
-                      </svg>
-                    </div>
-                    <div class="text-left min-w-0">
-                      <div class="text-[12px] font-semibold text-white leading-tight">Plin</div>
-                      <div class="text-[10px] text-white/35">QR · Rápido</div>
-                    </div>
-                  </button>
-                </div>
-
-                <!-- Izipay custom card fields (shown after handlePay creates the order) -->
-                <div v-if="step === 'payment-form' && payMethod === 'card'" class="space-y-3">
-                  <div class="kr-embedded" v-bind="krPublicKey ? {'kr-public-key': krPublicKey} : {}" style="display:contents">
-                    <!-- Card number -->
-                    <div>
-                      <p class="text-[11px] text-white/40 mb-1.5 font-medium">Número de tarjeta</p>
-                      <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60 focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.10)]">
-                        <div class="kr-pan"></div>
-                      </div>
-                    </div>
-                    <!-- Expiry + CVV -->
-                    <div class="grid grid-cols-2 gap-3">
-                      <div>
-                        <p class="text-[11px] text-white/40 mb-1.5 font-medium">Vencimiento</p>
-                        <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                          <div class="kr-expiry"></div>
-                        </div>
-                      </div>
-                      <div>
-                        <p class="text-[11px] text-white/40 mb-1.5 font-medium">CVV</p>
-                        <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                          <div class="kr-security-code"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Cardholder name -->
-                    <div>
-                      <p class="text-[11px] text-white/40 mb-1.5 font-medium">Nombre del titular</p>
-                      <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                        <div class="kr-card-holder-name"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Security note -->
-                  <div class="flex items-center gap-2 pt-1">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <p class="text-[11px] text-white/25">Cifrado TLS 1.3 · Nunca almacenamos datos de tu tarjeta</p>
-                  </div>
-                </div>
-
-                <!-- Card hint (before order is created) -->
-                <div v-else-if="payMethod === 'card'" class="flex items-center gap-2 bg-night-2/60 border border-border rounded-xl px-4 py-3">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                  <p class="text-[11px] text-white/40">Al continuar se mostrarán los campos de tarjeta. <span class="text-violet font-medium">Visa, Mastercard y Amex</span> aceptados.</p>
-                </div>
-
-                <!-- Yape / Plin instruction -->
-                <div v-else class="text-[13px] text-white/40 text-center py-2 leading-relaxed max-w-xs mx-auto">
-                  Al confirmar se generará el QR de pago. Ábrelo en
-                  <span class="text-white font-medium">{{ payMethod === 'yape' ? 'Yape' : 'Plin' }}</span> y escanea para pagar.
-                </div>
-              </div>
-
-              <!-- Coupon accordion -->
-              <div class="mb-6 border border-border rounded-2xl overflow-hidden">
-                <button class="w-full flex items-center justify-between px-4 py-3.5 text-left" @click="couponOpen = !couponOpen">
-                  <div class="flex items-center gap-2.5 text-[13px] text-white/40">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                      <line x1="7" y1="7" x2="7.01" y2="7"/>
-                    </svg>
-                    ¿Tienes un cupón de descuento?
-                  </div>
-                  <svg :class="['w-3.5 h-3.5 transition-transform duration-200 text-white/25', couponOpen ? 'rotate-180' : '']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </button>
-                <Transition name="coupon">
-                  <div v-if="couponOpen" class="px-4 pb-4 flex gap-2">
-                    <input
-                      v-model="couponCode"
-                      type="text"
-                      placeholder="Ej: FOTIFY20"
-                      class="flex-1 bg-night-2 border border-border rounded-xl px-4 py-2.5 text-[13px] text-white placeholder-white/20 outline-none focus:border-violet/60 transition-all"
-                    />
-                    <button class="flex-shrink-0 bg-violet/15 hover:bg-violet/25 border border-violet/30 text-violet text-[13px] font-medium px-4 py-2.5 rounded-xl transition-colors">
-                      Aplicar
-                    </button>
-                  </div>
-                </Transition>
-              </div>
-
-              <!-- Terms -->
-              <label class="flex items-start gap-3 cursor-pointer mb-6 group">
-                <div class="flex-shrink-0 mt-0.5">
-                  <input v-model="termsAccepted" type="checkbox" class="sr-only" />
-                  <div :class="['w-5 h-5 rounded-[5px] border bg-night-2 flex items-center justify-center transition-all group-hover:border-violet/50', termsAccepted ? 'bg-violet border-violet' : 'border-border']">
-                    <svg v-if="termsAccepted" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                </div>
-                <span class="text-[12px] text-white/35 leading-relaxed">
-                  Acepto los <NuxtLink to="/legal" class="text-violet hover:text-white transition-colors underline underline-offset-2">Términos de uso</NuxtLink> y la <NuxtLink to="/legal" class="text-violet hover:text-white transition-colors underline underline-offset-2">Política de privacidad</NuxtLink> de Fotify. Entiendo que la descarga es digital e inmediata.
-                </span>
-              </label>
-
-              <!-- Error -->
-              <p v-if="orderError" class="text-[13px] text-coral text-center mb-4">{{ orderError }}</p>
-
-              <!-- Pay CTA: initial flow -->
-              <button
-                v-if="step !== 'payment-form'"
-                :disabled="step === 'processing'"
-                class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[16px] py-4 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-coral/25 active:scale-[.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                @click="handlePay"
-              >
-                <svg v-if="step === 'processing'" class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                {{ payLabel }}
-              </button>
-
-              <!-- Confirm CTA: shown when card fields are rendered -->
-              <template v-else>
-                <p v-if="krError" class="text-[13px] text-coral text-center mb-3">{{ krError }}</p>
-                <button
-                  :disabled="krSubmitting"
-                  class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[16px] py-4 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-coral/25 active:scale-[.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                  @click="handleCardSubmit"
-                >
-                  <svg v-if="krSubmitting" class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                  </svg>
-                  <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  {{ krSubmitting ? 'Procesando...' : `Pagar ${formattedTotal} de forma segura` }}
-                </button>
-              </template>
-
-              <p class="text-[11px] text-white/20 text-center mt-3">Procesado por Izipay · Datos encriptados TLS 1.3</p>
-
-            </template>
-          </div><!-- /LEFT -->
-
-          <!-- ── RIGHT: Order summary (sticky, desktop) ─────────────────────── -->
-          <div class="w-full lg:w-[360px] flex-shrink-0 order-1 lg:order-2 hidden lg:block sticky top-20">
-            <div class="bg-night-2 border border-border rounded-2xl overflow-hidden">
-
-              <!-- Header -->
-              <div class="px-5 pt-5 pb-4 border-b border-border">
-                <div class="text-[11px] font-semibold tracking-[2px] uppercase text-violet mb-1">Tu pedido</div>
-                <div class="font-display font-bold text-[16px] text-white tracking-tight">
-                  {{ event?.name ?? 'Cargando...' }}
-                </div>
-                <div v-if="event?.event_date" class="text-[12px] text-white/35 mt-0.5 flex items-center gap-1.5">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                  {{ formatDate(event.event_date) }}
-                </div>
-              </div>
-
-              <!-- Photo thumbnails -->
-              <div class="px-5 pt-4 pb-3">
-                <div class="text-[11px] text-white/30 mb-3 font-medium">
-                  {{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }} seleccionada{{ cart.count !== 1 ? 's' : '' }}
-                </div>
-                <div class="grid grid-cols-5 gap-2">
-                  <div
-                    v-for="i in Math.min(4, cart.count)"
-                    :key="i"
-                    class="aspect-[3/4] rounded-lg border border-border bg-night overflow-hidden flex items-center justify-center"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                  </div>
-                  <div v-if="cart.count > 4" class="aspect-[3/4] rounded-lg border border-border bg-night flex items-center justify-center">
-                    <span class="text-[11px] font-bold text-white/40">+{{ cart.count - 4 }}</span>
-                  </div>
-                </div>
-                <NuxtLink
-                  v-if="backLink"
-                  :to="backLink"
-                  class="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 mt-3 transition-colors w-fit"
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 12H5M12 5l-7 7 7 7"/>
-                  </svg>
-                  Cambiar selección
-                </NuxtLink>
-              </div>
-
-              <!-- Pricing -->
-              <div class="px-5 py-4 border-t border-border flex flex-col gap-2.5">
-                <div class="flex items-center justify-between text-[13px]">
-                  <span class="text-white/50">
-                    {{ cart.count }} foto{{ cart.count !== 1 ? 's' : '' }}
-                    <span v-if="event?.photo_price"> × S/ {{ event.photo_price }}</span>
-                  </span>
-                  <span class="text-white/50">{{ formattedTotal }}</span>
-                </div>
-              </div>
-
-              <!-- Total -->
-              <div class="px-5 py-4 border-t border-border">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-[13px] text-white/50 mb-0.5">Total a pagar</div>
-                    <div class="font-display font-bold text-[28px] text-white tracking-tight leading-none">{{ formattedTotal }}</div>
-                  </div>
-                  <div class="flex flex-col gap-0.5 text-right">
-                    <span class="text-[10px] text-white/35 flex items-center gap-1 justify-end">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      Descarga HD
-                    </span>
-                    <span class="text-[10px] text-white/35 flex items-center gap-1 justify-end">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      Sin marca de agua
-                    </span>
-                    <span class="text-[10px] text-white/35 flex items-center gap-1 justify-end">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      Acceso permanente
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Trust badges -->
-              <div class="px-5 py-4 border-t border-border grid grid-cols-2 gap-3">
-                <div class="flex items-center gap-1.5 text-[11px] text-white/35">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Pago 100% seguro
-                </div>
-                <div class="flex items-center gap-1.5 text-[11px] text-white/35">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                  Descarga inmediata
-                </div>
-                <div class="flex items-center gap-1.5 text-[11px] text-white/35">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                  Acceso permanente
-                </div>
-                <div class="flex items-center gap-1.5 text-[11px] text-white/35">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(251,191,36,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  Garantía 7 días
-                </div>
-              </div>
-
-              <!-- Processor badges -->
-              <div class="px-5 pb-4 flex items-center gap-3 flex-wrap">
-                <span class="text-[10px] text-white/20">Procesado por</span>
-                <div class="flex items-center gap-2">
-                  <div class="h-5 px-2 bg-night border border-border rounded flex items-center text-[9px] font-bold text-white/30 tracking-widest">IZIPAY</div>
-                  <div class="h-5 w-8 bg-[#1A6FBF]/40 border border-[#1A6FBF]/30 rounded flex items-center justify-center text-[7px] font-bold text-white/40">VISA</div>
-                  <div class="h-5 w-10 bg-[#EB001B]/10 border border-[#EB001B]/20 rounded flex items-center justify-center">
-                    <div class="flex">
-                      <div class="w-3 h-3 rounded-full bg-[#EB001B]/40"></div>
-                      <div class="w-3 h-3 rounded-full bg-[#F79E1B]/40 -ml-1.5"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div><!-- /RIGHT -->
-
-        </div>
+      <!-- ── NESTED ROUTE (detail / payment) ────────────────────────────────── -->
+      <section v-show="ck.step.value !== 'failed' && ck.step.value !== 'success'" class="px-5 md:px-10 lg:px-12 pb-16">
+        <NuxtPage />
       </section>
 
     </template>
@@ -660,8 +184,8 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from "~/composables/useApi"
-import type { CreateOrderInput, EventResponse, OrderResponse, SingleEnvelope } from "~/types"
+import { validateCartPhotos } from "~/composables/useApi"
+import { provideCheckout } from "~/composables/useCheckout"
 
 definePageMeta({ ssr: false, middleware: "auth" })
 useSeoMeta({ title: "Checkout — Fotify" })
@@ -669,329 +193,78 @@ useSeoMeta({ title: "Checkout — Fotify" })
 const auth = useAuthStore()
 const cart = useCartStore()
 const showAuth = useAuthModal()
-const route = useRoute()
-const izipay = useIzipay()
 
-type Step = "form" | "processing" | "payment-form" | "awaiting-qr" | "success" | "failed"
-type PayMethod = "card" | "yape" | "plin"
+const ck = provideCheckout()
 
-const step = ref<Step>("form")
-const payMethod = ref<PayMethod>("card")
-const event = ref<EventResponse | null>(null)
-const userEmail = ref("")
-const orderId = ref<number | null>(null)
-const successPhotoCount = ref(0)
-
-const termsAccepted = ref(false)
-const couponOpen = ref(false)
-const couponCode = ref("")
-const orderError = ref<string | null>(null)
-const failedError = ref<string | null>(null)
 const selectedFailReason = ref(-1)
-const krSubmitting = ref(false)
-const krError = ref<string | null>(null)
-const krPublicKey = ref("")
 
 const failReasons = [
-	"Fondos insuficientes en la cuenta",
-	"Datos de tarjeta incorrectos",
-	"Tarjeta bloqueada o vencida",
-	"Otro motivo",
+  "Fondos insuficientes en la cuenta",
+  "Datos de tarjeta incorrectos",
+  "Tarjeta bloqueada o vencida",
+  "Otro motivo",
 ]
 
-const qrSeconds = ref(600)
-let qrInterval: ReturnType<typeof setInterval> | null = null
-let pollInterval: ReturnType<typeof setInterval> | null = null
-
-// Computed
-const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail.value))
-
-const totalAmount = computed(() => {
-	if (!event.value?.photo_price || !cart.count) return 0
-	return cart.count * event.value.photo_price
-})
-
-const formattedTotal = computed(() => `S/ ${totalAmount.value.toFixed(2)}`)
-
-const qrTimerDisplay = computed(() => {
-	const m = Math.floor(qrSeconds.value / 60)
-		.toString()
-		.padStart(2, "0")
-	const s = (qrSeconds.value % 60).toString().padStart(2, "0")
-	return `QR válido por ${m}:${s}`
-})
-
-const payLabel = computed(() => {
-	if (step.value === "processing") return "Preparando pago..."
-	if (payMethod.value === "yape") return "Confirmar pago con Yape"
-	if (payMethod.value === "plin") return "Confirmar pago con Plin"
-	return `Pagar ${formattedTotal.value} de forma segura`
-})
-
-const backLink = computed(() => {
-	const slug = route.query.event_slug as string | undefined
-	if (slug) return `/events/${slug}`
-	return "/events"
-})
-
-// Init
+// Guards + initialization
 onMounted(async () => {
-	if (!auth.isAuthenticated) {
-		showAuth.value = true
-		return
-	}
-	if (!cart.hasPhotos) {
-		await navigateTo("/events")
-		return
-	}
-	await Promise.all([fetchEvent(), fetchUserEmail()])
+  if (!auth.isAuthenticated) {
+    showAuth.value = true
+    ck.isValidating.value = false
+    return
+  }
+  if (!cart.hasPhotos) {
+    ck.isValidating.value = false
+    await navigateTo("/events")
+    return
+  }
+
+  await Promise.all([ck.fetchEvent(), ck.fetchUserEmail()])
+
+  // Validate cart photos still exist (CART-02)
+  if (cart.eventId && cart.hasPhotos) {
+    try {
+      const res = await validateCartPhotos(cart.eventId, [...cart.photoIds])
+      if (res.invalid.length > 0) {
+        const invalidSet = new Set(res.invalid)
+        ck.unavailablePhotos.value = cart.photos.filter((p) => invalidSet.has(p.id))
+
+        if (cart.orderType === "full_event") {
+          cart.orderType = "single"
+        }
+
+        cart.removePhotos(res.invalid)
+
+        // If all photos are invalid, keep the page visible so the user
+        // can see which ones were unavailable (CART-02).
+      }
+    } catch {
+      // Network error — skip validation, POST /orders validates server-side
+    }
+  }
+
+  ck.isValidating.value = false
 })
 
-onUnmounted(() => {
-	if (qrInterval) clearInterval(qrInterval)
-	if (pollInterval) clearInterval(pollInterval)
-	izipay.destroy()
+// Redirect when cart becomes empty (e.g. user clicks "Vaciar carrito")
+// Skip redirect when unavailable photos are being shown (all-invalid scenario)
+watch(() => cart.hasPhotos, (has) => {
+  if (!has && ck.step.value !== "success" && ck.unavailablePhotos.value.length === 0) {
+    navigateTo(ck.backLink.value)
+  }
 })
 
-async function fetchEvent() {
-	if (!cart.eventId) return
-	try {
-		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${cart.eventId}`)
-		event.value = res.data ?? null
-	} catch {
-		/* optional context */
-	}
-}
-
-async function fetchUserEmail() {
-	try {
-		const res = await apiFetch<{ data?: { email?: string } }>("/auth/me")
-		userEmail.value = res.data?.email ?? ""
-	} catch {
-		/* not critical */
-	}
-}
-
-function formatDate(dateStr: string): string {
-	return new Date(dateStr).toLocaleDateString("es-PE", {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	})
-}
-
-function startQrTimer() {
-	qrSeconds.value = 600
-	if (qrInterval) clearInterval(qrInterval)
-	qrInterval = setInterval(() => {
-		if (qrSeconds.value <= 0) {
-			if (qrInterval) clearInterval(qrInterval)
-			qrInterval = null
-			return
-		}
-		qrSeconds.value--
-	}, 1000)
-}
-
-watch(payMethod, (m) => {
-	if (m === "yape" || m === "plin") startQrTimer()
-	else {
-		if (qrInterval) {
-			clearInterval(qrInterval)
-			qrInterval = null
-		}
-	}
-})
-
-async function handlePay() {
-	if (!termsAccepted.value) {
-		orderError.value = "Acepta los términos de uso para continuar."
-		return
-	}
-	if (!emailValid.value) {
-		orderError.value = "Ingresa un correo válido."
-		return
-	}
-
-	orderError.value = null
-	step.value = "processing"
-	successPhotoCount.value = cart.count
-
-	try {
-		const orderRes = await apiFetch<{ data?: OrderResponse }>("/orders", {
-			method: "POST",
-			body: {
-				event_id: cart.eventId,
-				payment_gateway: "izipay",
-				photo_ids: [...cart.photoIds],
-				...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
-				type: cart.orderType,
-			} as CreateOrderInput,
-		})
-
-		const oid = orderRes.data?.id
-		if (!oid) throw new Error("No se recibió un ID de orden válido")
-		orderId.value = oid
-
-		if (payMethod.value === "card") {
-			// Get Izipay form token from backend
-			const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(
-				`/orders/${oid}/payment-token`,
-				{
-					method: "POST",
-				},
-			)
-
-			if (!tokenRes.data) throw new Error("No se recibió token de pago")
-			const { form_token, public_key } = tokenRes.data
-
-			// Set the key before the div appears in the DOM so Krypton's
-			// MutationObserver finds kr-public-key immediately and skips CLIENT_501.
-			krPublicKey.value = public_key
-
-			// Render the Krypton embedded form
-			step.value = "payment-form"
-
-			// Wait one tick so the kr-embedded div is in the DOM
-			await nextTick()
-			await izipay.initForm(form_token, public_key)
-
-			// Krypton calls this when the user submits the card form
-			izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
-				krSubmitting.value = false
-				try {
-					await apiFetch(`/orders/${oid}/confirm-payment`, {
-						method: "POST",
-						body: { kr_answer: krAnswer, kr_hash: krHash },
-					})
-					persistOrderPhotos(oid, [...cart.photoIds])
-					cart.clear()
-					step.value = "success"
-				} catch (err: unknown) {
-					step.value = "failed"
-					const e = err as { data?: { error?: string }; message?: string }
-					failedError.value = e?.data?.error || e?.message || "Pago no completado."
-				}
-			})
-		} else {
-			// Yape / Plin: show QR + poll
-			step.value = "awaiting-qr"
-			startQrTimer()
-			pollOrderStatus(oid)
-		}
-	} catch (err: unknown) {
-		step.value = "failed"
-		const e = err as { data?: { error?: string }; message?: string }
-		failedError.value = e?.data?.error || e?.message || "Error al procesar el pago."
-	}
-}
-
-async function handleCardSubmit() {
-	krError.value = null
-	krSubmitting.value = true
-	try {
-		await izipay.submit()
-		// onPaymentResult callback takes over from here
-	} catch (err: unknown) {
-		const e = err as { message?: string }
-		krError.value = e?.message || "Revisa los datos de la tarjeta e intenta de nuevo."
-		krSubmitting.value = false
-	}
-}
-
-function pollOrderStatus(oid: number) {
-	if (pollInterval) clearInterval(pollInterval)
-	pollInterval = setInterval(async () => {
-		try {
-			const res = await apiFetch<{ data?: OrderResponse }>(`/orders/${oid}`)
-			if (res.data?.status === "paid") {
-				if (pollInterval) clearInterval(pollInterval)
-				pollInterval = null
-				persistOrderPhotos(oid, [...cart.photoIds])
-				cart.clear()
-				step.value = "success"
-			}
-		} catch {
-			/* ignore poll errors */
-		}
-	}, 3000)
-}
-
-function persistOrderPhotos(oid: number, ids: number[]) {
-	try {
-		const key = `fotify_order_photos_${oid}`
-		localStorage.setItem(key, JSON.stringify(ids))
-	} catch {
-		/* ignore storage errors */
-	}
+function retryPayment() {
+  ck.step.value = "detail"
+  ck.failedError.value = null
+  selectedFailReason.value = -1
 }
 
 function navigateToDownloads() {
-	if (orderId.value) navigateTo(`/downloads/${orderId.value}`)
+  if (ck.orderId.value) navigateTo(`/downloads/${ck.orderId.value}`)
 }
 </script>
 
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-.coupon-enter-active, .coupon-leave-active {
-  transition: max-height 0.3s ease, opacity 0.2s ease;
-  overflow: hidden;
-}
-.coupon-enter-from, .coupon-leave-to { max-height: 0; opacity: 0; }
-.coupon-enter-to, .coupon-leave-from { max-height: 80px; opacity: 1; }
-
-.qr-ring { animation: spin-slow 10s linear infinite; }
-@keyframes spin-slow { to { transform: rotate(360deg); } }
-
-/* ── Krypton injected elements ────────────────────────────────────────── */
-
-/* Hide the default Krypton pay button — we use our own */
-:deep(.kr-payment-button) {
-  display: none !important;
-}
-
-/* Reset Krypton's wrapper styling for installments and deferred payment */
-:deep(.kr-installment-count),
-:deep(.kr-do-register) {
-  width: 100%;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Style the selects to match the other card fields */
-:deep(.kr-installment-count select),
-:deep(.kr-do-register select) {
-  width: 100%;
-  background-color: #1A1030;
-  border: 1px solid #2A1F4A;
-  border-radius: 0.75rem;
-  padding: 0.8125rem 2.5rem 0.8125rem 1rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
-  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-:deep(.kr-installment-count select:focus),
-:deep(.kr-do-register select:focus) {
-  border-color: rgba(124, 58, 237, 0.6);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.10);
-}
-
-:deep(.kr-installment-count select option),
-:deep(.kr-do-register select option) {
-  background-color: #1A1030;
-  color: white;
-}
 </style>
