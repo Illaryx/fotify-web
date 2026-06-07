@@ -63,27 +63,13 @@
                 {{ loginError }}
               </div>
 
-              <button type="submit" :disabled="loginLoading" class="w-full bg-coral hover:opacity-90 disabled:opacity-60 text-white font-semibold py-3 rounded-full text-sm transition-opacity flex items-center justify-center gap-2 mt-1">
+              <button type="submit" :disabled="loginLoading || isLoginLocked" class="w-full bg-coral hover:opacity-90 disabled:opacity-60 text-white font-semibold py-3 rounded-full text-sm transition-opacity flex items-center justify-center gap-2 mt-1">
                 <svg v-if="loginLoading" class="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2A6 6 0 0 1 14 8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
-                {{ loginLoading ? 'Entrando...' : 'Entrar' }}
+                {{ isLoginLocked ? `Espera ${loginLockRemaining}s` : loginLoading ? 'Entrando...' : 'Entrar' }}
               </button>
             </form>
 
-            <div class="flex items-center gap-3 my-5">
-              <div class="flex-1 h-px bg-border" />
-              <span class="text-xs text-white/25">o continúa con</span>
-              <div class="flex-1 h-px bg-border" />
-            </div>
-
-            <button disabled class="w-full flex items-center justify-center gap-3 border border-border bg-transparent text-white/40 py-3 rounded-full text-sm opacity-50 cursor-not-allowed">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M15.4 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.15a3.55 3.55 0 0 1-1.54 2.33v1.93h2.5C14.6 12.59 15.4 10.56 15.4 8.18Z" fill="#4285F4"/>
-                <path d="M8 16c2.08 0 3.83-.69 5.1-1.86l-2.49-1.93c-.69.46-1.57.73-2.61.73-2 0-3.7-1.35-4.3-3.17H1.12v1.99A8 8 0 0 0 8 16Z" fill="#34A853"/>
-                <path d="M3.7 9.77A4.8 4.8 0 0 1 3.45 8c0-.61.1-1.21.25-1.77V4.24H1.12A8.01 8.01 0 0 0 0 8c0 1.3.3 2.52.84 3.57l2.86-1.8Z" fill="#FBBC05"/>
-                <path d="M8 3.18c1.12 0 2.13.39 2.92 1.14l2.19-2.19C11.83.79 10.08 0 8 0A8 8 0 0 0 1.12 4.24l2.58 2c.6-1.82 2.3-3.06 4.3-3.06Z" fill="#EA4335"/>
-              </svg>
-              Continuar con Google
-            </button>
+            <!-- Google OAuth: fase 2 (AUTH-02) -->
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
@@ -122,7 +108,7 @@
                   </button>
                 </div>
                 <div class="mt-2 flex gap-1">
-                  <div v-for="i in 3" :key="i" class="flex-1 h-1 bg-border rounded-full overflow-hidden">
+                  <div v-for="i in 4" :key="i" class="flex-1 h-1 bg-border rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-300"
                       :style="{ width: passwordStrength >= i ? '100%' : '0%', background: strengthBarColor }"
@@ -152,21 +138,7 @@
               </button>
             </form>
 
-            <div class="flex items-center gap-3 my-5">
-              <div class="flex-1 h-px bg-border" />
-              <span class="text-xs text-white/25">o regístrate con</span>
-              <div class="flex-1 h-px bg-border" />
-            </div>
-
-            <button disabled class="w-full flex items-center justify-center gap-3 border border-border bg-transparent text-white/40 py-3 rounded-full text-sm opacity-50 cursor-not-allowed">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M15.4 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.15a3.55 3.55 0 0 1-1.54 2.33v1.93h2.5C14.6 12.59 15.4 10.56 15.4 8.18Z" fill="#4285F4"/>
-                <path d="M8 16c2.08 0 3.83-.69 5.1-1.86l-2.49-1.93c-.69.46-1.57.73-2.61.73-2 0-3.7-1.35-4.3-3.17H1.12v1.99A8 8 0 0 0 8 16Z" fill="#34A853"/>
-                <path d="M3.7 9.77A4.8 4.8 0 0 1 3.45 8c0-.61.1-1.21.25-1.77V4.24H1.12A8.01 8.01 0 0 0 0 8c0 1.3.3 2.52.84 3.57l2.86-1.8Z" fill="#FBBC05"/>
-                <path d="M8 3.18c1.12 0 2.13.39 2.92 1.14l2.19-2.19C11.83.79 10.08 0 8 0A8 8 0 0 0 1.12 4.24l2.58 2c.6-1.82 2.3-3.06 4.3-3.06Z" fill="#EA4335"/>
-              </svg>
-              Continuar con Google
-            </button>
+            <!-- Google OAuth: fase 2 (AUTH-02) -->
 
             <p class="text-center text-xs text-white/30 mt-5">
               ¿Eres fotógrafo?
@@ -270,6 +242,10 @@ const loginForm = reactive<LoginInput>({ email: "", password: "" })
 const showLoginPass = ref(false)
 const loginLoading = ref(false)
 const loginError = ref("")
+const loginAttempts = ref(0)
+const loginLockedUntil = ref(0)
+const loginLockRemaining = ref(0)
+let loginLockTimer: ReturnType<typeof setInterval> | null = null
 
 const registerForm = reactive<RegisterInput & { terms: boolean }>({
 	full_name: "",
@@ -284,29 +260,34 @@ const registerError = ref("")
 const forgotEmail = ref("")
 const forgotLoading = ref(false)
 
-const passwordStrength = computed(() => {
+const passwordChecks = computed(() => {
 	const val = registerForm.password
-	if (!val) return 0
-	let score = 0
-	if (val.length >= 8) score++
-	if (/[A-Z]/.test(val) || /[0-9]/.test(val)) score++
-	if (/[^A-Za-z0-9]/.test(val) && val.length >= 10) score++
-	return score
+	return {
+		length: val.length >= 8,
+		uppercase: /[A-Z]/.test(val),
+		number: /[0-9]/.test(val),
+		special: /[^A-Za-z0-9]/.test(val),
+	}
 })
 
+const passwordStrength = computed(() => {
+	const c = passwordChecks.value
+	return [c.length, c.uppercase, c.number, c.special].filter(Boolean).length
+})
+
+const isPasswordValid = computed(() => passwordStrength.value === 4)
+
 const strengthBarColor = computed(
-	() => ["#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#2A1F4A",
+	() => ["#ef4444", "#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#2A1F4A",
 )
 const strengthLabelColor = computed(() => {
 	if (!registerForm.password) return "rgba(255,255,255,.25)"
-	return ["#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#ef4444"
+	return ["#ef4444", "#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#ef4444"
 })
 const strengthLabel = computed(() => {
 	if (!registerForm.password) return "Escribe para verificar seguridad"
 	return (
-		["Contraseña muy corta", "Contraseña débil", "Contraseña media", "Contraseña fuerte"][
-			passwordStrength.value
-		] ?? "Contraseña muy corta"
+		["Muy débil", "Débil", "Media", "Fuerte"][passwordStrength.value - 1] ?? "Muy débil"
 	)
 })
 
@@ -327,8 +308,27 @@ function close() {
 	emit("update:modelValue", false)
 }
 
+function startLoginLock(seconds: number) {
+	loginLockedUntil.value = Date.now() + seconds * 1000
+	loginLockRemaining.value = seconds
+	if (loginLockTimer) clearInterval(loginLockTimer)
+	loginLockTimer = setInterval(() => {
+		const left = Math.ceil((loginLockedUntil.value - Date.now()) / 1000)
+		if (left <= 0) {
+			loginLockRemaining.value = 0
+			if (loginLockTimer) clearInterval(loginLockTimer)
+			loginLockTimer = null
+		} else {
+			loginLockRemaining.value = left
+		}
+	}, 1000)
+}
+
+const isLoginLocked = computed(() => loginLockRemaining.value > 0)
+
 async function handleLogin() {
 	loginError.value = ""
+	if (isLoginLocked.value) return
 	if (!loginForm.email || !loginForm.password) {
 		loginError.value = "Por favor completa todos los campos."
 		triggerShake()
@@ -340,6 +340,7 @@ async function handleLogin() {
 			method: "POST",
 			body: { email: loginForm.email, password: loginForm.password },
 		})
+		loginAttempts.value = 0
 		if (res.data) {
 			auth.setTokens(res.data)
 			if (auth.isPhotographer || auth.isAdmin) {
@@ -349,8 +350,22 @@ async function handleLogin() {
 		}
 		close()
 	} catch (e: unknown) {
-		const msg = (e as { data?: { error?: string } })?.data?.error
-		loginError.value = msg ?? "Email o contraseña incorrectos. Inténtalo de nuevo."
+		const fetchErr = e as { status?: number; data?: { error?: string } }
+		if (fetchErr?.status === 429) {
+			loginError.value = "Demasiados intentos. Espera un momento antes de reintentar."
+			startLoginLock(30)
+			triggerShake()
+			return
+		}
+		loginAttempts.value++
+		if (loginAttempts.value >= 5) {
+			const lockSeconds = Math.min(30 * 2 ** (loginAttempts.value - 5), 300)
+			loginError.value = `Demasiados intentos. Espera ${lockSeconds} segundos.`
+			startLoginLock(lockSeconds)
+		} else {
+			const msg = fetchErr?.data?.error
+			loginError.value = msg ?? "Email o contraseña incorrectos. Inténtalo de nuevo."
+		}
 		triggerShake()
 	} finally {
 		loginLoading.value = false
@@ -369,8 +384,14 @@ async function handleRegister() {
 		triggerShake()
 		return
 	}
-	if (registerForm.password.length < 8) {
-		registerError.value = "La contraseña debe tener al menos 8 caracteres."
+	if (!isPasswordValid.value) {
+		const missing: string[] = []
+		const c = passwordChecks.value
+		if (!c.length) missing.push("8 caracteres")
+		if (!c.uppercase) missing.push("1 mayúscula")
+		if (!c.number) missing.push("1 número")
+		if (!c.special) missing.push("1 carácter especial")
+		registerError.value = `La contraseña necesita: ${missing.join(", ")}.`
 		triggerShake()
 		return
 	}
@@ -398,8 +419,16 @@ async function handleRegister() {
 async function handleForgot() {
 	if (!forgotEmail.value) return
 	forgotLoading.value = true
-	await new Promise((r) => setTimeout(r, 1000))
-	forgotLoading.value = false
+	try {
+		await apiFetch("/auth/forgot-password", {
+			method: "POST",
+			body: { email: forgotEmail.value },
+		})
+	} catch {
+		// Always show success to prevent email enumeration
+	} finally {
+		forgotLoading.value = false
+	}
 	view.value = "forgot-success"
 }
 

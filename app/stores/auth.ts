@@ -34,14 +34,41 @@ export const useAuthStore = defineStore("auth", () => {
 			})
 			if (data.data) setTokens(data.data)
 		} catch {
+			const { show } = useToast()
+			show("Tu sesión expiró. Por favor inicia sesión nuevamente.", { type: "warning" })
 			logout()
 		}
 	}
 
-	function logout() {
+	let authChannel: BroadcastChannel | null = null
+	if (import.meta.client) {
+		authChannel = new BroadcastChannel("fotify_auth")
+		authChannel.onmessage = (e) => {
+			if (e.data === "logout") {
+				accessToken.value = null
+				refreshToken.value = null
+				role.value = null
+				navigateTo("/")
+			}
+		}
+	}
+
+	async function logout(broadcast = true) {
+		if (refreshToken.value) {
+			try {
+				await $fetch("/auth/logout", {
+					baseURL: useRuntimeConfig().public.apiBase,
+					method: "POST",
+					body: { refresh_token: refreshToken.value },
+				})
+			} catch {
+				// Best-effort — clear local state regardless
+			}
+		}
 		accessToken.value = null
 		refreshToken.value = null
 		role.value = null
+		if (broadcast) authChannel?.postMessage("logout")
 		navigateTo("/")
 	}
 

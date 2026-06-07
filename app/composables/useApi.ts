@@ -1,3 +1,5 @@
+let refreshPromise: Promise<void> | null = null
+
 export async function apiFetch<T>(
 	path: string,
 	options: Parameters<typeof $fetch>[1] = {},
@@ -20,7 +22,12 @@ export async function apiFetch<T>(
 	} catch (err: unknown) {
 		const fetchErr = err as { status?: number }
 		if (fetchErr?.status === 401 && tokens.refresh) {
-			await refresh()
+			if (!refreshPromise) {
+				refreshPromise = refresh().finally(() => {
+					refreshPromise = null
+				})
+			}
+			await refreshPromise
 			return await doFetch()
 		}
 		throw err
