@@ -436,12 +436,15 @@
 const dashboardBase = useRuntimeConfig().public.dashboardBase
 
 useSeoMeta({
-  title: 'Para fotógrafos — Fotify',
-  description: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende. 70% de cada venta es tuyo.',
-  ogTitle: 'Para fotógrafos — Fotify',
-  ogDescription: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.',
-  twitterTitle: 'Para fotógrafos — Fotify',
-  twitterDescription: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.',
+	title: "Para fotógrafos — Fotify",
+	description:
+		"Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende. 70% de cada venta es tuyo.",
+	ogTitle: "Para fotógrafos — Fotify",
+	ogDescription:
+		"Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.",
+	twitterTitle: "Para fotógrafos — Fotify",
+	twitterDescription:
+		"Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.",
 })
 
 // Calculator
@@ -449,118 +452,121 @@ const calcPhotos = ref(2000)
 const calcEvents = ref(2)
 const calcConv = ref(15)
 
-const photosLabel = computed(() => calcPhotos.value.toLocaleString() + ' fotos')
+const photosLabel = computed(() => calcPhotos.value.toLocaleString() + " fotos")
 const calcAthletes = computed(() => Math.round(calcPhotos.value * calcEvents.value * 0.3))
-const calcBuyers = computed(() => Math.round(calcAthletes.value * calcConv.value / 100))
+const calcBuyers = computed(() => Math.round((calcAthletes.value * calcConv.value) / 100))
 const calcGross = computed(() => calcBuyers.value * 59)
 const calcYours = computed(() => Math.round(calcGross.value * 0.7))
 
 // FAQ
 const openFaq = ref<number | null>(null)
 function toggleFaq(i: number) {
-  openFaq.value = openFaq.value === i ? null : i
+	openFaq.value = openFaq.value === i ? null : i
 }
 
 const faq = [
-  {
-    q: '¿Necesito equipo especial para subir fotos?',
-    a: 'No. Cualquier archivo JPG o RAW exportado funciona. Puedes subir desde tu computadora, disco externo, o directamente desde Lightroom con nuestro plugin (próximamente).',
-  },
-  {
-    q: '¿Qué pasa si el atleta no se encuentra con la IA?',
-    a: 'El atleta también puede buscar por número de dorsal. Además, nuestro sistema aprende y mejora constantemente. La tasa de coincidencia actual es del 97%.',
-  },
-  {
-    q: '¿Cómo recibo mis pagos?',
-    a: 'Transferencia bancaria directa (BCP, BBVA, Interbank, Scotiabank) o Yape. El pago se genera el 1 y 15 de cada mes para las ventas del período anterior. Mínimo de retiro: S/ 50.',
-  },
-  {
-    q: '¿Puedo establecer mis propios precios?',
-    a: 'Actualmente los precios son estándar (S/ 15 / pack 3 S/ 38 / pack 5 S/ 59 etc.) para asegurar conversión óptima. Los precios personalizados están disponibles con el plan Pro.',
-  },
-  {
-    q: '¿Las fotos siguen siendo mías?',
-    a: 'Sí. Tú mantienes todos los derechos de autor. Fotify opera como tu agente de ventas, no como propietario. Puedes retirar tus fotos en cualquier momento.',
-  },
+	{
+		q: "¿Necesito equipo especial para subir fotos?",
+		a: "No. Cualquier archivo JPG o RAW exportado funciona. Puedes subir desde tu computadora, disco externo, o directamente desde Lightroom con nuestro plugin (próximamente).",
+	},
+	{
+		q: "¿Qué pasa si el atleta no se encuentra con la IA?",
+		a: "El atleta también puede buscar por número de dorsal. Además, nuestro sistema aprende y mejora constantemente. La tasa de coincidencia actual es del 97%.",
+	},
+	{
+		q: "¿Cómo recibo mis pagos?",
+		a: "Transferencia bancaria directa (BCP, BBVA, Interbank, Scotiabank) o Yape. El pago se genera el 1 y 15 de cada mes para las ventas del período anterior. Mínimo de retiro: S/ 50.",
+	},
+	{
+		q: "¿Puedo establecer mis propios precios?",
+		a: "Actualmente los precios son estándar (S/ 15 / pack 3 S/ 38 / pack 5 S/ 59 etc.) para asegurar conversión óptima. Los precios personalizados están disponibles con el plan Pro.",
+	},
+	{
+		q: "¿Las fotos siguen siendo mías?",
+		a: "Sí. Tú mantienes todos los derechos de autor. Fotify opera como tu agente de ventas, no como propietario. Puedes retirar tus fotos en cualquier momento.",
+	},
 ]
 
 const benefits = [
-  {
-    title: 'IA que vende por ti',
-    desc: 'Nuestra IA de reconocimiento facial identifica a cada atleta en tus fotos y las pone delante de ellos automáticamente. Sin que tú hagas nada extra.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="4" stroke="#7C3AED" stroke-width="1.5"/><path d="M11 4V2M11 20V18M4 11H2M20 11H18M6.3 6.3L4.9 4.9M17.1 17.1L15.7 15.7M17.1 6.3L15.7 4.9M6.3 17.1L4.9 18.5" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
-  },
-  {
-    title: 'Tus fotos, siempre protegidas',
-    desc: 'Marca de agua automática antes del pago. Los atletas ven una preview con "FOTIFY" superpuesto. Solo quien paga descarga la foto limpia en alta resolución.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="16" height="16" rx="3" stroke="#7C3AED" stroke-width="1.5"/><path d="M7 11L10 14L15 9" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  },
-  {
-    title: 'Dashboard con analytics real',
-    desc: 'Ve cuántas personas vieron tus fotos, cuántas compraron, qué eventos rinden más. Datos para que crezcas como profesional.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 7H19M3 12H15M3 17H11" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
-  },
-  {
-    title: 'Perfil público y reputación',
-    desc: 'Tu perfil en Fotify muestra todos tus eventos y portfolio. Los atletas te siguen y vuelven a buscar tus fotos en próximas carreras.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M12 3L14.5 9H21L16 13L18 19L12 15.5L6 19L8 13L3 9H9.5L12 3Z" stroke="#7C3AED" stroke-width="1.5" stroke-linejoin="round" fill="none"/></svg>',
-  },
-  {
-    title: 'Pagos automáticos cada 15 días',
-    desc: 'Sin trámites, sin esperas. Cada quincena recibes tu dinero directo a tu cuenta bancaria o billetera digital. Solo en Perú por ahora.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="#7C3AED" stroke-width="1.5"/><path d="M11 7V11.5L14 13.5" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
-  },
-  {
-    title: 'Acceso a miles de eventos en LATAM',
-    desc: 'Conectamos fotógrafos con organizadores de eventos. Tú solo fotografía. Nosotros te ponemos en el mapa de las carreras más grandes de la región.',
-    icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M18 9A6 6 0 0 0 6 9C6 14 12 19 12 19C12 19 18 14 18 9Z" stroke="#7C3AED" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2" stroke="#7C3AED" stroke-width="1.5"/></svg>',
-  },
+	{
+		title: "IA que vende por ti",
+		desc: "Nuestra IA de reconocimiento facial identifica a cada atleta en tus fotos y las pone delante de ellos automáticamente. Sin que tú hagas nada extra.",
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="4" stroke="#7C3AED" stroke-width="1.5"/><path d="M11 4V2M11 20V18M4 11H2M20 11H18M6.3 6.3L4.9 4.9M17.1 17.1L15.7 15.7M17.1 6.3L15.7 4.9M6.3 17.1L4.9 18.5" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
+	},
+	{
+		title: "Tus fotos, siempre protegidas",
+		desc: 'Marca de agua automática antes del pago. Los atletas ven una preview con "FOTIFY" superpuesto. Solo quien paga descarga la foto limpia en alta resolución.',
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="16" height="16" rx="3" stroke="#7C3AED" stroke-width="1.5"/><path d="M7 11L10 14L15 9" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+	},
+	{
+		title: "Dashboard con analytics real",
+		desc: "Ve cuántas personas vieron tus fotos, cuántas compraron, qué eventos rinden más. Datos para que crezcas como profesional.",
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 7H19M3 12H15M3 17H11" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
+	},
+	{
+		title: "Perfil público y reputación",
+		desc: "Tu perfil en Fotify muestra todos tus eventos y portfolio. Los atletas te siguen y vuelven a buscar tus fotos en próximas carreras.",
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M12 3L14.5 9H21L16 13L18 19L12 15.5L6 19L8 13L3 9H9.5L12 3Z" stroke="#7C3AED" stroke-width="1.5" stroke-linejoin="round" fill="none"/></svg>',
+	},
+	{
+		title: "Pagos automáticos cada 15 días",
+		desc: "Sin trámites, sin esperas. Cada quincena recibes tu dinero directo a tu cuenta bancaria o billetera digital. Solo en Perú por ahora.",
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="#7C3AED" stroke-width="1.5"/><path d="M11 7V11.5L14 13.5" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/></svg>',
+	},
+	{
+		title: "Acceso a miles de eventos en LATAM",
+		desc: "Conectamos fotógrafos con organizadores de eventos. Tú solo fotografía. Nosotros te ponemos en el mapa de las carreras más grandes de la región.",
+		icon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M18 9A6 6 0 0 0 6 9C6 14 12 19 12 19C12 19 18 14 18 9Z" stroke="#7C3AED" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2" stroke="#7C3AED" stroke-width="1.5"/></svg>',
+	},
 ]
 
 const testimonials = [
-  {
-    quote: '"Antes vendía 3-4 fotos por evento si tenía suerte. Con Fotify en el primer mes ya vendí 127 fotos en la Maratón Lima. La IA es lo que marca la diferencia."',
-    name: 'Carlos R.',
-    initials: 'CR',
-    location: 'Lima · Running & Triatlón',
-    gradFrom: '#7C3AED',
-    gradTo: '#FF3D6B',
-  },
-  {
-    quote: '"Lo que más me gustó fue que no tengo que perseguir a nadie. Subo las fotos y el dinero llega solo cada quincena. Gano más que en trabajos corporativos por hora."',
-    name: 'María P.',
-    initials: 'MP',
-    location: 'Arequipa · Ciclismo & Trail',
-    gradFrom: '#5B21B6',
-    gradTo: '#7C3AED',
-  },
-  {
-    quote: '"Trabajo 3 eventos al mes y saco S/ 4,200 limpios. Mi récord fue la IronMan Huacachina: 340 fotos vendidas. Ahora esto es mi trabajo principal."',
-    name: 'Andrés L.',
-    initials: 'AL',
-    location: 'Lima · Triatlón & Natación',
-    gradFrom: '#FF3D6B',
-    gradTo: '#7C3AED',
-  },
+	{
+		quote:
+			'"Antes vendía 3-4 fotos por evento si tenía suerte. Con Fotify en el primer mes ya vendí 127 fotos en la Maratón Lima. La IA es lo que marca la diferencia."',
+		name: "Carlos R.",
+		initials: "CR",
+		location: "Lima · Running & Triatlón",
+		gradFrom: "#7C3AED",
+		gradTo: "#FF3D6B",
+	},
+	{
+		quote:
+			'"Lo que más me gustó fue que no tengo que perseguir a nadie. Subo las fotos y el dinero llega solo cada quincena. Gano más que en trabajos corporativos por hora."',
+		name: "María P.",
+		initials: "MP",
+		location: "Arequipa · Ciclismo & Trail",
+		gradFrom: "#5B21B6",
+		gradTo: "#7C3AED",
+	},
+	{
+		quote:
+			'"Trabajo 3 eventos al mes y saco S/ 4,200 limpios. Mi récord fue la IronMan Huacachina: 340 fotos vendidas. Ahora esto es mi trabajo principal."',
+		name: "Andrés L.",
+		initials: "AL",
+		location: "Lima · Triatlón & Natación",
+		gradFrom: "#FF3D6B",
+		gradTo: "#7C3AED",
+	},
 ]
 
 const freePlan = [
-  { text: 'Hasta 3 eventos activos', active: true },
-  { text: '2,000 fotos por evento', active: true },
-  { text: 'IA facial incluida', active: true },
-  { text: '70% de comisión', active: true },
-  { text: 'Perfil público', active: true },
-  { text: 'Analytics avanzado', active: false },
-  { text: 'Eventos ilimitados', active: false },
+	{ text: "Hasta 3 eventos activos", active: true },
+	{ text: "2,000 fotos por evento", active: true },
+	{ text: "IA facial incluida", active: true },
+	{ text: "70% de comisión", active: true },
+	{ text: "Perfil público", active: true },
+	{ text: "Analytics avanzado", active: false },
+	{ text: "Eventos ilimitados", active: false },
 ]
 
 const proPlan = [
-  'Eventos ilimitados',
-  '5,000 fotos por evento',
-  'IA facial prioritaria',
-  '75% de comisión',
-  'Analytics avanzado',
-  'Soporte prioritario',
-  'Badge verificado en perfil',
+	"Eventos ilimitados",
+	"5,000 fotos por evento",
+	"IA facial prioritaria",
+	"75% de comisión",
+	"Analytics avanzado",
+	"Soporte prioritario",
+	"Badge verificado en perfil",
 ]
 </script>

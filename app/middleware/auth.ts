@@ -1,4 +1,4 @@
 export default defineNuxtRouteMiddleware(() => {
-  const auth = useAuthStore()
-  if (!auth.isAuthenticated) return navigateTo('/')
+	const auth = useAuthStore()
+	if (!auth.isAuthenticated) return navigateTo("/")
 })

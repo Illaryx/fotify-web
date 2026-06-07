@@ -150,36 +150,41 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from '~/composables/useApi'
-import type { EventResponse, ListEnvelope } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import type { EventResponse, ListEnvelope } from "~/types"
 
 useSeoMeta({
-  title: 'Explorar eventos — Fotify',
-  description: 'Descubre miles de eventos deportivos en Perú y LATAM. Maratones, triatlones, ciclismo y más.',
+	title: "Explorar eventos — Fotify",
+	description:
+		"Descubre miles de eventos deportivos en Perú y LATAM. Maratones, triatlones, ciclismo y más.",
 })
 
 const LIMIT = 24
-const CITIES = ['Todas', 'Lima', 'Arequipa', 'Cusco']
+const CITIES = ["Todas", "Lima", "Arequipa", "Cusco"]
 
-interface EventCategory { id: number; name: string; slug: string }
+interface EventCategory {
+	id: number
+	name: string
+	slug: string
+}
 const config = useRuntimeConfig()
 const rawCategories = ref<EventCategory[]>([])
 const CATEGORIES = computed(() => [
-  { id: null as number | null, name: 'Todos' },
-  ...rawCategories.value.map(c => ({ id: c.id as number | null, name: c.name })),
+	{ id: null as number | null, name: "Todos" },
+	...rawCategories.value.map((c) => ({ id: c.id as number | null, name: c.name })),
 ])
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Más recientes' },
-  { value: 'photos', label: 'Más fotos' },
-  { value: 'upcoming', label: 'Próximos' },
+	{ value: "newest", label: "Más recientes" },
+	{ value: "photos", label: "Más fotos" },
+	{ value: "upcoming", label: "Próximos" },
 ]
 
 // Filter state
-const query = ref('')
-const debouncedQuery = ref('')
-const cityFilter = ref('Todas')
+const query = ref("")
+const debouncedQuery = ref("")
+const cityFilter = ref("Todas")
 const categoryFilter = ref<number | null>(null)
-const sortBy = ref('newest')
+const sortBy = ref("newest")
 
 // Data state
 const events = ref<EventResponse[]>([])
@@ -190,88 +195,92 @@ const error = ref<string | null>(null)
 const page = ref(1)
 
 onMounted(async () => {
-  try {
-    const res = await $fetch<{ data: EventCategory[] }>('/event-categories', { baseURL: config.public.apiBase })
-    rawCategories.value = res.data ?? []
-  }
-  catch { /* use empty list */ }
-  fetchEvents()
+	try {
+		const res = await $fetch<{ data: EventCategory[] }>("/event-categories", {
+			baseURL: config.public.apiBase,
+		})
+		rawCategories.value = res.data ?? []
+	} catch {
+		/* use empty list */
+	}
+	fetchEvents()
 })
 
 // Debounce search
 let debounceTimer: ReturnType<typeof setTimeout>
 watch(query, (val) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => { debouncedQuery.value = val }, 300)
+	clearTimeout(debounceTimer)
+	debounceTimer = setTimeout(() => {
+		debouncedQuery.value = val
+	}, 300)
 })
 
 // Re-fetch when API-level filters change
-watch([debouncedQuery, cityFilter, sortBy], () => { fetchEvents() })
+watch([debouncedQuery, cityFilter, sortBy], () => {
+	fetchEvents()
+})
 
 // Client-side category filter by category_id when available, name-based fallback
 const displayedEvents = computed(() => {
-  if (categoryFilter.value === null) return events.value
-  const selectedName = CATEGORIES.value.find(c => c.id === categoryFilter.value)?.name.toLowerCase() ?? ''
-  return events.value.filter(e => {
-    const ev = e as any
-    if (ev.category_id != null) return ev.category_id === categoryFilter.value
-    return ev.name?.toLowerCase().includes(selectedName)
-  })
+	if (categoryFilter.value === null) return events.value
+	const selectedName =
+		CATEGORIES.value.find((c) => c.id === categoryFilter.value)?.name.toLowerCase() ?? ""
+	return events.value.filter((e) => {
+		const ev = e as { category_id?: number | null; name?: string }
+		if (ev.category_id != null) return ev.category_id === categoryFilter.value
+		return ev.name?.toLowerCase().includes(selectedName)
+	})
 })
 
 const hasMore = computed(() => events.value.length < total.value)
 
 function buildQuery(p: number): Record<string, string | number> {
-  const q: Record<string, string | number> = { status: 'active', limit: LIMIT, page: p }
-  if (debouncedQuery.value) q.search = debouncedQuery.value
-  if (cityFilter.value !== 'Todas') q.location = cityFilter.value
-  return q
+	const q: Record<string, string | number> = { status: "active", limit: LIMIT, page: p }
+	if (debouncedQuery.value) q.search = debouncedQuery.value
+	if (cityFilter.value !== "Todas") q.location = cityFilter.value
+	return q
 }
 
 async function fetchEvents() {
-  loading.value = true
-  error.value = null
-  page.value = 1
-  try {
-    const data = await apiFetch<ListEnvelope<EventResponse>>('/events', {
-      query: buildQuery(1),
-    })
-    events.value = data?.data?.items ?? []
-    total.value = data?.data?.total ?? 0
-  }
-  catch {
-    error.value = 'No se pudo cargar los eventos. Inténtalo de nuevo.'
-  }
-  finally {
-    loading.value = false
-  }
+	loading.value = true
+	error.value = null
+	page.value = 1
+	try {
+		const data = await apiFetch<ListEnvelope<EventResponse>>("/events", {
+			query: buildQuery(1),
+		})
+		events.value = data?.data?.items ?? []
+		total.value = data?.data?.total ?? 0
+	} catch {
+		error.value = "No se pudo cargar los eventos. Inténtalo de nuevo."
+	} finally {
+		loading.value = false
+	}
 }
 
 async function loadMore() {
-  if (loadingMore.value || !hasMore.value) return
-  loadingMore.value = true
-  try {
-    const nextPage = page.value + 1
-    const data = await apiFetch<ListEnvelope<EventResponse>>('/events', {
-      query: buildQuery(nextPage),
-    })
-    events.value.push(...(data?.data?.items ?? []))
-    page.value = nextPage
-  }
-  catch {
-    // silent — user can retry via load more button
-  }
-  finally {
-    loadingMore.value = false
-  }
+	if (loadingMore.value || !hasMore.value) return
+	loadingMore.value = true
+	try {
+		const nextPage = page.value + 1
+		const data = await apiFetch<ListEnvelope<EventResponse>>("/events", {
+			query: buildQuery(nextPage),
+		})
+		events.value.push(...(data?.data?.items ?? []))
+		page.value = nextPage
+	} catch {
+		// silent — user can retry via load more button
+	} finally {
+		loadingMore.value = false
+	}
 }
 
 function clearFilters() {
-  query.value = ''
-  debouncedQuery.value = ''
-  cityFilter.value = 'Todas'
-  categoryFilter.value = null
-  sortBy.value = 'newest'
+	query.value = ""
+	debouncedQuery.value = ""
+	cityFilter.value = "Todas"
+	categoryFilter.value = null
+	sortBy.value = "newest"
 }
 </script>
 

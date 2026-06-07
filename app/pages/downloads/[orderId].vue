@@ -237,10 +237,10 @@
 </template>
 
 <script setup lang="ts">
-import type { OrderResponse, EventResponse, DownloadResponse, SingleEnvelope } from '~/types'
+import type { DownloadResponse, EventResponse, OrderResponse, SingleEnvelope } from "~/types"
 
-definePageMeta({ ssr: false, middleware: 'auth' })
-useSeoMeta({ title: 'Descargar fotos — Fotify' })
+definePageMeta({ ssr: false, middleware: "auth" })
+useSeoMeta({ title: "Descargar fotos — Fotify" })
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -252,7 +252,7 @@ const error = ref<string | null>(null)
 const order = ref<OrderResponse | null>(null)
 const event = ref<EventResponse | null>(null)
 const photoIds = ref<number[]>([])
-const userEmail = ref('')
+const userEmail = ref("")
 const showIndividual = ref(false)
 const downloadingAll = ref(false)
 const downloadingPhoto = ref(new Set<number>())
@@ -261,146 +261,162 @@ const eventName = computed(() => event.value?.name ?? null)
 const eventSlug = computed(() => event.value?.slug ?? null)
 
 const gridItems = computed<(number | null)[]>(() => {
-  const count = order.value?.item_count ?? 0
-  const ids = photoIds.value
-  if (ids.length > 0) return ids.slice(0, count)
-  return Array.from({ length: Math.min(count, 10) }, () => null)
+	const count = order.value?.item_count ?? 0
+	const ids = photoIds.value
+	if (ids.length > 0) return ids.slice(0, count)
+	return Array.from({ length: Math.min(count, 10) }, () => null)
 })
 
 const gradients = [
-  'background: linear-gradient(135deg,rgba(124,58,237,.3),rgba(91,33,182,.2))',
-  'background: linear-gradient(135deg,rgba(124,58,237,.2),rgba(91,33,182,.3))',
-  'background: linear-gradient(135deg,rgba(91,33,182,.4),rgba(124,58,237,.15))',
-  'background: linear-gradient(135deg,rgba(124,58,237,.35),rgba(91,33,182,.2))',
-  'background: linear-gradient(135deg,rgba(91,33,182,.25),rgba(124,58,237,.4))',
+	"background: linear-gradient(135deg,rgba(124,58,237,.3),rgba(91,33,182,.2))",
+	"background: linear-gradient(135deg,rgba(124,58,237,.2),rgba(91,33,182,.3))",
+	"background: linear-gradient(135deg,rgba(91,33,182,.4),rgba(124,58,237,.15))",
+	"background: linear-gradient(135deg,rgba(124,58,237,.35),rgba(91,33,182,.2))",
+	"background: linear-gradient(135deg,rgba(91,33,182,.25),rgba(124,58,237,.4))",
 ]
 
 function cardGradient(idx: number): string {
-  return gradients[idx % gradients.length]
+	return gradients[idx % gradients.length] ?? gradients[0] ?? ""
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
+	return new Date(iso).toLocaleDateString("es-PE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	})
 }
 
 function loadStoredPhotoIds(oid: number): number[] {
-  try {
-    const raw = localStorage.getItem(`fotify_order_photos_${oid}`)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as number[]) : []
-  } catch {
-    return []
-  }
+	try {
+		const raw = localStorage.getItem(`fotify_order_photos_${oid}`)
+		if (!raw) return []
+		const parsed = JSON.parse(raw)
+		return Array.isArray(parsed) ? (parsed as number[]) : []
+	} catch {
+		return []
+	}
 }
 
 function resolvePhotoIds(o: OrderResponse, oid: number): number[] {
-  // Prefer server-provided photo_ids (available on all devices).
-  // Fall back to localStorage (set at checkout time on same device).
-  if (o.photo_ids && o.photo_ids.length > 0) return o.photo_ids
-  return loadStoredPhotoIds(oid)
+	// Prefer server-provided photo_ids (available on all devices).
+	// Fall back to localStorage (set at checkout time on same device).
+	if (o.photo_ids && o.photo_ids.length > 0) return o.photo_ids
+	return loadStoredPhotoIds(oid)
 }
 
 async function fetchDownloadUrl(photoId: number): Promise<string | null> {
-  try {
-    const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/photos/${photoId}/download`)
-    return res.data?.download_url ?? null
-  } catch {
-    return null
-  }
+	try {
+		const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/photos/${photoId}/download`)
+		return res.data?.download_url ?? null
+	} catch {
+		return null
+	}
 }
 
 function triggerBrowserDownload(url: string, filename: string) {
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.target = '_blank'
-  a.rel = 'noopener'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+	const a = document.createElement("a")
+	a.href = url
+	a.download = filename
+	a.target = "_blank"
+	a.rel = "noopener"
+	document.body.appendChild(a)
+	a.click()
+	document.body.removeChild(a)
 }
 
 async function triggerSingleDownload(photoId: number) {
-  if (downloadingPhoto.value.has(photoId)) return
-  downloadingPhoto.value = new Set([...downloadingPhoto.value, photoId])
-  try {
-    const url = await fetchDownloadUrl(photoId)
-    if (url) triggerBrowserDownload(url, `fotify-photo-${photoId}.jpg`)
-  } finally {
-    const next = new Set(downloadingPhoto.value)
-    next.delete(photoId)
-    downloadingPhoto.value = next
-  }
+	if (downloadingPhoto.value.has(photoId)) return
+	downloadingPhoto.value = new Set([...downloadingPhoto.value, photoId])
+	try {
+		const url = await fetchDownloadUrl(photoId)
+		if (url) triggerBrowserDownload(url, `fotify-photo-${photoId}.jpg`)
+	} finally {
+		const next = new Set(downloadingPhoto.value)
+		next.delete(photoId)
+		downloadingPhoto.value = next
+	}
 }
 
 async function downloadAll() {
-  if (downloadingAll.value || photoIds.value.length === 0) return
-  downloadingAll.value = true
-  try {
-    const urls = await Promise.allSettled(photoIds.value.map(id => fetchDownloadUrl(id)))
-    urls.forEach((result, idx) => {
-      if (result.status === 'fulfilled' && result.value) {
-        setTimeout(() => {
-          triggerBrowserDownload(result.value!, `fotify-photo-${photoIds.value[idx]}.jpg`)
-        }, idx * 300)
-      }
-    })
-  } finally {
-    setTimeout(() => { downloadingAll.value = false }, photoIds.value.length * 300 + 500)
-  }
+	if (downloadingAll.value || photoIds.value.length === 0) return
+	downloadingAll.value = true
+	try {
+		const urls = await Promise.allSettled(photoIds.value.map((id) => fetchDownloadUrl(id)))
+		urls.forEach((result, idx) => {
+			if (result.status === "fulfilled" && result.value) {
+				const url = result.value
+				setTimeout(() => {
+					triggerBrowserDownload(url, `fotify-photo-${photoIds.value[idx]}.jpg`)
+				}, idx * 300)
+			}
+		})
+	} finally {
+		setTimeout(
+			() => {
+				downloadingAll.value = false
+			},
+			photoIds.value.length * 300 + 500,
+		)
+	}
 }
 
 onMounted(async () => {
-  if (!auth.isAuthenticated) {
-    await navigateTo('/')
-    return
-  }
+	if (!auth.isAuthenticated) {
+		await navigateTo("/")
+		return
+	}
 
-  const oid = orderId.value
-  if (!oid || isNaN(oid)) {
-    error.value = 'Orden no encontrada.'
-    loading.value = false
-    return
-  }
+	const oid = orderId.value
+	if (!oid || isNaN(oid)) {
+		error.value = "Orden no encontrada."
+		loading.value = false
+		return
+	}
 
-  try {
-    const [orderRes, meRes] = await Promise.allSettled([
-      apiFetch<SingleEnvelope<OrderResponse>>(`/orders/${oid}`),
-      apiFetch<{ data?: { email?: string } }>('/auth/me'),
-    ])
+	try {
+		const [orderRes, meRes] = await Promise.allSettled([
+			apiFetch<SingleEnvelope<OrderResponse>>(`/orders/${oid}`),
+			apiFetch<{ data?: { email?: string } }>("/auth/me"),
+		])
 
-    if (orderRes.status === 'fulfilled') {
-      const o = orderRes.value.data
-      if (!o) { error.value = 'Orden no encontrada.'; loading.value = false; return }
-      order.value = o
-      photoIds.value = resolvePhotoIds(o, oid)
+		if (orderRes.status === "fulfilled") {
+			const o = orderRes.value.data
+			if (!o) {
+				error.value = "Orden no encontrada."
+				loading.value = false
+				return
+			}
+			order.value = o
+			photoIds.value = resolvePhotoIds(o, oid)
 
-      if (o.event_id) {
-        try {
-          const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${o.event_id}`)
-          event.value = evRes.data ?? null
-        } catch { /* non-critical */ }
-      }
-    } else {
-      const fetchErr = orderRes.reason as any
-      if (fetchErr?.status === 403 || fetchErr?.status === 404) {
-        error.value = 'No tienes acceso a esta orden o no existe.'
-      } else {
-        error.value = 'Error al cargar la orden. Intenta de nuevo.'
-      }
-      loading.value = false
-      return
-    }
+			if (o.event_id) {
+				try {
+					const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${o.event_id}`)
+					event.value = evRes.data ?? null
+				} catch {
+					/* non-critical */
+				}
+			}
+		} else {
+			const fetchErr = orderRes.reason as { status?: number }
+			if (fetchErr?.status === 403 || fetchErr?.status === 404) {
+				error.value = "No tienes acceso a esta orden o no existe."
+			} else {
+				error.value = "Error al cargar la orden. Intenta de nuevo."
+			}
+			loading.value = false
+			return
+		}
 
-    if (meRes.status === 'fulfilled') {
-      userEmail.value = meRes.value.data?.email ?? ''
-    }
-  } catch {
-    error.value = 'Error al cargar la orden. Intenta de nuevo.'
-  } finally {
-    loading.value = false
-  }
+		if (meRes.status === "fulfilled") {
+			userEmail.value = meRes.value.data?.email ?? ""
+		}
+	} catch {
+		error.value = "Error al cargar la orden. Intenta de nuevo."
+	} finally {
+		loading.value = false
+	}
 })
 </script>
 

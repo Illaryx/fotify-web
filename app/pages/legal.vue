@@ -369,59 +369,60 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Términos y Políticas — Fotify',
-  description: 'Términos de uso, política de privacidad y acuerdo de fotógrafo de Fotify. Cumplimiento Ley 29733 Perú.',
+	title: "Términos y Políticas — Fotify",
+	description:
+		"Términos de uso, política de privacidad y acuerdo de fotógrafo de Fotify. Cumplimiento Ley 29733 Perú.",
 })
 
-const activeTab = ref<'terminos' | 'privacidad' | 'fotografo'>('terminos')
+const activeTab = ref<"terminos" | "privacidad" | "fotografo">("terminos")
 
 const tabs = [
-  { key: 'terminos' as const, label: 'Términos de Uso' },
-  { key: 'privacidad' as const, label: 'Política de Privacidad' },
-  { key: 'fotografo' as const, label: 'Acuerdo de Fotógrafo' },
+	{ key: "terminos" as const, label: "Términos de Uso" },
+	{ key: "privacidad" as const, label: "Política de Privacidad" },
+	{ key: "fotografo" as const, label: "Acuerdo de Fotógrafo" },
 ]
 
 const tocTerminos = [
-  '01 — Definiciones',
-  '02 — Elegibilidad',
-  '03 — Uso del servicio',
-  '04 — Derechos de fotos',
-  '05 — Pagos y reembolsos',
-  '06 — Reconocimiento IA',
-  '07 — Responsabilidad',
-  '08 — Modificaciones',
-  '09 — Ley aplicable',
+	"01 — Definiciones",
+	"02 — Elegibilidad",
+	"03 — Uso del servicio",
+	"04 — Derechos de fotos",
+	"05 — Pagos y reembolsos",
+	"06 — Reconocimiento IA",
+	"07 — Responsabilidad",
+	"08 — Modificaciones",
+	"09 — Ley aplicable",
 ]
 
 const tocPrivacidad = [
-  '01 — Responsable',
-  '02 — Datos recopilados',
-  '03 — Finalidades',
-  '04 — Base legal',
-  '05 — Retención',
-  '06 — Cookies',
-  '07 — Terceros',
-  '08 — Tus derechos',
-  '09 — Seguridad',
+	"01 — Responsable",
+	"02 — Datos recopilados",
+	"03 — Finalidades",
+	"04 — Base legal",
+	"05 — Retención",
+	"06 — Cookies",
+	"07 — Terceros",
+	"08 — Tus derechos",
+	"09 — Seguridad",
 ]
 
 const tocFotografo = [
-  '01 — Requisitos',
-  '02 — Licencia',
-  '03 — Contenido prohibido',
-  '04 — Pagos',
-  '05 — Gestión eventos',
-  '06 — Obligaciones',
-  '07 — Plan Pro',
-  '08 — Terminación',
+	"01 — Requisitos",
+	"02 — Licencia",
+	"03 — Contenido prohibido",
+	"04 — Pagos",
+	"05 — Gestión eventos",
+	"06 — Obligaciones",
+	"07 — Plan Pro",
+	"08 — Terminación",
 ]
 
 const complianceBadges = [
-  'Ley 29733 (Perú)',
-  'ANPDP registrado',
-  'TLS 1.3 + AES-256',
-  'Pagos via Izipay PCI-DSS',
-  'Biométricos eliminados en 24h',
+	"Ley 29733 (Perú)",
+	"ANPDP registrado",
+	"TLS 1.3 + AES-256",
+	"Pagos via Izipay PCI-DSS",
+	"Biométricos eliminados en 24h",
 ]
 </script>
 

@@ -158,8 +158,8 @@
                 <div class="flex items-center justify-between text-[11px] text-white/40">
                   <span>{{ order.item_count ?? 0 }} foto{{ (order.item_count ?? 0) !== 1 ? 's' : '' }}</span>
                   <NuxtLink
-                    v-if="eventsMap[order.event_id!]?.slug"
-                    :to="`/events/${eventsMap[order.event_id!].slug}`"
+                    v-if="order.event_id && eventsMap[order.event_id]?.slug"
+                    :to="`/events/${eventsMap[order.event_id]?.slug}`"
                     class="text-violet hover:underline"
                   >
                     Ver evento
@@ -194,11 +194,11 @@
 </template>
 
 <script setup lang="ts">
-import type { OrderResponse, EventResponse, SingleEnvelope } from '~/types'
+import type { EventResponse, OrderResponse, SingleEnvelope } from "~/types"
 
-definePageMeta({ ssr: false, middleware: 'auth' })
+definePageMeta({ ssr: false, middleware: "auth" })
 
-useSeoMeta({ title: 'Mis compras — Fotify' })
+useSeoMeta({ title: "Mis compras — Fotify" })
 
 const auth = useAuthStore()
 const showAuth = useAuthModal()
@@ -212,11 +212,11 @@ const orders = ref<OrderResponse[]>([])
 const total = ref(0)
 const eventsMap = ref<Record<number, EventResponse>>({})
 
-const userName = ref('')
-const userEmail = ref('')
+const userName = ref("")
+const userEmail = ref("")
 
-type Filter = 'all' | 'paid'
-const activeFilter = ref<Filter>('all')
+type Filter = "all" | "paid"
+const activeFilter = ref<Filter>("all")
 
 // Infinite scroll sentinel
 const sentinel = ref<HTMLElement | null>(null)
@@ -225,130 +225,138 @@ const sentinel = ref<HTMLElement | null>(null)
 let cardObserver: IntersectionObserver | null = null
 
 // Computed
-const firstName = computed(() => userName.value.split(' ')[0])
+const firstName = computed(() => userName.value.split(" ")[0])
 const userInitials = computed(() =>
-  userName.value.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+	userName.value
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.substring(0, 2)
+		.toUpperCase(),
 )
 const filteredOrders = computed(() =>
-  activeFilter.value === 'paid'
-    ? orders.value.filter(o => o.status === 'paid')
-    : orders.value,
+	activeFilter.value === "paid" ? orders.value.filter((o) => o.status === "paid") : orders.value,
 )
 const hasMore = computed(() => orders.value.length < total.value)
-const paidCount = computed(() => orders.value.filter(o => o.status === 'paid').length)
+const paidCount = computed(() => orders.value.filter((o) => o.status === "paid").length)
 const totalPhotos = computed(() =>
-  orders.value.filter(o => o.status === 'paid').reduce((acc, o) => acc + (o.item_count ?? 0), 0),
+	orders.value.filter((o) => o.status === "paid").reduce((acc, o) => acc + (o.item_count ?? 0), 0),
 )
 const totalSpent = computed(() =>
-  orders.value.filter(o => o.status === 'paid').reduce((acc, o) => acc + (o.subtotal ?? 0), 0),
+	orders.value.filter((o) => o.status === "paid").reduce((acc, o) => acc + (o.subtotal ?? 0), 0),
 )
 
 onMounted(async () => {
-  if (!auth.isAuthenticated) {
-    showAuth.value = true
-    loading.value = false
-    return
-  }
-  setupCardObserver()
-  await Promise.all([fetchOrders(), fetchUserInfo()])
-  loading.value = false
+	if (!auth.isAuthenticated) {
+		showAuth.value = true
+		loading.value = false
+		return
+	}
+	setupCardObserver()
+	await Promise.all([fetchOrders(), fetchUserInfo()])
+	loading.value = false
 })
 
 onUnmounted(() => {
-  cardObserver?.disconnect()
+	cardObserver?.disconnect()
 })
 
 // Infinite scroll via VueUse
-useIntersectionObserver(sentinel, ([{ isIntersecting }]) => {
-  if (isIntersecting && hasMore.value && !loadingMore.value) {
-    loadMoreOrders()
-  }
+useIntersectionObserver(sentinel, (entries) => {
+	const { isIntersecting } = entries[0] ?? {}
+	if (isIntersecting === undefined) return
+	if (isIntersecting && hasMore.value && !loadingMore.value) {
+		loadMoreOrders()
+	}
 })
 
 // ── Per-card lazy event fetch ─────────────────────────────────────────────────
 function setupCardObserver() {
-  cardObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return
-        const eventId = Number((entry.target as HTMLElement).dataset.eventId)
-        cardObserver?.unobserve(entry.target)
-        if (eventId && !eventsMap.value[eventId]) {
-          fetchEventById(eventId)
-        }
-      })
-    },
-    { rootMargin: '100px' },
-  )
+	cardObserver = new IntersectionObserver(
+		(entries) => {
+			entries.forEach((entry) => {
+				if (!entry.isIntersecting) return
+				const eventId = Number((entry.target as HTMLElement).dataset.eventId)
+				cardObserver?.unobserve(entry.target)
+				if (eventId && !eventsMap.value[eventId]) {
+					fetchEventById(eventId)
+				}
+			})
+		},
+		{ rootMargin: "100px" },
+	)
 }
 
 function observeCard(el: HTMLElement, eventId: number) {
-  if (!cardObserver || !eventId) return
-  if (eventsMap.value[eventId]) return // already fetched
-  el.dataset.eventId = String(eventId)
-  cardObserver.observe(el)
+	if (!cardObserver || !eventId) return
+	if (eventsMap.value[eventId]) return // already fetched
+	el.dataset.eventId = String(eventId)
+	cardObserver.observe(el)
 }
 
 async function fetchEventById(id: number) {
-  try {
-    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${id}`)
-    if (res.data) eventsMap.value = { ...eventsMap.value, [id]: res.data }
-  }
-  catch { /* optional context, fail silently */ }
+	try {
+		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${id}`)
+		if (res.data) eventsMap.value = { ...eventsMap.value, [id]: res.data }
+	} catch {
+		/* optional context, fail silently */
+	}
 }
 
 // ── Orders fetch / pagination ─────────────────────────────────────────────────
 async function fetchOrders() {
-  fetchError.value = null
-  try {
-    const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
-      '/orders',
-      { query: { limit: LIMIT, offset: 0 } },
-    )
-    orders.value = res.data?.items ?? []
-    total.value = res.data?.total ?? 0
-  }
-  catch {
-    fetchError.value = 'Error al cargar tus compras. Intenta de nuevo.'
-  }
+	fetchError.value = null
+	try {
+		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/orders", {
+			query: { limit: LIMIT, offset: 0 },
+		})
+		orders.value = res.data?.items ?? []
+		total.value = res.data?.total ?? 0
+	} catch {
+		fetchError.value = "Error al cargar tus compras. Intenta de nuevo."
+	}
 }
 
 async function loadMoreOrders() {
-  if (!hasMore.value || loadingMore.value) return
-  loadingMore.value = true
-  try {
-    const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>(
-      '/orders',
-      { query: { limit: LIMIT, offset: orders.value.length } },
-    )
-    orders.value = [...orders.value, ...(res.data?.items ?? [])]
-    total.value = res.data?.total ?? total.value
-  }
-  catch { /* ignore load-more errors */ }
-  finally {
-    loadingMore.value = false
-  }
+	if (!hasMore.value || loadingMore.value) return
+	loadingMore.value = true
+	try {
+		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/orders", {
+			query: { limit: LIMIT, offset: orders.value.length },
+		})
+		orders.value = [...orders.value, ...(res.data?.items ?? [])]
+		total.value = res.data?.total ?? total.value
+	} catch {
+		/* ignore load-more errors */
+	} finally {
+		loadingMore.value = false
+	}
 }
 
 async function fetchUserInfo() {
-  try {
-    const res = await apiFetch<{ data?: { email?: string; full_name?: string } }>('/auth/me')
-    userEmail.value = res.data?.email ?? ''
-    userName.value = res.data?.full_name ?? ''
-  }
-  catch { /* not critical */ }
+	try {
+		const res = await apiFetch<{ data?: { email?: string; full_name?: string } }>("/auth/me")
+		userEmail.value = res.data?.email ?? ""
+		userName.value = res.data?.full_name ?? ""
+	} catch {
+		/* not critical */
+	}
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
+	return new Date(dateStr).toLocaleDateString("es-PE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	})
 }
 
 function formatOrderId(id: number): string {
-  return `#FT-${String(id).padStart(5, '0')}`
+	return `#FT-${String(id).padStart(5, "0")}`
 }
 
 function isNew(createdAt?: string): boolean {
-  if (!createdAt) return false
-  return Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
+	if (!createdAt) return false
+	return Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
 }
 </script>

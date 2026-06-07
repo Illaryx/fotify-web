@@ -364,18 +364,19 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Cómo funciona — Fotify',
-  description: 'Descubre cómo Fotify conecta atletas con sus mejores fotos usando IA de reconocimiento facial. Para atletas y fotógrafos deportivos.',
+	title: "Cómo funciona — Fotify",
+	description:
+		"Descubre cómo Fotify conecta atletas con sus mejores fotos usando IA de reconocimiento facial. Para atletas y fotógrafos deportivos.",
 })
 
-const activeTab = ref<'atleta' | 'foto'>('atleta')
+const activeTab = ref<"atleta" | "foto">("atleta")
 
 const comparisonRows = [
-  { feature: 'Búsqueda por IA facial', fotify: '✓', fotop: '✗', len: '✗' },
-  { feature: 'Pack pricing (ahorro)', fotify: '✓', fotop: '✗', len: '✗' },
-  { feature: 'Yape / Plin', fotify: '✓', fotop: '✗', len: '✗' },
-  { feature: 'Dashboard fotógrafo', fotify: '✓', fotop: 'Básico', len: '✗' },
-  { feature: 'Dark mode moderno', fotify: '✓', fotop: '✗', len: '✗' },
-  { feature: 'Descarga inmediata', fotify: '✓', fotop: '✓', len: '24-48h' },
+	{ feature: "Búsqueda por IA facial", fotify: "✓", fotop: "✗", len: "✗" },
+	{ feature: "Pack pricing (ahorro)", fotify: "✓", fotop: "✗", len: "✗" },
+	{ feature: "Yape / Plin", fotify: "✓", fotop: "✗", len: "✗" },
+	{ feature: "Dashboard fotógrafo", fotify: "✓", fotop: "Básico", len: "✗" },
+	{ feature: "Dark mode moderno", fotify: "✓", fotop: "✗", len: "✗" },
+	{ feature: "Descarga inmediata", fotify: "✓", fotop: "✓", len: "24-48h" },
 ]
 </script>

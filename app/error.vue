@@ -32,6 +32,6 @@
 const props = defineProps<{ error: { statusCode: number; message: string } }>()
 
 useSeoMeta({
-  title: props.error?.statusCode === 404 ? 'Página no encontrada — Fotify' : 'Error — Fotify',
+	title: props.error?.statusCode === 404 ? "Página no encontrada — Fotify" : "Error — Fotify",
 })
 </script>

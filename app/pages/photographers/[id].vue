@@ -265,9 +265,9 @@
 </template>
 
 <script setup lang="ts">
-import { demoThumb } from '~/utils/demophotos'
-import { apiFetch } from '~/composables/useApi'
-import type { PhotographerResponse, PhotoResponse, EventResponse, ListEnvelope } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import type { EventResponse, ListEnvelope, PhotographerResponse, PhotoResponse } from "~/types"
+import { demoThumb } from "~/utils/demophotos"
 
 const route = useRoute()
 const id = route.params.id as string
@@ -282,97 +282,127 @@ const photosTotal = ref(0)
 const eventsTotal = ref(0)
 
 onMounted(async () => {
-  const [pResult, photosResult, eventsResult] = await Promise.allSettled([
-    apiFetch<PhotographerEnvelope>(`/photographers/${id}`),
-    apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
-      query: { photographer_id: id, status: 'indexed', limit: 8 },
-    }),
-    apiFetch<ListEnvelope<EventResponse>>('/events', {
-      query: { photographer_id: id, status: 'active', limit: 6 },
-    }),
-  ])
+	const [pResult, photosResult, eventsResult] = await Promise.allSettled([
+		apiFetch<PhotographerEnvelope>(`/photographers/${id}`),
+		apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+			query: { photographer_id: id, status: "indexed", limit: 8 },
+		}),
+		apiFetch<ListEnvelope<EventResponse>>("/events", {
+			query: { photographer_id: id, status: "active", limit: 6 },
+		}),
+	])
 
-  photographer.value = pResult.status === 'fulfilled' ? (pResult.value.data ?? null) : null
-  photos.value = photosResult.status === 'fulfilled' ? (photosResult.value.data?.items ?? []) : []
-  events.value = eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.items ?? []) : []
-  photosTotal.value = photosResult.status === 'fulfilled' ? (photosResult.value.data?.total ?? 0) : 0
-  eventsTotal.value = eventsResult.status === 'fulfilled' ? (eventsResult.value.data?.total ?? 0) : 0
+	photographer.value = pResult.status === "fulfilled" ? (pResult.value.data ?? null) : null
+	photos.value = photosResult.status === "fulfilled" ? (photosResult.value.data?.items ?? []) : []
+	events.value = eventsResult.status === "fulfilled" ? (eventsResult.value.data?.items ?? []) : []
+	photosTotal.value =
+		photosResult.status === "fulfilled" ? (photosResult.value.data?.total ?? 0) : 0
+	eventsTotal.value =
+		eventsResult.status === "fulfilled" ? (eventsResult.value.data?.total ?? 0) : 0
 
-  pending.value = false
+	pending.value = false
 })
 
 const initials = computed(() => {
-  const name = photographer.value?.display_name ?? ''
-  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
+	const name = photographer.value?.display_name ?? ""
+	return (
+		name
+			.split(" ")
+			.map((w) => w[0])
+			.filter(Boolean)
+			.slice(0, 2)
+			.join("")
+			.toUpperCase() || "?"
+	)
 })
 
 const planBadge = computed(() => {
-  switch (photographer.value?.plan) {
-    case 'pro':    return { label: 'Pro',    cls: 'bg-violet/20 text-violet border border-violet/30' }
-    case 'studio': return { label: 'Studio', cls: 'bg-amber-500/20 text-amber-400 border border-amber-500/30' }
-    default:       return { label: 'Free',   cls: 'bg-white/5 text-muted border border-white/10' }
-  }
+	switch (photographer.value?.plan) {
+		case "pro":
+			return { label: "Pro", cls: "bg-violet/20 text-violet border border-violet/30" }
+		case "studio":
+			return { label: "Studio", cls: "bg-amber-500/20 text-amber-400 border border-amber-500/30" }
+		default:
+			return { label: "Free", cls: "bg-white/5 text-muted border border-white/10" }
+	}
 })
 
-const CITIES = ['Lima', 'Cusco', 'Arequipa', 'Trujillo', 'Chiclayo', 'Iquitos', 'Piura', 'Huancayo', 'Tacna', 'Puno', 'Ica', 'Cajamarca', 'Ayacucho']
+const CITIES = [
+	"Lima",
+	"Cusco",
+	"Arequipa",
+	"Trujillo",
+	"Chiclayo",
+	"Iquitos",
+	"Piura",
+	"Huancayo",
+	"Tacna",
+	"Puno",
+	"Ica",
+	"Cajamarca",
+	"Ayacucho",
+]
 
 const locationFromBio = computed(() => {
-  const bio = photographer.value?.bio ?? ''
-  return CITIES.find(city => new RegExp(`\\b${city}\\b`, 'i').test(bio)) ?? null
+	const bio = photographer.value?.bio ?? ""
+	return CITIES.find((city) => new RegExp(`\\b${city}\\b`, "i").test(bio)) ?? null
 })
 
 const specialtyPills = computed(() => {
-  const bio = (photographer.value?.bio ?? '').toLowerCase()
-  const checks: { keywords: string[]; label: string }[] = [
-    { keywords: ['running', 'corredor', 'corredores'],           label: 'Running' },
-    { keywords: ['maratón', 'marathon', 'maratones', 'maraton'], label: 'Maratón' },
-    { keywords: ['trail'],                                        label: 'Trail Running' },
-    { keywords: ['triatlón', 'triathlon', 'triatlon'],           label: 'Triatlón' },
-    { keywords: ['ciclismo', 'cycling', 'bicicleta', 'ciclista'],label: 'Ciclismo' },
-    { keywords: ['natación', 'natacion', 'swimming', 'nadador'], label: 'Natación' },
-    { keywords: ['atletismo', 'atleta'],                         label: 'Atletismo' },
-    { keywords: ['fútbol', 'futbol', 'soccer'],                  label: 'Fútbol' },
-    { keywords: ['crossfit'],                                     label: 'CrossFit' },
-    { keywords: ['trekking', 'hiking', 'montaña'],               label: 'Trekking' },
-    { keywords: ['surf'],                                         label: 'Surf' },
-  ]
-  const found = checks.filter(c => c.keywords.some(kw => bio.includes(kw))).map(c => c.label)
-  return found.length > 0 ? found : ['Fotografía deportiva', 'Eventos al aire libre', 'Captura en acción']
+	const bio = (photographer.value?.bio ?? "").toLowerCase()
+	const checks: { keywords: string[]; label: string }[] = [
+		{ keywords: ["running", "corredor", "corredores"], label: "Running" },
+		{ keywords: ["maratón", "marathon", "maratones", "maraton"], label: "Maratón" },
+		{ keywords: ["trail"], label: "Trail Running" },
+		{ keywords: ["triatlón", "triathlon", "triatlon"], label: "Triatlón" },
+		{ keywords: ["ciclismo", "cycling", "bicicleta", "ciclista"], label: "Ciclismo" },
+		{ keywords: ["natación", "natacion", "swimming", "nadador"], label: "Natación" },
+		{ keywords: ["atletismo", "atleta"], label: "Atletismo" },
+		{ keywords: ["fútbol", "futbol", "soccer"], label: "Fútbol" },
+		{ keywords: ["crossfit"], label: "CrossFit" },
+		{ keywords: ["trekking", "hiking", "montaña"], label: "Trekking" },
+		{ keywords: ["surf"], label: "Surf" },
+	]
+	const found = checks.filter((c) => c.keywords.some((kw) => bio.includes(kw))).map((c) => c.label)
+	return found.length > 0
+		? found
+		: ["Fotografía deportiva", "Eventos al aire libre", "Captura en acción"]
 })
 
 const eventMap = computed(() => {
-  const map: Record<number, string> = {}
-  for (const ev of events.value) {
-    if (ev.id != null && ev.name) map[ev.id] = ev.name
-  }
-  return map
+	const map: Record<number, string> = {}
+	for (const ev of events.value) {
+		if (ev.id != null && ev.name) map[ev.id] = ev.name
+	}
+	return map
 })
 
 const sinceYear = computed(() => {
-  const years = events.value
-    .map(e => e.event_date ?? e.created_at ?? e.published_at)
-    .filter((d): d is string => !!d)
-    .map(d => new Date(d).getFullYear())
-    .filter(y => !isNaN(y))
-  return years.length > 0 ? String(Math.min(...years)) : '–'
+	const years = events.value
+		.map((e) => e.event_date ?? e.created_at ?? e.published_at)
+		.filter((d): d is string => !!d)
+		.map((d) => new Date(d).getFullYear())
+		.filter((y) => !isNaN(y))
+	return years.length > 0 ? String(Math.min(...years)) : "–"
 })
 
-const totalSales = computed(() =>
-  events.value.reduce((sum, ev) => sum + (ev.total_sales ?? 0), 0),
-)
+const totalSales = computed(() => events.value.reduce((sum, ev) => sum + (ev.total_sales ?? 0), 0))
 
 useSeoMeta({
-  title: () => photographer.value?.display_name
-    ? `${photographer.value.display_name} — Fotógrafo deportivo | Fotify`
-    : 'Fotógrafo | Fotify',
-  description: () => photographer.value?.bio ?? 'Perfil público de fotógrafo deportivo en Fotify.',
-  ogTitle: () => photographer.value?.display_name ?? 'Fotógrafo deportivo',
-  ogDescription: () => photographer.value?.bio ?? '',
-  ogImage: () => photographer.value?.avatar_url ?? undefined,
-  twitterTitle: () => photographer.value?.display_name
-    ? `${photographer.value.display_name} — Fotógrafo deportivo | Fotify`
-    : 'Fotógrafo | Fotify',
-  twitterDescription: () => photographer.value?.bio ?? 'Perfil público de fotógrafo deportivo en Fotify.',
-  twitterImage: () => photographer.value?.avatar_url ?? undefined,
+	title: () =>
+		photographer.value?.display_name
+			? `${photographer.value.display_name} — Fotógrafo deportivo | Fotify`
+			: "Fotógrafo | Fotify",
+	description: () => photographer.value?.bio ?? "Perfil público de fotógrafo deportivo en Fotify.",
+	ogTitle: () => photographer.value?.display_name ?? "Fotógrafo deportivo",
+	ogDescription: () => photographer.value?.bio ?? "",
+	ogImage: () => photographer.value?.avatar_url ?? undefined,
+	twitterTitle: () =>
+		photographer.value?.display_name
+			? `${photographer.value.display_name} — Fotógrafo deportivo | Fotify`
+			: "Fotógrafo | Fotify",
+	twitterDescription: () =>
+		photographer.value?.bio ?? "Perfil público de fotógrafo deportivo en Fotify.",
+	twitterImage: () => photographer.value?.avatar_url ?? undefined,
 })
 </script>

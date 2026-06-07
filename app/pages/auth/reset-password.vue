@@ -83,56 +83,54 @@
 
 <script setup lang="ts">
 definePageMeta({ ssr: false })
-useSeoMeta({ title: 'Restablecer contraseña — Fotify' })
+useSeoMeta({ title: "Restablecer contraseña — Fotify" })
 
 const route = useRoute()
 const token = computed(() => route.query.token as string | undefined)
 
-const password = ref('')
-const confirm = ref('')
+const password = ref("")
+const confirm = ref("")
 const loading = ref(false)
 const success = ref(false)
 const tokenInvalid = ref(false)
-const errorMsg = ref('')
+const errorMsg = ref("")
 
 onMounted(() => {
-  if (!token.value) tokenInvalid.value = true
+	if (!token.value) tokenInvalid.value = true
 })
 
 async function submit() {
-  errorMsg.value = ''
-  if (password.value.length < 8) {
-    errorMsg.value = 'La contraseña debe tener al menos 8 caracteres.'
-    return
-  }
-  if (password.value !== confirm.value) {
-    errorMsg.value = 'Las contraseñas no coinciden.'
-    return
-  }
-  if (!token.value) {
-    tokenInvalid.value = true
-    return
-  }
+	errorMsg.value = ""
+	if (password.value.length < 8) {
+		errorMsg.value = "La contraseña debe tener al menos 8 caracteres."
+		return
+	}
+	if (password.value !== confirm.value) {
+		errorMsg.value = "Las contraseñas no coinciden."
+		return
+	}
+	if (!token.value) {
+		tokenInvalid.value = true
+		return
+	}
 
-  loading.value = true
-  try {
-    await apiFetch('/auth/reset-password', {
-      method: 'POST',
-      body: { token: token.value, new_password: password.value },
-    })
-    success.value = true
-  }
-  catch (err: any) {
-    const status = err?.status ?? err?.data?.status
-    if (status === 400 || status === 401) {
-      tokenInvalid.value = true
-    }
-    else {
-      errorMsg.value = 'Error al guardar la contraseña. Intenta de nuevo.'
-    }
-  }
-  finally {
-    loading.value = false
-  }
+	loading.value = true
+	try {
+		await apiFetch("/auth/reset-password", {
+			method: "POST",
+			body: { token: token.value, new_password: password.value },
+		})
+		success.value = true
+	} catch (err: unknown) {
+		const e = err as { status?: number; data?: { status?: number } }
+		const status = e?.status ?? e?.data?.status
+		if (status === 400 || status === 401) {
+			tokenInvalid.value = true
+		} else {
+			errorMsg.value = "Error al guardar la contraseña. Intenta de nuevo."
+		}
+	} finally {
+		loading.value = false
+	}
 }
 </script>

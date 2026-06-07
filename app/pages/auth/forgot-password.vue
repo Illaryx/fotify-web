@@ -59,30 +59,28 @@
 
 <script setup lang="ts">
 definePageMeta({ ssr: false })
-useSeoMeta({ title: 'Recuperar contraseña — Fotify' })
+useSeoMeta({ title: "Recuperar contraseña — Fotify" })
 
-const email = ref('')
+const email = ref("")
 const loading = ref(false)
 const sent = ref(false)
-const errorMsg = ref('')
+const errorMsg = ref("")
 
 async function submit() {
-  if (!email.value) return
-  loading.value = true
-  errorMsg.value = ''
-  try {
-    await apiFetch('/auth/forgot-password', {
-      method: 'POST',
-      body: { email: email.value },
-    })
-    sent.value = true
-  }
-  catch {
-    // Always show success to prevent email enumeration
-    sent.value = true
-  }
-  finally {
-    loading.value = false
-  }
+	if (!email.value) return
+	loading.value = true
+	errorMsg.value = ""
+	try {
+		await apiFetch("/auth/forgot-password", {
+			method: "POST",
+			body: { email: email.value },
+		})
+		sent.value = true
+	} catch {
+		// Always show success to prevent email enumeration
+		sent.value = true
+	} finally {
+		loading.value = false
+	}
 }
 </script>

@@ -255,29 +255,29 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from '~/composables/useApi'
-import type { ListEnvelope, EventResponse } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import type { EventResponse, ListEnvelope } from "~/types"
 
 // Hero slider
 const heroSlides = [
-  { name: 'Maratón Lima 2025', image: demoHero(10) },
-  { name: 'Triatlón Costa Verde', image: demoHero(35) },
-  { name: 'Ciclismo Andes 2025', image: demoHero(60) },
+	{ name: "Maratón Lima 2025", image: demoHero(10) },
+	{ name: "Triatlón Costa Verde", image: demoHero(35) },
+	{ name: "Ciclismo Andes 2025", image: demoHero(60) },
 ]
 
 const activeSlide = ref(0)
 
 const { pause: pauseSlider, resume: resumeSlider } = useIntervalFn(() => {
-  activeSlide.value = (activeSlide.value + 1) % heroSlides.length
+	activeSlide.value = (activeSlide.value + 1) % heroSlides.length
 }, 4000)
 
 function goToSlide(i: number) {
-  activeSlide.value = i
-  pauseSlider()
-  resumeSlider()
+	activeSlide.value = i
+	pauseSlider()
+	resumeSlider()
 }
 
-const searchQuery = ref('')
+const searchQuery = ref("")
 const searchFocused = ref(false)
 
 // Fetch events
@@ -285,58 +285,66 @@ const eventsLoading = ref(true)
 const eventsItems = ref<EventResponse[]>([])
 
 onMounted(async () => {
-  try {
-    const res = await apiFetch<ListEnvelope<EventResponse>>('/events', { query: { limit: 20 } })
-    eventsItems.value = res.data?.items ?? []
-  }
-  finally {
-    eventsLoading.value = false
-  }
+	try {
+		const res = await apiFetch<ListEnvelope<EventResponse>>("/events", { query: { limit: 20 } })
+		eventsItems.value = res.data?.items ?? []
+	} finally {
+		eventsLoading.value = false
+	}
 })
 
 const events = computed(() => eventsItems.value.slice(0, 6))
 const allEvents = computed(() => eventsItems.value)
 
 const filteredEvents = computed(() => {
-  if (!searchQuery.value.trim()) return allEvents.value
-  const q = searchQuery.value.toLowerCase()
-  return allEvents.value.filter(ev => ev.name?.toLowerCase().includes(q) || ev.location?.toLowerCase().includes(q))
+	if (!searchQuery.value.trim()) return allEvents.value
+	const q = searchQuery.value.toLowerCase()
+	return allEvents.value.filter(
+		(ev) => ev.name?.toLowerCase().includes(q) || ev.location?.toLowerCase().includes(q),
+	)
 })
 
 function onSearchBlur() {
-  setTimeout(() => { searchFocused.value = false }, 150)
+	setTimeout(() => {
+		searchFocused.value = false
+	}, 150)
 }
 
 // How it works
 const steps = [
-  {
-    title: 'Encuentra tu evento',
-    description: 'Busca por nombre o fecha. Más de 48 eventos activos en Perú.',
-    iconPath: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
-  },
-  {
-    title: 'Sube tu selfie',
-    description: 'Nuestra IA escanea todas las fotos del evento y te encuentra en segundos.',
-    iconPath: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  },
-  {
-    title: 'Compra y descarga HD',
-    description: 'Elige tus fotos, paga seguro y descarga al instante sin marca de agua.',
-    iconPath: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-  },
+	{
+		title: "Encuentra tu evento",
+		description: "Busca por nombre o fecha. Más de 48 eventos activos en Perú.",
+		iconPath: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
+	},
+	{
+		title: "Sube tu selfie",
+		description: "Nuestra IA escanea todas las fotos del evento y te encuentra en segundos.",
+		iconPath:
+			'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+	},
+	{
+		title: "Compra y descarga HD",
+		description: "Elige tus fotos, paga seguro y descarga al instante sin marca de agua.",
+		iconPath:
+			'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+	},
 ]
 
 // Category pills
-const categoryPills = ['Todos', 'Running', 'Ciclismo', 'Triatlón', 'Social', 'Trail', 'Fitness']
-const activePill = ref('Todos')
+const categoryPills = ["Todos", "Running", "Ciclismo", "Triatlón", "Social", "Trail", "Fitness"]
+const activePill = ref("Todos")
 
 useSeoMeta({
-  title: 'Fotify — Encuentra tus fotos del evento',
-  description: 'Marketplace de fotografía deportiva con IA. Sube tu selfie y encuentra tus fotos en segundos.',
-  ogTitle: 'Fotify — Encuentra tus fotos del evento',
-  ogDescription: 'Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.',
-  twitterTitle: 'Fotify — Encuentra tus fotos del evento',
-  twitterDescription: 'Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.',
+	title: "Fotify — Encuentra tus fotos del evento",
+	description:
+		"Marketplace de fotografía deportiva con IA. Sube tu selfie y encuentra tus fotos en segundos.",
+	ogTitle: "Fotify — Encuentra tus fotos del evento",
+	ogDescription:
+		"Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.",
+	twitterTitle: "Fotify — Encuentra tus fotos del evento",
+	twitterDescription:
+		"Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.",
 })
 </script>
 

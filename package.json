@@ -1,42 +1,47 @@
 {
-  "name": "fotify-web",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "api:types": "swagger2openapi ../fotify-api/docs/swagger.json | npx openapi-typescript /dev/stdin -o app/types/api.ts"
-  },
-  "dependencies": {
-    "@tanstack/vue-query": "^5.80.2",
-    "@vueuse/core": "^12.7.0",
-    "jose": "^5.10.0",
-    "nuxt": "^4.4.2",
-    "pinia": "^3.0.2",
-    "vee-validate": "^4.15.0",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4",
-    "zod": "^3.24.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild",
-      "sharp",
-      "vue-demi"
-    ]
-  },
-  "devDependencies": {
-    "@nuxt/image": "^1.10.0",
-    "@nuxtjs/sitemap": "^8.0.15",
-    "@pinia/nuxt": "^0.11.3",
-    "@tailwindcss/vite": "^4.1.7",
-    "@vueuse/nuxt": "^12.7.0",
-    "openapi-typescript": "^7.13.0",
-    "tailwindcss": "^4.1.7",
-    "typescript": "^5.8.3"
-  }
+	"name": "fotify-web",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"build": "nuxt build",
+		"dev": "nuxt dev",
+		"generate": "nuxt generate",
+		"preview": "nuxt preview",
+		"postinstall": "nuxt prepare",
+		"typecheck": "nuxi typecheck",
+		"lint": "biome check .",
+		"lint:fix": "biome check --fix .",
+		"format": "biome format --fix .",
+		"api:types": "swagger2openapi ../fotify-api/docs/swagger.json | npx openapi-typescript /dev/stdin -o app/types/api.ts"
+	},
+	"dependencies": {
+		"@tanstack/vue-query": "^5.80.2",
+		"@vueuse/core": "^12.7.0",
+		"jose": "^5.10.0",
+		"nuxt": "^4.4.2",
+		"pinia": "^3.0.2",
+		"vee-validate": "^4.15.0",
+		"vue": "^3.5.32",
+		"vue-router": "^5.0.4",
+		"zod": "^3.24.4"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@parcel/watcher",
+			"esbuild",
+			"sharp",
+			"vue-demi"
+		]
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.16",
+		"@nuxt/image": "^1.10.0",
+		"@nuxtjs/sitemap": "^8.0.15",
+		"@pinia/nuxt": "^0.11.3",
+		"@tailwindcss/vite": "^4.1.7",
+		"@vueuse/nuxt": "^12.7.0",
+		"openapi-typescript": "^7.13.0",
+		"tailwindcss": "^4.1.7",
+		"typescript": "^5.8.3"
+	}
 }

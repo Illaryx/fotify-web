@@ -5,14 +5,18 @@
  * resolves to the same placeholder image across page reloads.
  */
 export function useDemoPhoto() {
-  function getDemoUrl(photoId: number, width = 400, height = 600): string {
-    return `https://picsum.photos/seed/fotify-${photoId}/${width}/${height}`
-  }
+	function getDemoUrl(photoId: number, width = 400, height = 600): string {
+		return `https://picsum.photos/seed/fotify-${photoId}/${width}/${height}`
+	}
 
-  function getThumbUrl(photo: { id?: number; thumbnail_url?: string | null }, width = 400, height = 600): string {
-    if (photo.thumbnail_url) return photo.thumbnail_url
-    return getDemoUrl(photo.id ?? 0, width, height)
-  }
+	function getThumbUrl(
+		photo: { id?: number; thumbnail_url?: string | null },
+		width = 400,
+		height = 600,
+	): string {
+		if (photo.thumbnail_url) return photo.thumbnail_url
+		return getDemoUrl(photo.id ?? 0, width, height)
+	}
 
-  return { getDemoUrl, getThumbUrl }
+	return { getDemoUrl, getThumbUrl }
 }

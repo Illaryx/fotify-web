@@ -660,11 +660,11 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from '~/composables/useApi'
-import type { EventResponse, OrderResponse, CreateOrderInput, SingleEnvelope } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import type { CreateOrderInput, EventResponse, OrderResponse, SingleEnvelope } from "~/types"
 
-definePageMeta({ ssr: false, middleware: 'auth' })
-useSeoMeta({ title: 'Checkout — Fotify' })
+definePageMeta({ ssr: false, middleware: "auth" })
+useSeoMeta({ title: "Checkout — Fotify" })
 
 const auth = useAuthStore()
 const cart = useCartStore()
@@ -672,31 +672,31 @@ const showAuth = useAuthModal()
 const route = useRoute()
 const izipay = useIzipay()
 
-type Step = 'form' | 'processing' | 'payment-form' | 'awaiting-qr' | 'success' | 'failed'
-type PayMethod = 'card' | 'yape' | 'plin'
+type Step = "form" | "processing" | "payment-form" | "awaiting-qr" | "success" | "failed"
+type PayMethod = "card" | "yape" | "plin"
 
-const step = ref<Step>('form')
-const payMethod = ref<PayMethod>('card')
+const step = ref<Step>("form")
+const payMethod = ref<PayMethod>("card")
 const event = ref<EventResponse | null>(null)
-const userEmail = ref('')
+const userEmail = ref("")
 const orderId = ref<number | null>(null)
 const successPhotoCount = ref(0)
 
 const termsAccepted = ref(false)
 const couponOpen = ref(false)
-const couponCode = ref('')
+const couponCode = ref("")
 const orderError = ref<string | null>(null)
 const failedError = ref<string | null>(null)
 const selectedFailReason = ref(-1)
 const krSubmitting = ref(false)
 const krError = ref<string | null>(null)
-const krPublicKey = ref('')
+const krPublicKey = ref("")
 
 const failReasons = [
-  'Fondos insuficientes en la cuenta',
-  'Datos de tarjeta incorrectos',
-  'Tarjeta bloqueada o vencida',
-  'Otro motivo',
+	"Fondos insuficientes en la cuenta",
+	"Datos de tarjeta incorrectos",
+	"Tarjeta bloqueada o vencida",
+	"Otro motivo",
 ]
 
 const qrSeconds = ref(600)
@@ -707,206 +707,227 @@ let pollInterval: ReturnType<typeof setInterval> | null = null
 const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail.value))
 
 const totalAmount = computed(() => {
-  if (!event.value?.photo_price || !cart.count) return 0
-  return cart.count * event.value.photo_price
+	if (!event.value?.photo_price || !cart.count) return 0
+	return cart.count * event.value.photo_price
 })
 
 const formattedTotal = computed(() => `S/ ${totalAmount.value.toFixed(2)}`)
 
 const qrTimerDisplay = computed(() => {
-  const m = Math.floor(qrSeconds.value / 60).toString().padStart(2, '0')
-  const s = (qrSeconds.value % 60).toString().padStart(2, '0')
-  return `QR válido por ${m}:${s}`
+	const m = Math.floor(qrSeconds.value / 60)
+		.toString()
+		.padStart(2, "0")
+	const s = (qrSeconds.value % 60).toString().padStart(2, "0")
+	return `QR válido por ${m}:${s}`
 })
 
 const payLabel = computed(() => {
-  if (step.value === 'processing') return 'Preparando pago...'
-  if (payMethod.value === 'yape') return 'Confirmar pago con Yape'
-  if (payMethod.value === 'plin') return 'Confirmar pago con Plin'
-  return `Pagar ${formattedTotal.value} de forma segura`
+	if (step.value === "processing") return "Preparando pago..."
+	if (payMethod.value === "yape") return "Confirmar pago con Yape"
+	if (payMethod.value === "plin") return "Confirmar pago con Plin"
+	return `Pagar ${formattedTotal.value} de forma segura`
 })
 
 const backLink = computed(() => {
-  const slug = route.query.event_slug as string | undefined
-  if (slug) return `/events/${slug}`
-  return '/events'
+	const slug = route.query.event_slug as string | undefined
+	if (slug) return `/events/${slug}`
+	return "/events"
 })
 
 // Init
 onMounted(async () => {
-  if (!auth.isAuthenticated) {
-    showAuth.value = true
-    return
-  }
-  if (!cart.hasPhotos) {
-    await navigateTo('/events')
-    return
-  }
-  await Promise.all([fetchEvent(), fetchUserEmail()])
+	if (!auth.isAuthenticated) {
+		showAuth.value = true
+		return
+	}
+	if (!cart.hasPhotos) {
+		await navigateTo("/events")
+		return
+	}
+	await Promise.all([fetchEvent(), fetchUserEmail()])
 })
 
 onUnmounted(() => {
-  if (qrInterval) clearInterval(qrInterval)
-  if (pollInterval) clearInterval(pollInterval)
-izipay.destroy()
+	if (qrInterval) clearInterval(qrInterval)
+	if (pollInterval) clearInterval(pollInterval)
+	izipay.destroy()
 })
 
 async function fetchEvent() {
-  if (!cart.eventId) return
-  try {
-    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${cart.eventId}`)
-    event.value = res.data ?? null
-  }
-  catch { /* optional context */ }
+	if (!cart.eventId) return
+	try {
+		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${cart.eventId}`)
+		event.value = res.data ?? null
+	} catch {
+		/* optional context */
+	}
 }
 
 async function fetchUserEmail() {
-  try {
-    const res = await apiFetch<{ data?: { email?: string } }>('/auth/me')
-    userEmail.value = res.data?.email ?? ''
-  }
-  catch { /* not critical */ }
+	try {
+		const res = await apiFetch<{ data?: { email?: string } }>("/auth/me")
+		userEmail.value = res.data?.email ?? ""
+	} catch {
+		/* not critical */
+	}
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
+	return new Date(dateStr).toLocaleDateString("es-PE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	})
 }
 
-
 function startQrTimer() {
-  qrSeconds.value = 600
-  if (qrInterval) clearInterval(qrInterval)
-  qrInterval = setInterval(() => {
-    if (qrSeconds.value <= 0) { clearInterval(qrInterval!); qrInterval = null; return }
-    qrSeconds.value--
-  }, 1000)
+	qrSeconds.value = 600
+	if (qrInterval) clearInterval(qrInterval)
+	qrInterval = setInterval(() => {
+		if (qrSeconds.value <= 0) {
+			if (qrInterval) clearInterval(qrInterval)
+			qrInterval = null
+			return
+		}
+		qrSeconds.value--
+	}, 1000)
 }
 
 watch(payMethod, (m) => {
-  if (m === 'yape' || m === 'plin') startQrTimer()
-  else {
-    if (qrInterval) { clearInterval(qrInterval); qrInterval = null }
-  }
+	if (m === "yape" || m === "plin") startQrTimer()
+	else {
+		if (qrInterval) {
+			clearInterval(qrInterval)
+			qrInterval = null
+		}
+	}
 })
 
 async function handlePay() {
-  if (!termsAccepted.value) {
-    orderError.value = 'Acepta los términos de uso para continuar.'
-    return
-  }
-  if (!emailValid.value) {
-    orderError.value = 'Ingresa un correo válido.'
-    return
-  }
+	if (!termsAccepted.value) {
+		orderError.value = "Acepta los términos de uso para continuar."
+		return
+	}
+	if (!emailValid.value) {
+		orderError.value = "Ingresa un correo válido."
+		return
+	}
 
-  orderError.value = null
-  step.value = 'processing'
-  successPhotoCount.value = cart.count
+	orderError.value = null
+	step.value = "processing"
+	successPhotoCount.value = cart.count
 
-  try {
-    const orderRes = await apiFetch<{ data?: OrderResponse }>('/orders', {
-      method: 'POST',
-      body: {
-        event_id: cart.eventId!,
-        payment_gateway: 'izipay',
-        photo_ids: [...cart.photoIds],
-        ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
-        type: cart.orderType,
-      } as CreateOrderInput,
-    })
+	try {
+		const orderRes = await apiFetch<{ data?: OrderResponse }>("/orders", {
+			method: "POST",
+			body: {
+				event_id: cart.eventId,
+				payment_gateway: "izipay",
+				photo_ids: [...cart.photoIds],
+				...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
+				type: cart.orderType,
+			} as CreateOrderInput,
+		})
 
-    const oid = orderRes.data?.id!
-    orderId.value = oid
+		const oid = orderRes.data?.id
+		if (!oid) throw new Error("No se recibió un ID de orden válido")
+		orderId.value = oid
 
-    if (payMethod.value === 'card') {
-      // Get Izipay form token from backend
-      const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(`/orders/${oid}/payment-token`, {
-        method: 'POST',
-      })
+		if (payMethod.value === "card") {
+			// Get Izipay form token from backend
+			const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(
+				`/orders/${oid}/payment-token`,
+				{
+					method: "POST",
+				},
+			)
 
-      const { form_token, public_key } = tokenRes.data!
+			if (!tokenRes.data) throw new Error("No se recibió token de pago")
+			const { form_token, public_key } = tokenRes.data
 
-      // Set the key before the div appears in the DOM so Krypton's
-      // MutationObserver finds kr-public-key immediately and skips CLIENT_501.
-      krPublicKey.value = public_key
+			// Set the key before the div appears in the DOM so Krypton's
+			// MutationObserver finds kr-public-key immediately and skips CLIENT_501.
+			krPublicKey.value = public_key
 
-      // Render the Krypton embedded form
-      step.value = 'payment-form'
+			// Render the Krypton embedded form
+			step.value = "payment-form"
 
-      // Wait one tick so the kr-embedded div is in the DOM
-      await nextTick()
-      await izipay.initForm(form_token, public_key)
+			// Wait one tick so the kr-embedded div is in the DOM
+			await nextTick()
+			await izipay.initForm(form_token, public_key)
 
-      // Krypton calls this when the user submits the card form
-      izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
-        krSubmitting.value = false
-        try {
-          await apiFetch(`/orders/${oid}/confirm-payment`, {
-            method: 'POST',
-            body: { kr_answer: krAnswer, kr_hash: krHash },
-          })
-          persistOrderPhotos(oid, [...cart.photoIds])
-          cart.clear()
-          step.value = 'success'
-        }
-        catch (err: any) {
-          step.value = 'failed'
-          failedError.value = err?.data?.error || err?.message || 'Pago no completado.'
-        }
-      })
-    }
-    else {
-      // Yape / Plin: show QR + poll
-      step.value = 'awaiting-qr'
-      startQrTimer()
-      pollOrderStatus(oid)
-    }
-  }
-  catch (err: any) {
-    step.value = 'failed'
-    failedError.value = err?.data?.error || err?.message || 'Error al procesar el pago.'
-  }
+			// Krypton calls this when the user submits the card form
+			izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
+				krSubmitting.value = false
+				try {
+					await apiFetch(`/orders/${oid}/confirm-payment`, {
+						method: "POST",
+						body: { kr_answer: krAnswer, kr_hash: krHash },
+					})
+					persistOrderPhotos(oid, [...cart.photoIds])
+					cart.clear()
+					step.value = "success"
+				} catch (err: unknown) {
+					step.value = "failed"
+					const e = err as { data?: { error?: string }; message?: string }
+					failedError.value = e?.data?.error || e?.message || "Pago no completado."
+				}
+			})
+		} else {
+			// Yape / Plin: show QR + poll
+			step.value = "awaiting-qr"
+			startQrTimer()
+			pollOrderStatus(oid)
+		}
+	} catch (err: unknown) {
+		step.value = "failed"
+		const e = err as { data?: { error?: string }; message?: string }
+		failedError.value = e?.data?.error || e?.message || "Error al procesar el pago."
+	}
 }
 
 async function handleCardSubmit() {
-  krError.value = null
-  krSubmitting.value = true
-  try {
-    await izipay.submit()
-    // onPaymentResult callback takes over from here
-  }
-  catch (err: any) {
-    krError.value = err?.message || 'Revisa los datos de la tarjeta e intenta de nuevo.'
-    krSubmitting.value = false
-  }
+	krError.value = null
+	krSubmitting.value = true
+	try {
+		await izipay.submit()
+		// onPaymentResult callback takes over from here
+	} catch (err: unknown) {
+		const e = err as { message?: string }
+		krError.value = e?.message || "Revisa los datos de la tarjeta e intenta de nuevo."
+		krSubmitting.value = false
+	}
 }
 
 function pollOrderStatus(oid: number) {
-  if (pollInterval) clearInterval(pollInterval)
-  pollInterval = setInterval(async () => {
-    try {
-      const res = await apiFetch<{ data?: OrderResponse }>(`/orders/${oid}`)
-      if (res.data?.status === 'paid') {
-        clearInterval(pollInterval!)
-        pollInterval = null
-        persistOrderPhotos(oid, [...cart.photoIds])
-        cart.clear()
-        step.value = 'success'
-      }
-    }
-    catch { /* ignore poll errors */ }
-  }, 3000)
+	if (pollInterval) clearInterval(pollInterval)
+	pollInterval = setInterval(async () => {
+		try {
+			const res = await apiFetch<{ data?: OrderResponse }>(`/orders/${oid}`)
+			if (res.data?.status === "paid") {
+				if (pollInterval) clearInterval(pollInterval)
+				pollInterval = null
+				persistOrderPhotos(oid, [...cart.photoIds])
+				cart.clear()
+				step.value = "success"
+			}
+		} catch {
+			/* ignore poll errors */
+		}
+	}, 3000)
 }
 
 function persistOrderPhotos(oid: number, ids: number[]) {
-  try {
-    const key = `fotify_order_photos_${oid}`
-    localStorage.setItem(key, JSON.stringify(ids))
-  } catch { /* ignore storage errors */ }
+	try {
+		const key = `fotify_order_photos_${oid}`
+		localStorage.setItem(key, JSON.stringify(ids))
+	} catch {
+		/* ignore storage errors */
+	}
 }
 
 function navigateToDownloads() {
-  if (orderId.value) navigateTo(`/downloads/${orderId.value}`)
+	if (orderId.value) navigateTo(`/downloads/${orderId.value}`)
 }
 </script>
 

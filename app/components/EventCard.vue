@@ -55,24 +55,33 @@
 </template>
 
 <script setup lang="ts">
-import type { EventResponse } from '~/types'
-import { demoCover } from '~/utils/demophotos'
+import type { EventResponse } from "~/types"
+import { demoCover } from "~/utils/demophotos"
 
 const props = defineProps<{ event: EventResponse }>()
 
 const formattedDate = computed(() => {
-  if (!props.event.event_date) return ''
-  return new Date(props.event.event_date).toLocaleDateString('es-PE', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
+	if (!props.event.event_date) return ""
+	return new Date(props.event.event_date).toLocaleDateString("es-PE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	})
 })
 
 const statusBadge = computed(() => {
-  switch (props.event.status) {
-    case 'active': return { label: 'En vivo', class: 'bg-green-500/15 border border-green-500/25 text-green-400' }
-    case 'draft': return { label: 'Pronto', class: 'bg-coral/10 border border-coral/20 text-[#FF8FAB]' }
-    case 'closed': return { label: 'Cerrado', class: 'bg-white/5 border border-white/10 text-white/40' }
-    default: return null
-  }
+	switch (props.event.status) {
+		case "active":
+			return {
+				label: "En vivo",
+				class: "bg-green-500/15 border border-green-500/25 text-green-400",
+			}
+		case "draft":
+			return { label: "Pronto", class: "bg-coral/10 border border-coral/20 text-[#FF8FAB]" }
+		case "closed":
+			return { label: "Cerrado", class: "bg-white/5 border border-white/10 text-white/40" }
+		default:
+			return null
+	}
 })
 </script>

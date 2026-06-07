@@ -5,7 +5,6 @@
         v-if="modelValue"
         class="fixed inset-0 z-[300] flex items-center justify-center p-5"
         style="background: rgba(10, 6, 20, 0.7); backdrop-filter: blur(6px);"
-        @click.self="close"
       >
         <div
           class="relative w-full max-w-[420px] bg-night-2 border border-border rounded-3xl p-8 shadow-[0_32px_80px_rgba(0,0,0,.6),0_0_0_1px_rgba(124,58,237,.1)]"
@@ -248,175 +247,183 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from '~/composables/useApi'
-import type { LoginInput, RegisterInput, TokenPair, SingleEnvelope } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import type { LoginInput, RegisterInput, SingleEnvelope, TokenPair } from "~/types"
 
 const props = defineProps<{ modelValue: boolean }>()
-const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
+const emit = defineEmits<{ "update:modelValue": [value: boolean] }>()
 
 const auth = useAuthStore()
 const dashboardBase = useRuntimeConfig().public.dashboardBase
 
-type View = 'login' | 'register' | 'forgot' | 'forgot-success' | 'register-success' | 'panel-redirect'
-const view = ref<View>('login')
+type View =
+	| "login"
+	| "register"
+	| "forgot"
+	| "forgot-success"
+	| "register-success"
+	| "panel-redirect"
+const view = ref<View>("login")
 const shaking = ref(false)
 
-const loginForm = reactive<LoginInput>({ email: '', password: '' })
+const loginForm = reactive<LoginInput>({ email: "", password: "" })
 const showLoginPass = ref(false)
 const loginLoading = ref(false)
-const loginError = ref('')
+const loginError = ref("")
 
 const registerForm = reactive<RegisterInput & { terms: boolean }>({
-  full_name: '',
-  email: '',
-  password: '',
-  terms: false,
+	full_name: "",
+	email: "",
+	password: "",
+	terms: false,
 })
 const showRegisterPass = ref(false)
 const registerLoading = ref(false)
-const registerError = ref('')
+const registerError = ref("")
 
-const forgotEmail = ref('')
+const forgotEmail = ref("")
 const forgotLoading = ref(false)
 
 const passwordStrength = computed(() => {
-  const val = registerForm.password
-  if (!val) return 0
-  let score = 0
-  if (val.length >= 8) score++
-  if (/[A-Z]/.test(val) || /[0-9]/.test(val)) score++
-  if (/[^A-Za-z0-9]/.test(val) && val.length >= 10) score++
-  return score
+	const val = registerForm.password
+	if (!val) return 0
+	let score = 0
+	if (val.length >= 8) score++
+	if (/[A-Z]/.test(val) || /[0-9]/.test(val)) score++
+	if (/[^A-Za-z0-9]/.test(val) && val.length >= 10) score++
+	return score
 })
 
-const strengthBarColor = computed(() =>
-  ['#ef4444', '#f59e0b', '#4ade80'][passwordStrength.value - 1] ?? '#2A1F4A',
+const strengthBarColor = computed(
+	() => ["#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#2A1F4A",
 )
 const strengthLabelColor = computed(() => {
-  if (!registerForm.password) return 'rgba(255,255,255,.25)'
-  return ['#ef4444', '#f59e0b', '#4ade80'][passwordStrength.value - 1] ?? '#ef4444'
+	if (!registerForm.password) return "rgba(255,255,255,.25)"
+	return ["#ef4444", "#f59e0b", "#4ade80"][passwordStrength.value - 1] ?? "#ef4444"
 })
 const strengthLabel = computed(() => {
-  if (!registerForm.password) return 'Escribe para verificar seguridad'
-  return (
-    ['Contraseña muy corta', 'Contraseña débil', 'Contraseña media', 'Contraseña fuerte'][passwordStrength.value]
-    ?? 'Contraseña muy corta'
-  )
+	if (!registerForm.password) return "Escribe para verificar seguridad"
+	return (
+		["Contraseña muy corta", "Contraseña débil", "Contraseña media", "Contraseña fuerte"][
+			passwordStrength.value
+		] ?? "Contraseña muy corta"
+	)
 })
 
 function triggerShake() {
-  shaking.value = false
-  nextTick(() => { shaking.value = true })
+	shaking.value = false
+	nextTick(() => {
+		shaking.value = true
+	})
 }
 
 function switchTo(target: View) {
-  loginError.value = ''
-  registerError.value = ''
-  view.value = target
+	loginError.value = ""
+	registerError.value = ""
+	view.value = target
 }
 
 function close() {
-  emit('update:modelValue', false)
+	emit("update:modelValue", false)
 }
 
 async function handleLogin() {
-  loginError.value = ''
-  if (!loginForm.email || !loginForm.password) {
-    loginError.value = 'Por favor completa todos los campos.'
-    triggerShake()
-    return
-  }
-  loginLoading.value = true
-  try {
-    const res = await apiFetch<SingleEnvelope<TokenPair>>('/auth/login', {
-      method: 'POST',
-      body: { email: loginForm.email, password: loginForm.password },
-    })
-    if (res.data) {
-      auth.setTokens(res.data)
-      if (auth.isPhotographer || auth.isAdmin) {
-        view.value = 'panel-redirect'
-        return
-      }
-    }
-    close()
-  }
-  catch (e: unknown) {
-    const msg = (e as { data?: { error?: string } })?.data?.error
-    loginError.value = msg ?? 'Email o contraseña incorrectos. Inténtalo de nuevo.'
-    triggerShake()
-  }
-  finally {
-    loginLoading.value = false
-  }
+	loginError.value = ""
+	if (!loginForm.email || !loginForm.password) {
+		loginError.value = "Por favor completa todos los campos."
+		triggerShake()
+		return
+	}
+	loginLoading.value = true
+	try {
+		const res = await apiFetch<SingleEnvelope<TokenPair>>("/auth/login", {
+			method: "POST",
+			body: { email: loginForm.email, password: loginForm.password },
+		})
+		if (res.data) {
+			auth.setTokens(res.data)
+			if (auth.isPhotographer || auth.isAdmin) {
+				view.value = "panel-redirect"
+				return
+			}
+		}
+		close()
+	} catch (e: unknown) {
+		const msg = (e as { data?: { error?: string } })?.data?.error
+		loginError.value = msg ?? "Email o contraseña incorrectos. Inténtalo de nuevo."
+		triggerShake()
+	} finally {
+		loginLoading.value = false
+	}
 }
 
 async function handleRegister() {
-  registerError.value = ''
-  if (!registerForm.full_name || !registerForm.email || !registerForm.password) {
-    registerError.value = 'Por favor completa todos los campos.'
-    triggerShake()
-    return
-  }
-  if (!registerForm.terms) {
-    registerError.value = 'Debes aceptar los términos de uso.'
-    triggerShake()
-    return
-  }
-  if (registerForm.password.length < 8) {
-    registerError.value = 'La contraseña debe tener al menos 8 caracteres.'
-    triggerShake()
-    return
-  }
-  registerLoading.value = true
-  try {
-    const res = await apiFetch<SingleEnvelope<TokenPair>>('/auth/register', {
-      method: 'POST',
-      body: { email: registerForm.email, full_name: registerForm.full_name, password: registerForm.password },
-    })
-    if (res.data) auth.setTokens(res.data)
-    view.value = 'register-success'
-  }
-  catch (e: unknown) {
-    const msg = (e as { data?: { error?: string } })?.data?.error
-    registerError.value = msg ?? 'No se pudo crear la cuenta. Intenta de nuevo.'
-    triggerShake()
-  }
-  finally {
-    registerLoading.value = false
-  }
+	registerError.value = ""
+	if (!registerForm.full_name || !registerForm.email || !registerForm.password) {
+		registerError.value = "Por favor completa todos los campos."
+		triggerShake()
+		return
+	}
+	if (!registerForm.terms) {
+		registerError.value = "Debes aceptar los términos de uso."
+		triggerShake()
+		return
+	}
+	if (registerForm.password.length < 8) {
+		registerError.value = "La contraseña debe tener al menos 8 caracteres."
+		triggerShake()
+		return
+	}
+	registerLoading.value = true
+	try {
+		const res = await apiFetch<SingleEnvelope<TokenPair>>("/auth/register", {
+			method: "POST",
+			body: {
+				email: registerForm.email,
+				full_name: registerForm.full_name,
+				password: registerForm.password,
+			},
+		})
+		if (res.data) auth.setTokens(res.data)
+		view.value = "register-success"
+	} catch (e: unknown) {
+		const msg = (e as { data?: { error?: string } })?.data?.error
+		registerError.value = msg ?? "No se pudo crear la cuenta. Intenta de nuevo."
+		triggerShake()
+	} finally {
+		registerLoading.value = false
+	}
 }
 
 async function handleForgot() {
-  if (!forgotEmail.value) return
-  forgotLoading.value = true
-  await new Promise(r => setTimeout(r, 1000))
-  forgotLoading.value = false
-  view.value = 'forgot-success'
+	if (!forgotEmail.value) return
+	forgotLoading.value = true
+	await new Promise((r) => setTimeout(r, 1000))
+	forgotLoading.value = false
+	view.value = "forgot-success"
 }
 
-watch(() => props.modelValue, (open) => {
-  if (!open) {
-    setTimeout(() => {
-      view.value = 'login'
-      loginForm.email = ''
-      loginForm.password = ''
-      loginError.value = ''
-      showLoginPass.value = false
-      registerForm.full_name = ''
-      registerForm.email = ''
-      registerForm.password = ''
-      registerForm.terms = false
-      registerError.value = ''
-      showRegisterPass.value = false
-      forgotEmail.value = ''
-    }, 300)
-  }
-})
-
-const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
-onMounted(() => window.addEventListener('keydown', onKey))
-onUnmounted(() => window.removeEventListener('keydown', onKey))
+watch(
+	() => props.modelValue,
+	(open) => {
+		if (!open) {
+			setTimeout(() => {
+				view.value = "login"
+				loginForm.email = ""
+				loginForm.password = ""
+				loginError.value = ""
+				showLoginPass.value = false
+				registerForm.full_name = ""
+				registerForm.email = ""
+				registerForm.password = ""
+				registerForm.terms = false
+				registerError.value = ""
+				showRegisterPass.value = false
+				forgotEmail.value = ""
+			}, 300)
+		}
+	},
+)
 </script>
 
 <style scoped>

@@ -553,9 +553,9 @@
 </template>
 
 <script setup lang="ts">
-import { apiFetch } from '~/composables/useApi'
-import { useDemoPhoto } from '~/composables/useDemoPhoto'
-import type { EventResponse, PhotoResponse, SingleEnvelope, ListEnvelope } from '~/types'
+import { apiFetch } from "~/composables/useApi"
+import { useDemoPhoto } from "~/composables/useDemoPhoto"
+import type { EventResponse, ListEnvelope, PhotoResponse, SingleEnvelope } from "~/types"
 
 const LIMIT = 24
 
@@ -563,6 +563,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const cart = useCartStore()
 const showAuth = useAuthModal()
+// biome-ignore lint/correctness/noUnusedVariables: used in template
 const { getThumbUrl } = useDemoPhoto()
 
 // Lightbox state
@@ -573,46 +574,46 @@ const lightboxImgLoading = ref(true)
 const lightboxImgError = ref(false)
 
 function openLightbox(photo: PhotoResponse, index: number) {
-  lightboxPhoto.value = photo
-  lightboxIndex.value = index
-  lightboxImgLoading.value = true
-  lightboxImgError.value = false
+	lightboxPhoto.value = photo
+	lightboxIndex.value = index
+	lightboxImgLoading.value = true
+	lightboxImgError.value = false
 }
 
 function closeLightbox() {
-  lightboxPhoto.value = null
+	lightboxPhoto.value = null
 }
 
 function lightboxPrev() {
-  if (lightboxIndex.value > 0) {
-    lightboxIndex.value--
-    lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
-    lightboxImgLoading.value = true
-    lightboxImgError.value = false
-  }
+	if (lightboxIndex.value > 0) {
+		lightboxIndex.value--
+		lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
+		lightboxImgLoading.value = true
+		lightboxImgError.value = false
+	}
 }
 
 function lightboxNext() {
-  if (lightboxIndex.value < photos.value.length - 1) {
-    lightboxIndex.value++
-    lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
-    lightboxImgLoading.value = true
-    lightboxImgError.value = false
-  }
+	if (lightboxIndex.value < photos.value.length - 1) {
+		lightboxIndex.value++
+		lightboxPhoto.value = photos.value[lightboxIndex.value] ?? null
+		lightboxImgLoading.value = true
+		lightboxImgError.value = false
+	}
 }
 
 // Keyboard navigation for lightbox
 onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
+	window.addEventListener("keydown", onKeydown)
 })
 onUnmounted(() => {
-  window.removeEventListener('keydown', onKeydown)
+	window.removeEventListener("keydown", onKeydown)
 })
 function onKeydown(e: KeyboardEvent) {
-  if (!lightboxPhoto.value) return
-  if (e.key === 'Escape') closeLightbox()
-  if (e.key === 'ArrowLeft') lightboxPrev()
-  if (e.key === 'ArrowRight') lightboxNext()
+	if (!lightboxPhoto.value) return
+	if (e.key === "Escape") closeLightbox()
+	if (e.key === "ArrowLeft") lightboxPrev()
+	if (e.key === "ArrowRight") lightboxNext()
 }
 
 const slug = route.params.slug as string
@@ -626,185 +627,198 @@ const totalPhotos = ref(0)
 const loadingMore = ref(false)
 
 onMounted(async () => {
-  try {
-    const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/slug/${slug}`)
-    event.value = evRes.data ?? null
-    if (event.value?.id) cart.setEvent(event.value.id)
-  }
-  catch { /* not found state handled by template */ }
-  finally {
-    eventLoading.value = false
-  }
+	try {
+		const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/slug/${slug}`)
+		event.value = evRes.data ?? null
+		if (event.value?.id) cart.setEvent(event.value.id)
+	} catch {
+		/* not found state handled by template */
+	} finally {
+		eventLoading.value = false
+	}
 
-  if (!event.value?.id) {
-    photosLoading.value = false
-    return
-  }
+	if (!event.value?.id) {
+		photosLoading.value = false
+		return
+	}
 
-  try {
-    const photosRes = await apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
-      query: { event_id: event.value.id, limit: LIMIT, offset: 0 },
-    })
-    photos.value = photosRes.data?.items ?? []
-    totalPhotos.value = photosRes.data?.total ?? event.value?.total_photos ?? 0
-  }
-  finally {
-    photosLoading.value = false
-  }
+	try {
+		const photosRes = await apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+			query: { event_id: event.value.id, limit: LIMIT, offset: 0 },
+		})
+		photos.value = photosRes.data?.items ?? []
+		totalPhotos.value = photosRes.data?.total ?? event.value?.total_photos ?? 0
+	} finally {
+		photosLoading.value = false
+	}
 })
 
 const hasMore = computed(() => photos.value.length < totalPhotos.value)
 
 async function loadMore() {
-  if (!eventId.value || loadingMore.value) return
-  loadingMore.value = true
-  try {
-    const res = await apiFetch<ListEnvelope<PhotoResponse>>('/photos', {
-      query: { event_id: eventId.value, limit: LIMIT, offset: photos.value.length },
-    })
-    photos.value = [...photos.value, ...(res.data?.items ?? [])]
-    totalPhotos.value = res.data?.total ?? totalPhotos.value
-  }
-  finally {
-    loadingMore.value = false
-  }
+	if (!eventId.value || loadingMore.value) return
+	loadingMore.value = true
+	try {
+		const res = await apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+			query: { event_id: eventId.value, limit: LIMIT, offset: photos.value.length },
+		})
+		photos.value = [...photos.value, ...(res.data?.items ?? [])]
+		totalPhotos.value = res.data?.total ?? totalPhotos.value
+	} finally {
+		loadingMore.value = false
+	}
 }
 
-const currency = computed(() => event.value?.currency ?? 'S/')
+const currency = computed(() => event.value?.currency ?? "S/")
 
-const hasPricing = computed(() =>
-  !!(event.value?.photo_price || event.value?.packs?.length || event.value?.full_event_price),
+const hasPricing = computed(
+	() => !!(event.value?.photo_price || event.value?.packs?.length || event.value?.full_event_price),
 )
 
 const sortedPacks = computed(() =>
-  [...(event.value?.packs ?? [])].sort((a, b) => a.quantity - b.quantity),
+	[...(event.value?.packs ?? [])].sort((a, b) => (a.quantity ?? 0) - (b.quantity ?? 0)),
 )
 
-function packOriginalFor(pack: { quantity: number; price: number }): string {
-  const price = event.value?.photo_price
-  if (!price) return '0.00'
-  return (pack.quantity * price).toFixed(2)
+function packOriginalFor(pack: { quantity?: number; price?: number }): string {
+	const price = event.value?.photo_price
+	if (!price) return "0.00"
+	return ((pack.quantity ?? 0) * price).toFixed(2)
 }
 
-function packSavingFor(pack: { quantity: number; price: number }): string {
-  const price = event.value?.photo_price
-  if (!price) return '0.00'
-  return (pack.quantity * price - pack.price).toFixed(2)
+function packSavingFor(pack: { quantity?: number; price?: number }): string {
+	const price = event.value?.photo_price
+	if (!price) return "0.00"
+	return ((pack.quantity ?? 0) * price - (pack.price ?? 0)).toFixed(2)
 }
 
 // Best pack to apply: highest-quantity pack whose threshold the cart meets.
 const bestPack = computed(() => {
-  const count = cart.count
-  let best: { quantity: number; price: number } | null = null
-  for (const pack of sortedPacks.value) {
-    if (count >= pack.quantity) best = pack
-  }
-  return best
+	const count = cart.count
+	let best: { quantity?: number; price?: number } | null = null
+	for (const pack of sortedPacks.value) {
+		if (count >= (pack.quantity ?? 0)) best = pack
+	}
+	return best
 })
 
 const bestPackApplied = computed(() => bestPack.value !== null)
 
 const currentPackSaving = computed(() => {
-  const pack = bestPack.value
-  const price = event.value?.photo_price
-  if (!pack || !price) return '0.00'
-  const numPacks = Math.floor(cart.count / pack.quantity)
-  const singles = cart.count % pack.quantity
-  return (cart.count * price - (numPacks * pack.price + singles * price)).toFixed(2)
+	const pack = bestPack.value
+	const price = event.value?.photo_price
+	if (!pack || !price) return "0.00"
+	const qty = pack.quantity ?? 0
+	const numPacks = Math.floor(cart.count / qty)
+	const singles = cart.count % qty
+	return (cart.count * price - (numPacks * (pack.price ?? 0) + singles * price)).toFixed(2)
 })
 
 // Cart total: apply best matching pack pricing when possible.
 const cartTotal = computed(() => {
-  const price = event.value?.photo_price
-  if (!price) return '0.00'
-  const pack = bestPack.value
-  if (pack) {
-    const numPacks = Math.floor(cart.count / pack.quantity)
-    const singles = cart.count % pack.quantity
-    return (numPacks * pack.price + singles * price).toFixed(2)
-  }
-  return (cart.count * price).toFixed(2)
+	const price = event.value?.photo_price
+	if (!price) return "0.00"
+	const pack = bestPack.value
+	if (pack) {
+		const qty = pack.quantity ?? 0
+		const numPacks = Math.floor(cart.count / qty)
+		const singles = cart.count % qty
+		return (numPacks * (pack.price ?? 0) + singles * price).toFixed(2)
+	}
+	return (cart.count * price).toFixed(2)
 })
 
 // Photos needed to reach the next pack threshold.
 const photosToNextPack = computed(() => {
-  const count = cart.count
-  for (const pack of sortedPacks.value) {
-    if (count < pack.quantity) return pack.quantity - count
-  }
-  return 0
+	const count = cart.count
+	for (const pack of sortedPacks.value) {
+		if (count < (pack.quantity ?? 0)) return (pack.quantity ?? 0) - count
+	}
+	return 0
 })
 
 const formattedDate = computed(() => {
-  if (!event.value?.event_date) return ''
-  return new Date(event.value.event_date).toLocaleDateString('es-PE', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  })
+	if (!event.value?.event_date) return ""
+	return new Date(event.value.event_date).toLocaleDateString("es-PE", {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	})
 })
 
 const statusLabel = computed(() => {
-  switch (event.value?.status) {
-    case 'active': return 'Fotos disponibles'
-    case 'closed': return 'Evento cerrado'
-    case 'draft': return 'Próximamente'
-    default: return ''
-  }
+	switch (event.value?.status) {
+		case "active":
+			return "Fotos disponibles"
+		case "closed":
+			return "Evento cerrado"
+		case "draft":
+			return "Próximamente"
+		default:
+			return ""
+	}
 })
 
 function handlePhotoClick(photo: PhotoResponse) {
-  if (!auth.isAuthenticated) {
-    showAuth.value = true
-    return
-  }
-  if (photo.id === undefined || !eventId.value) return
-  cart.setEvent(eventId.value)
-  cart.toggle(photo.id)
+	if (!auth.isAuthenticated) {
+		showAuth.value = true
+		return
+	}
+	if (photo.id === undefined || !eventId.value) return
+	cart.setEvent(eventId.value)
+	cart.toggle(photo.id)
 }
 
 function toggleFromLightbox() {
-  const photo = lightboxPhoto.value
-  if (!photo || photo.id === undefined || !eventId.value) return
-  cart.setEvent(eventId.value)
-  cart.toggle(photo.id)
+	const photo = lightboxPhoto.value
+	if (!photo || photo.id === undefined || !eventId.value) return
+	cart.setEvent(eventId.value)
+	cart.toggle(photo.id)
 }
 
 useSeoMeta({
-  title: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
-  description: () => event.value
-    ? `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`
-    : '',
-  ogTitle: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
-  ogDescription: () => event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : '',
-  ogImage: () => event.value?.cover_image_url ?? undefined,
-  twitterTitle: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
-  twitterDescription: () => event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : '',
-  twitterImage: () => event.value?.cover_image_url ?? undefined,
+	title: () => (event.value ? `${event.value.name} — Fotify` : "Evento — Fotify"),
+	description: () =>
+		event.value
+			? `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`
+			: "",
+	ogTitle: () => (event.value ? `${event.value.name} — Fotify` : "Evento — Fotify"),
+	ogDescription: () =>
+		event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : "",
+	ogImage: () => event.value?.cover_image_url ?? undefined,
+	twitterTitle: () => (event.value ? `${event.value.name} — Fotify` : "Evento — Fotify"),
+	twitterDescription: () =>
+		event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : "",
+	twitterImage: () => event.value?.cover_image_url ?? undefined,
 })
 
 useHead({
-  script: computed(() => {
-    if (!event.value) return []
-    return [{
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: event.value.name,
-        description: `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`,
-        image: event.value.cover_image_url ?? undefined,
-        startDate: event.value.event_date,
-        location: event.value.location ? {
-          '@type': 'Place',
-          name: event.value.location,
-        } : undefined,
-        organizer: {
-          '@type': 'Organization',
-          name: 'Fotify',
-          url: 'https://fotify.pe',
-        },
-      }),
-    }]
-  }),
+	script: computed(() => {
+		if (!event.value) return []
+		return [
+			{
+				type: "application/ld+json",
+				innerHTML: JSON.stringify({
+					"@context": "https://schema.org",
+					"@type": "Event",
+					name: event.value.name,
+					description: `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`,
+					image: event.value.cover_image_url ?? undefined,
+					startDate: event.value.event_date,
+					location: event.value.location
+						? {
+								"@type": "Place",
+								name: event.value.location,
+							}
+						: undefined,
+					organizer: {
+						"@type": "Organization",
+						name: "Fotify",
+						url: "https://fotify.pe",
+					},
+				}),
+			},
+		]
+	}),
 })
 </script>
 

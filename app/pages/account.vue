@@ -266,41 +266,71 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ ssr: false, middleware: 'auth' })
-useSeoMeta({ title: 'Mi cuenta — Fotify' })
+definePageMeta({ ssr: false, middleware: "auth" })
+useSeoMeta({ title: "Mi cuenta — Fotify" })
 
 const auth = useAuthStore()
 
-type TabKey = 'perfil' | 'seguridad' | 'notificaciones' | 'privacidad'
+type TabKey = "perfil" | "seguridad" | "notificaciones" | "privacidad"
 
 const tabs = [
-  { key: 'perfil' as TabKey, label: 'Perfil' },
-  { key: 'seguridad' as TabKey, label: 'Seguridad' },
-  { key: 'notificaciones' as TabKey, label: 'Notificaciones' },
-  { key: 'privacidad' as TabKey, label: 'Privacidad' },
+	{ key: "perfil" as TabKey, label: "Perfil" },
+	{ key: "seguridad" as TabKey, label: "Seguridad" },
+	{ key: "notificaciones" as TabKey, label: "Notificaciones" },
+	{ key: "privacidad" as TabKey, label: "Privacidad" },
 ]
 
-const allSports = ['🏃 Running', '🏊 Triatlón', '🚴 Ciclismo', '🏔️ Trail', '🏋️ Crossfit', '🏊 Natación', '⚽ Fútbol', '🎽 Otro']
+const allSports = [
+	"🏃 Running",
+	"🏊 Triatlón",
+	"🚴 Ciclismo",
+	"🏔️ Trail",
+	"🏋️ Crossfit",
+	"🏊 Natación",
+	"⚽ Fútbol",
+	"🎽 Otro",
+]
 
-const activeTab = ref<TabKey>('perfil')
-const selectedSports = reactive(new Set(['🏃 Running']))
+const activeTab = ref<TabKey>("perfil")
+const selectedSports = reactive(new Set(["🏃 Running"]))
 
 const profile = reactive({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  city: 'Lima',
+	first_name: "",
+	last_name: "",
+	email: "",
+	phone: "",
+	city: "Lima",
 })
 
-const passwordForm = reactive({ current: '', new: '', confirm: '' })
-const notifSettings = reactive({ photos_ready: true, purchase_confirm: true, nearby_events: false, newsletter: false })
+const passwordForm = reactive({ current: "", new: "", confirm: "" })
+const notifSettings = reactive({
+	photos_ready: true,
+	purchase_confirm: true,
+	nearby_events: false,
+	newsletter: false,
+})
 
 const notifications = [
-  { key: 'photos_ready', label: 'Fotos disponibles', hint: 'Cuando un fotógrafo sube fotos de un evento donde participaste' },
-  { key: 'purchase_confirm', label: 'Confirmación de compra', hint: 'Recibo por email al comprar un pack de fotos' },
-  { key: 'nearby_events', label: 'Eventos cerca de mí', hint: 'Eventos deportivos próximos en tu ciudad' },
-  { key: 'newsletter', label: 'Newsletter mensual', hint: 'Novedades, ofertas y resumen mensual de Fotify' },
+	{
+		key: "photos_ready",
+		label: "Fotos disponibles",
+		hint: "Cuando un fotógrafo sube fotos de un evento donde participaste",
+	},
+	{
+		key: "purchase_confirm",
+		label: "Confirmación de compra",
+		hint: "Recibo por email al comprar un pack de fotos",
+	},
+	{
+		key: "nearby_events",
+		label: "Eventos cerca de mí",
+		hint: "Eventos deportivos próximos en tu ciudad",
+	},
+	{
+		key: "newsletter",
+		label: "Newsletter mensual",
+		hint: "Novedades, ofertas y resumen mensual de Fotify",
+	},
 ]
 
 const savingProfile = ref(false)
@@ -309,99 +339,122 @@ const savingPassword = ref(false)
 const passwordError = ref<string | null>(null)
 
 const toastVisible = ref(false)
-const toastMessage = ref('')
+const toastMessage = ref("")
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const avatarInitials = computed(() => {
-  const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ')
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'TU'
+	const name = [profile.first_name, profile.last_name].filter(Boolean).join(" ")
+	return (
+		name
+			.split(" ")
+			.map((w) => w[0])
+			.slice(0, 2)
+			.join("")
+			.toUpperCase() || "TU"
+	)
 })
 
-const displayName = computed(() => [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Mi cuenta')
+const displayName = computed(
+	() => [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Mi cuenta",
+)
 
 function toggleSport(sport: string) {
-  if (selectedSports.has(sport)) selectedSports.delete(sport)
-  else selectedSports.add(sport)
+	if (selectedSports.has(sport)) selectedSports.delete(sport)
+	else selectedSports.add(sport)
 }
 
 function showToast(msg: string) {
-  toastMessage.value = msg
-  toastVisible.value = true
-  if (toastTimer) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toastVisible.value = false }, 2500)
+	toastMessage.value = msg
+	toastVisible.value = true
+	if (toastTimer) clearTimeout(toastTimer)
+	toastTimer = setTimeout(() => {
+		toastVisible.value = false
+	}, 2500)
 }
 
 async function saveProfile() {
-  savingProfile.value = true
-  profileError.value = null
-  try {
-    await apiFetch<void>('/auth/me', {
-      method: 'PATCH',
-      body: {
-        full_name: `${profile.first_name} ${profile.last_name}`.trim(),
-        phone: profile.phone || undefined,
-      },
-    })
-    showToast('Perfil guardado correctamente')
-  }
-  catch (err: any) {
-    profileError.value = err?.data?.error || 'Error al guardar. Intenta de nuevo.'
-  }
-  finally {
-    savingProfile.value = false
-  }
+	savingProfile.value = true
+	profileError.value = null
+	try {
+		await apiFetch<void>("/auth/me", {
+			method: "PATCH",
+			body: {
+				full_name: `${profile.first_name} ${profile.last_name}`.trim(),
+				phone: profile.phone || undefined,
+			},
+		})
+		showToast("Perfil guardado correctamente")
+	} catch (err: unknown) {
+		const e = err as { data?: { error?: string } }
+		profileError.value = e?.data?.error || "Error al guardar. Intenta de nuevo."
+	} finally {
+		savingProfile.value = false
+	}
 }
 
 async function saveNotifications() {
-  try {
-    await apiFetch<void>('/auth/notification-preferences', {
-      method: 'PATCH',
-      body: { ...notifSettings },
-    })
-    showToast('Preferencias guardadas')
-  }
-  catch { showToast('Error al guardar preferencias') }
+	try {
+		await apiFetch<void>("/auth/notification-preferences", {
+			method: "PATCH",
+			body: { ...notifSettings },
+		})
+		showToast("Preferencias guardadas")
+	} catch {
+		showToast("Error al guardar preferencias")
+	}
 }
 
 async function savePassword() {
-  if (!passwordForm.current || !passwordForm.new) { passwordError.value = 'Completa todos los campos.'; return }
-  if (passwordForm.new !== passwordForm.confirm) { passwordError.value = 'Las contraseñas no coinciden.'; return }
-  if (passwordForm.new.length < 8) { passwordError.value = 'La contraseña debe tener al menos 8 caracteres.'; return }
-  savingPassword.value = true
-  passwordError.value = null
-  try {
-    await apiFetch<void>('/auth/password', {
-      method: 'PATCH',
-      body: { current_password: passwordForm.current, new_password: passwordForm.new },
-    })
-    passwordForm.current = ''
-    passwordForm.new = ''
-    passwordForm.confirm = ''
-    showToast('Contraseña actualizada')
-  }
-  catch (err: any) {
-    passwordError.value = err?.data?.error || 'Error al actualizar. Verifica tu contraseña actual.'
-  }
-  finally {
-    savingPassword.value = false
-  }
+	if (!passwordForm.current || !passwordForm.new) {
+		passwordError.value = "Completa todos los campos."
+		return
+	}
+	if (passwordForm.new !== passwordForm.confirm) {
+		passwordError.value = "Las contraseñas no coinciden."
+		return
+	}
+	if (passwordForm.new.length < 8) {
+		passwordError.value = "La contraseña debe tener al menos 8 caracteres."
+		return
+	}
+	savingPassword.value = true
+	passwordError.value = null
+	try {
+		await apiFetch<void>("/auth/password", {
+			method: "PATCH",
+			body: { current_password: passwordForm.current, new_password: passwordForm.new },
+		})
+		passwordForm.current = ""
+		passwordForm.new = ""
+		passwordForm.confirm = ""
+		showToast("Contraseña actualizada")
+	} catch (err: unknown) {
+		const e = err as { data?: { error?: string } }
+		passwordError.value = e?.data?.error || "Error al actualizar. Verifica tu contraseña actual."
+	} finally {
+		savingPassword.value = false
+	}
 }
 
 onMounted(async () => {
-  if (!auth.isAuthenticated) { await navigateTo('/'); return }
-  try {
-    const res = await apiFetch<{ data?: { email?: string; full_name?: string; phone?: string } }>(
-      '/auth/me',
-    )
-    const data = res.data
-    if (data) {
-      profile.email = data.email ?? ''
-      profile.phone = data.phone ?? ''
-      const parts = (data.full_name ?? '').split(' ')
-      profile.first_name = parts[0] ?? ''
-      profile.last_name = parts.slice(1).join(' ')
-    }
-  }
-  catch { /* optional */ }
+	if (!auth.isAuthenticated) {
+		await navigateTo("/")
+		return
+	}
+	try {
+		const res = await apiFetch<{ data?: { email?: string; full_name?: string; phone?: string } }>(
+			"/auth/me",
+		)
+		const data = res.data
+		if (data) {
+			profile.email = data.email ?? ""
+			profile.phone = data.phone ?? ""
+			const parts = (data.full_name ?? "").split(" ")
+			profile.first_name = parts[0] ?? ""
+			profile.last_name = parts.slice(1).join(" ")
+		}
+	} catch {
+		/* optional */
+	}
 })
 </script>

@@ -525,17 +525,17 @@
                   <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.photo_price }}</div>
                 </div>
                 <button
-                  v-if="event?.pack_size && event?.pack_price"
+                  v-if="packSize && packPrice"
                   class="border rounded-xl p-3.5 flex items-center gap-3 w-full text-left transition-colors"
                   :class="cart.orderType === 'pack' ? 'border-violet bg-violet/10' : 'border-border hover:border-violet/40'"
                   @click="selectPack"
                 >
                   <div class="flex-1 min-w-0">
-                    <div class="text-[13px] font-semibold text-white">Pack {{ event.pack_size }}</div>
+                    <div class="text-[13px] font-semibold text-white">Pack {{ packSize }}</div>
                     <div class="text-[11px] text-green-400/70 mt-0.5">ahorras {{ currency }} {{ packSaving }}</div>
                   </div>
                   <div class="text-right">
-                    <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ event.pack_price }}</div>
+                    <div class="font-display font-bold text-[15px] text-white">{{ currency }} {{ packPrice }}</div>
                     <div class="text-[10px] text-white/25 line-through">{{ currency }} {{ packOriginalPrice }}</div>
                   </div>
                 </button>
@@ -610,9 +610,15 @@
 </template>
 
 <script setup lang="ts">
-import type { EventResponse, InitSearchResponse, SearchResponse, SearchResultResponse, SingleEnvelope } from '~/types'
+import type {
+	EventResponse,
+	InitSearchResponse,
+	SearchResponse,
+	SearchResultResponse,
+	SingleEnvelope,
+} from "~/types"
 
-type SearchStep = 'auth-gate' | 'consent' | 'upload' | 'searching' | 'results'
+type SearchStep = "auth-gate" | "consent" | "upload" | "searching" | "results"
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -620,22 +626,23 @@ const cart = useCartStore()
 const showAuth = useAuthModal()
 
 // ── Query params ─────────────────────────────────────────────────────────────
-const eventId = computed(() => route.query.event_id ? Number(route.query.event_id) : undefined)
+const eventId = computed(() => (route.query.event_id ? Number(route.query.event_id) : undefined))
 const eventSlugBack = computed(() => route.query.event_slug as string | undefined)
 
 // ── Page step ────────────────────────────────────────────────────────────────
-const step = ref<SearchStep>('auth-gate')
+const step = ref<SearchStep>("auth-gate")
 
 // ── Event data (optional context) ────────────────────────────────────────────
 const event = ref<EventResponse | null>(null)
 
 async function fetchEvent() {
-  if (!eventId.value) return
-  try {
-    const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${eventId.value}`)
-    event.value = res.data ?? null
-  }
-  catch { /* event context is optional — fail silently */ }
+	if (!eventId.value) return
+	try {
+		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${eventId.value}`)
+		event.value = res.data ?? null
+	} catch {
+		/* event context is optional — fail silently */
+	}
 }
 
 // ── Consent ──────────────────────────────────────────────────────────────────
@@ -643,62 +650,60 @@ const consentLoading = ref(false)
 const consentError = ref<string | null>(null)
 
 async function acceptConsent() {
-  consentLoading.value = true
-  consentError.value = null
-  try {
-    await apiFetch<void>('/search/consent', {
-      method: 'POST',
-      body: { accepted: true },
-    })
-    localStorage.setItem('fotify_consented', 'true')
-    step.value = 'upload'
-  }
-  catch {
-    consentError.value = 'Error al registrar consentimiento. Intenta de nuevo.'
-  }
-  finally {
-    consentLoading.value = false
-  }
+	consentLoading.value = true
+	consentError.value = null
+	try {
+		await apiFetch<void>("/search/consent", {
+			method: "POST",
+			body: { accepted: true },
+		})
+		localStorage.setItem("fotify_consented", "true")
+		step.value = "upload"
+	} catch {
+		consentError.value = "Error al registrar consentimiento. Intenta de nuevo."
+	} finally {
+		consentLoading.value = false
+	}
 }
 
 function declineConsent() {
-  if (event.value?.slug) navigateTo(`/events/${event.value.slug}`)
-  else navigateTo('/events')
+	if (event.value?.slug) navigateTo(`/events/${event.value.slug}`)
+	else navigateTo("/events")
 }
 
 // ── File upload ───────────────────────────────────────────────────────────────
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const selfieFile = ref<File | null>(null)
 const selfiePreview = ref<string | null>(null)
-const selfieFileName = ref('')
+const selfieFileName = ref("")
 const uploadError = ref<string | null>(null)
 
 function triggerFileInput() {
-  fileInputRef.value?.click()
+	fileInputRef.value?.click()
 }
 
 function onFileSelect(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  if (!file.type.startsWith('image/')) {
-    uploadError.value = 'Por favor sube una imagen válida (JPG o PNG).'
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    uploadError.value = 'La imagen es demasiado grande. Máximo 10 MB.'
-    return
-  }
-  selfieFile.value = file
-  selfieFileName.value = file.name
-  selfiePreview.value = URL.createObjectURL(file)
-  uploadError.value = null
+	const file = (e.target as HTMLInputElement).files?.[0]
+	if (!file) return
+	if (!file.type.startsWith("image/")) {
+		uploadError.value = "Por favor sube una imagen válida (JPG o PNG)."
+		return
+	}
+	if (file.size > 10 * 1024 * 1024) {
+		uploadError.value = "La imagen es demasiado grande. Máximo 10 MB."
+		return
+	}
+	selfieFile.value = file
+	selfieFileName.value = file.name
+	selfiePreview.value = URL.createObjectURL(file)
+	uploadError.value = null
 }
 
 function clearSelfie() {
-  selfieFile.value = null
-  selfiePreview.value = null
-  selfieFileName.value = ''
-  if (fileInputRef.value) fileInputRef.value.value = ''
+	selfieFile.value = null
+	selfiePreview.value = null
+	selfieFileName.value = ""
+	if (fileInputRef.value) fileInputRef.value.value = ""
 }
 
 // ── Search flow ───────────────────────────────────────────────────────────────
@@ -707,218 +712,233 @@ const matchesFound = ref(0)
 const searchDate = ref(new Date())
 
 async function startSearch() {
-  if (!selfieFile.value) return
-  step.value = 'searching'
-  uploadError.value = null
+	if (!selfieFile.value) return
+	step.value = "searching"
+	uploadError.value = null
 
-  try {
-    // 1. Get S3 presigned URL
-    const initRes = await apiFetch<{ data: InitSearchResponse }>('/search/init', {
-      method: 'POST',
-      body: { event_id: eventId.value },
-    })
-    const initData = initRes.data
-    if (!initData?.upload_url || !initData?.session_id) throw new Error('init_failed')
+	try {
+		// 1. Get S3 presigned URL
+		const initRes = await apiFetch<{ data: InitSearchResponse }>("/search/init", {
+			method: "POST",
+			body: { event_id: eventId.value },
+		})
+		const initData = initRes.data
+		if (!initData?.upload_url || !initData?.session_id) throw new Error("init_failed")
 
-    // 2. Upload selfie directly to S3 (no auth header — presigned URL handles it)
-    await $fetch(initData.upload_url, {
-      method: 'PUT',
-      body: selfieFile.value,
-      headers: { 'Content-Type': selfieFile.value.type },
-    })
+		// 2. Upload selfie directly to S3 (no auth header — presigned URL handles it)
+		await $fetch(initData.upload_url, {
+			method: "PUT",
+			body: selfieFile.value,
+			headers: { "Content-Type": selfieFile.value.type },
+		})
 
-    // 3. Execute facial search
-    const searchRes = await apiFetch<{ data: SearchResponse }>('/search/execute', {
-      method: 'POST',
-      body: { session_id: initData.session_id },
-    })
+		// 3. Execute facial search
+		const searchRes = await apiFetch<{ data: SearchResponse }>("/search/execute", {
+			method: "POST",
+			body: { session_id: initData.session_id },
+		})
 
-    searchResults.value = searchRes.data?.results ?? []
-    matchesFound.value = searchRes.data?.matches_found ?? 0
-    searchDate.value = new Date()
+		searchResults.value = searchRes.data?.results ?? []
+		matchesFound.value = searchRes.data?.matches_found ?? 0
+		searchDate.value = new Date()
 
-    // Sync session and event to cart
-    cart.setSession(initData.session_id)
-    if (eventId.value) cart.setEvent(eventId.value)
+		// Sync session and event to cart
+		cart.setSession(initData.session_id)
+		if (eventId.value) cart.setEvent(eventId.value)
 
-    step.value = 'results'
-  }
-  catch {
-    step.value = 'upload'
-    uploadError.value = 'Error durante la búsqueda. Verifica tu conexión e intenta de nuevo.'
-  }
+		step.value = "results"
+	} catch {
+		step.value = "upload"
+		uploadError.value = "Error durante la búsqueda. Verifica tu conexión e intenta de nuevo."
+	}
 }
 
 function resetSearch() {
-  clearSelfie()
-  searchResults.value = []
-  matchesFound.value = 0
-  cart.clear()
-  step.value = 'upload'
+	clearSelfie()
+	searchResults.value = []
+	matchesFound.value = 0
+	cart.clear()
+	step.value = "upload"
 }
 
 // ── Result helpers ────────────────────────────────────────────────────────────
 const avgConfidence = computed(() => {
-  if (!searchResults.value.length) return 0
-  const sum = searchResults.value.reduce((acc, r) => acc + (r.similarity_score ?? 0), 0)
-  return sum / searchResults.value.length
+	if (!searchResults.value.length) return 0
+	const sum = searchResults.value.reduce((acc, r) => acc + (r.similarity_score ?? 0), 0)
+	return sum / searchResults.value.length
 })
 
-const resultVariant = computed((): 'success' | 'partial' | 'empty' => {
-  if (matchesFound.value === 0) return 'empty'
-  if (avgConfidence.value < 0.85) return 'partial'
-  return 'success'
+const resultVariant = computed((): "success" | "partial" | "empty" => {
+	if (matchesFound.value === 0) return "empty"
+	if (avgConfidence.value < 0.85) return "partial"
+	return "success"
 })
 
 const confidenceLabel = computed(() => {
-  const pct = Math.round(avgConfidence.value * 100)
-  return `${pct}% confianza`
+	const pct = Math.round(avgConfidence.value * 100)
+	return `${pct}% confianza`
 })
 
 const formattedSearchDate = computed(() =>
-  searchDate.value.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }),
+	searchDate.value.toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" }),
 )
 
 // ── Cart / selection ──────────────────────────────────────────────────────────
-const currency = computed(() => event.value?.currency ?? 'S/')
+const currency = computed(() => event.value?.currency ?? "S/")
 
 const allSelected = computed(() => {
-  const eligible = searchResults.value.filter(r => !r.already_purchased && r.photo_id !== undefined)
-  return eligible.length > 0 && eligible.every(r => cart.has(r.photo_id!))
+	const eligible = searchResults.value.filter(
+		(r) => !r.already_purchased && r.photo_id !== undefined,
+	)
+	return (
+		eligible.length > 0 && eligible.every((r) => r.photo_id !== undefined && cart.has(r.photo_id))
+	)
 })
 
 function handleResultClick(result: SearchResultResponse) {
-  if (result.already_purchased || result.photo_id === undefined) return
-  if (eventId.value) cart.setEvent(eventId.value)
-  cart.toggle(result.photo_id)
+	if (result.already_purchased || result.photo_id === undefined) return
+	if (eventId.value) cart.setEvent(eventId.value)
+	cart.toggle(result.photo_id)
 }
 
 function toggleSelectAll() {
-  const eligible = searchResults.value.filter(r => !r.already_purchased && r.photo_id !== undefined)
-  if (allSelected.value) {
-    eligible.forEach(r => { if (r.photo_id !== undefined) cart.toggle(r.photo_id) })
-  }
-  else {
-    if (eventId.value) cart.setEvent(eventId.value)
-    eligible.forEach(r => { if (r.photo_id !== undefined && !cart.has(r.photo_id)) cart.toggle(r.photo_id) })
-  }
+	const eligible = searchResults.value.filter(
+		(r) => !r.already_purchased && r.photo_id !== undefined,
+	)
+	if (allSelected.value) {
+		eligible.forEach((r) => {
+			if (r.photo_id !== undefined) cart.toggle(r.photo_id)
+		})
+	} else {
+		if (eventId.value) cart.setEvent(eventId.value)
+		eligible.forEach((r) => {
+			if (r.photo_id !== undefined && !cart.has(r.photo_id)) cart.toggle(r.photo_id)
+		})
+	}
 }
 
 function selectPack() {
-  if (!eventId.value || !event.value?.pack_size) return
-  const eligible = searchResults.value
-    .filter(r => !r.already_purchased && r.photo_id !== undefined)
-    .slice(0, event.value!.pack_size)
-    .map(r => r.photo_id!)
-  cart.setPack(eligible, eventId.value)
+	if (!eventId.value || !packSize.value) return
+	const eligible = searchResults.value
+		.filter((r) => !r.already_purchased && r.photo_id !== undefined)
+		.slice(0, packSize.value)
+		.map((r) => r.photo_id as number)
+	cart.setPack(eligible, eventId.value)
 }
 
 function selectFullEvent() {
-  if (!eventId.value) return
-  const eligible = searchResults.value
-    .filter(r => !r.already_purchased && r.photo_id !== undefined)
-    .map(r => r.photo_id!)
-  cart.setFullEvent(eligible, eventId.value)
+	if (!eventId.value) return
+	const eligible = searchResults.value
+		.filter((r) => !r.already_purchased && r.photo_id !== undefined)
+		.map((r) => r.photo_id as number)
+	cart.setFullEvent(eligible, eventId.value)
 }
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
-const hasPricing = computed(() =>
-  !!(event.value?.photo_price || searchResults.value.some(r => r.price)),
+const firstPack = computed(() => event.value?.packs?.[0] ?? null)
+const packSize = computed(() => firstPack.value?.quantity ?? 0)
+const packPrice = computed(() => firstPack.value?.price ?? 0)
+
+const hasPricing = computed(
+	() => !!(event.value?.photo_price || searchResults.value.some((r) => r.price)),
 )
 
 const packOriginalPrice = computed(() => {
-  if (!event.value?.pack_size || !event.value?.photo_price) return 0
-  return event.value.pack_size * event.value.photo_price
+	if (!packSize.value || !event.value?.photo_price) return 0
+	return packSize.value * event.value.photo_price
 })
 
 const packSaving = computed(() => {
-  if (!event.value?.pack_price) return 0
-  return packOriginalPrice.value - event.value.pack_price
+	if (!packPrice.value) return 0
+	return packOriginalPrice.value - packPrice.value
 })
 
 const cartTotal = computed(() => {
-  if (!cart.count) return '0.00'
-  const perPhoto = event.value?.photo_price ?? searchResults.value[0]?.price ?? 0
-  return (cart.count * perPhoto).toFixed(2)
+	if (!cart.count) return "0.00"
+	const perPhoto = event.value?.photo_price ?? searchResults.value[0]?.price ?? 0
+	return (cart.count * perPhoto).toFixed(2)
 })
 
 // ── Bib search ────────────────────────────────────────────────────────────────
-const bibNumber = ref<string>('')
+const bibNumber = ref<string>("")
 const bibSearching = ref(false)
 const bibResults = ref<SearchResultResponse[]>([])
 const bibError = ref<string | null>(null)
 
 async function searchByBib() {
-  if (!bibNumber.value) return
-  bibSearching.value = true
-  bibError.value = null
-  bibResults.value = []
-  try {
-    const res = await apiFetch<{ data: { results: SearchResultResponse[] } }>('/search/bib', {
-      method: 'POST',
-      body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
-    })
-    bibResults.value = res.data?.results ?? []
-    if (bibResults.value.length === 0) bibError.value = 'No encontramos fotos para ese dorsal.'
-    else if (eventId.value) cart.setEvent(eventId.value)
-  }
-  catch {
-    bibError.value = 'Error al buscar por dorsal. Intenta de nuevo.'
-  }
-  finally {
-    bibSearching.value = false
-  }
+	if (!bibNumber.value) return
+	bibSearching.value = true
+	bibError.value = null
+	bibResults.value = []
+	try {
+		const res = await apiFetch<{ data: { results: SearchResultResponse[] } }>("/search/bib", {
+			method: "POST",
+			body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
+		})
+		bibResults.value = res.data?.results ?? []
+		if (bibResults.value.length === 0) bibError.value = "No encontramos fotos para ese dorsal."
+		else if (eventId.value) cart.setEvent(eventId.value)
+	} catch {
+		bibError.value = "Error al buscar por dorsal. Intenta de nuevo."
+	} finally {
+		bibSearching.value = false
+	}
 }
 
 // ── Static content ────────────────────────────────────────────────────────────
 const selfieTips = [
-  { icon: '☀️', label: 'Buena iluminación' },
-  { icon: '😊', label: 'Cara de frente' },
-  { icon: '🚫', label: 'Sin gafas de sol' },
+	{ icon: "☀️", label: "Buena iluminación" },
+	{ icon: "😊", label: "Cara de frente" },
+	{ icon: "🚫", label: "Sin gafas de sol" },
 ]
 
 const searchingMessages = [
-  'Analizando rasgos faciales...',
-  'Comparando con las fotos del evento...',
-  'Calculando similitud...',
+	"Analizando rasgos faciales...",
+	"Comparando con las fotos del evento...",
+	"Calculando similitud...",
 ]
 
 async function resolveConsentStep() {
-  // Check server-side consent; fall back to localStorage cache on error.
-  try {
-    const res = await apiFetch<{ data?: { accepted: boolean } }>('/search/consent')
-    const accepted = res.data?.accepted ?? false
-    if (accepted) localStorage.setItem('fotify_consented', 'true')
-    step.value = accepted ? 'upload' : 'consent'
-  }
-  catch {
-    const cached = localStorage.getItem('fotify_consented') === 'true'
-    step.value = cached ? 'upload' : 'consent'
-  }
+	// Check server-side consent; fall back to localStorage cache on error.
+	try {
+		const res = await apiFetch<{ data?: { accepted: boolean } }>("/search/consent")
+		const accepted = res.data?.accepted ?? false
+		if (accepted) localStorage.setItem("fotify_consented", "true")
+		step.value = accepted ? "upload" : "consent"
+	} catch {
+		const cached = localStorage.getItem("fotify_consented") === "true"
+		step.value = cached ? "upload" : "consent"
+	}
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await fetchEvent()
+	await fetchEvent()
 
-  if (!auth.isAuthenticated) {
-    step.value = 'auth-gate'
-    return
-  }
+	if (!auth.isAuthenticated) {
+		step.value = "auth-gate"
+		return
+	}
 
-  await resolveConsentStep()
+	await resolveConsentStep()
 })
 
 // React to login while on page (auth modal closed after login)
-watch(() => auth.isAuthenticated, async (val) => {
-  if (val && step.value === 'auth-gate') {
-    await resolveConsentStep()
-  }
-})
+watch(
+	() => auth.isAuthenticated,
+	async (val) => {
+		if (val && step.value === "auth-gate") {
+			await resolveConsentStep()
+		}
+	},
+)
 
 useSeoMeta({
-  title: event.value ? `Buscar mis fotos — ${event.value.name} · Fotify` : 'Buscar mis fotos con IA — Fotify',
-  description: 'Encuentra tus fotos del evento usando reconocimiento facial. Sube una selfie y la IA te encuentra en segundos.',
+	title: event.value
+		? `Buscar mis fotos — ${event.value.name} · Fotify`
+		: "Buscar mis fotos con IA — Fotify",
+	description:
+		"Encuentra tus fotos del evento usando reconocimiento facial. Sube una selfie y la IA te encuentra en segundos.",
 })
 </script>
 
