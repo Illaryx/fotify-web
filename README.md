@@ -1,75 +1,39 @@
-# Nuxt Minimal Starter
+# fotify-web
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Frontend web de Fotify — marketplace de fotos de eventos con reconocimiento facial.
+
+## Stack
+
+- Nuxt 3 + Vue 3 (Composition API + `<script setup>`)
+- TypeScript
+- Pinia (stores)
+- TanStack Query (vue-query)
+- Tailwind CSS
 
 ## Setup
 
-Make sure to install dependencies:
-
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+cp .env.example .env
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+## Development
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+npm run dev   # http://localhost:3000
 ```
 
-## Production
+Requiere `fotify-api` corriendo en `localhost:8080` (via docker-compose) o `localhost:8000` (local).
 
-Build the application for production:
+## Build
 
 ```bash
-# npm
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+npm run preview   # preview de produccion en localhost:3000
 ```
 
-Locally preview production build:
+## Dependencias de otros repos
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- **fotify-api** — todos los endpoints REST consumidos desde `composables/useApi.ts`
+- **fotify-db** — schema es fuente de verdad (este repo no tiene migraciones)
+- **fotify-mockups** — referencia visual de las paginas
