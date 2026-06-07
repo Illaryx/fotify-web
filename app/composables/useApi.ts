@@ -3,7 +3,8 @@ export async function apiFetch<T>(
   options: Parameters<typeof $fetch>[1] = {},
 ): Promise<T> {
   const config = useRuntimeConfig()
-  const { tokens, refresh } = useAuthStore()
+  const { $pinia } = useNuxtApp()
+  const { tokens, refresh } = useAuthStore($pinia)
 
   const doFetch = () =>
     $fetch<T>(`${config.public.apiBase}${path}`, {
