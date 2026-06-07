@@ -170,7 +170,7 @@
         <!-- Animated avatar -->
         <div class="relative w-20 h-20 mx-auto mb-6">
           <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet/30 to-violet-deep/50 border border-violet/30 flex items-center justify-center overflow-hidden">
-            <img v-if="selfiePreview" :src="selfiePreview" alt="" class="w-full h-full object-cover" />
+            <img v-if="selfiePreview" :src="selfiePreview" alt="Your selfie used for photo search" class="w-full h-full object-cover" />
             <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
@@ -218,7 +218,7 @@
             <div class="flex flex-col items-center justify-center py-8 text-center max-w-sm mx-auto">
               <div class="relative w-20 h-20 mx-auto mb-5">
                 <div class="w-20 h-20 rounded-2xl bg-violet/15 border border-violet/25 flex items-center justify-center overflow-hidden">
-                  <img v-if="selfiePreview" :src="selfiePreview" alt="" class="w-full h-full object-cover" />
+                  <img v-if="selfiePreview" :src="selfiePreview" alt="Your selfie — no matching photos found" class="w-full h-full object-cover" />
                   <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
@@ -372,7 +372,7 @@
             </div>
             <div class="grid grid-cols-4 gap-2 mb-4">
               <div v-for="(r, i) in bibResults.slice(0, 3)" :key="r.photo_id" class="aspect-square rounded-xl bg-gradient-to-br from-violet/30 to-violet-deep/20 relative overflow-hidden">
-                <img v-if="r.thumbnail_url" :src="r.thumbnail_url" class="w-full h-full object-cover" />
+                <img v-if="r.thumbnail_url" :src="r.thumbnail_url" :alt="`Bib number ${bibNumber} photo result ${i + 1}`" class="w-full h-full object-cover" />
                 <div class="absolute inset-0 flex items-center justify-center text-[6px] text-white/10 font-bold tracking-widest -rotate-30">FOTIFY</div>
               </div>
               <div v-if="bibResults.length > 3" class="aspect-square rounded-xl bg-border flex items-center justify-center text-[12px] text-white/40 font-medium">+{{ bibResults.length - 3 }}</div>

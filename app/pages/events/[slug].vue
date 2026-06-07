@@ -776,6 +776,35 @@ useSeoMeta({
   ogTitle: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
   ogDescription: () => event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : '',
   ogImage: () => event.value?.cover_image_url ?? undefined,
+  twitterTitle: () => event.value ? `${event.value.name} — Fotify` : 'Evento — Fotify',
+  twitterDescription: () => event.value ? `Busca tus fotos con IA. ${totalPhotos.value} fotos disponibles.` : '',
+  twitterImage: () => event.value?.cover_image_url ?? undefined,
+})
+
+useHead({
+  script: computed(() => {
+    if (!event.value) return []
+    return [{
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Event',
+        name: event.value.name,
+        description: `Encuentra tus fotos del ${event.value.name}. ${totalPhotos.value} fotos disponibles.`,
+        image: event.value.cover_image_url ?? undefined,
+        startDate: event.value.event_date,
+        location: event.value.location ? {
+          '@type': 'Place',
+          name: event.value.location,
+        } : undefined,
+        organizer: {
+          '@type': 'Organization',
+          name: 'Fotify',
+          url: 'https://fotify.pe',
+        },
+      }),
+    }]
+  }),
 })
 </script>
 

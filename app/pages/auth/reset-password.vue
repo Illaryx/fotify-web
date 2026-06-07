@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 definePageMeta({ ssr: false })
+useSeoMeta({ title: 'Restablecer contraseña — Fotify' })
 
 const route = useRoute()
 const token = computed(() => route.query.token as string | undefined)

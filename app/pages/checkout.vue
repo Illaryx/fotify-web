@@ -664,6 +664,7 @@ import { apiFetch } from '~/composables/useApi'
 import type { EventResponse, OrderResponse, CreateOrderInput, SingleEnvelope } from '~/types'
 
 definePageMeta({ ssr: false, middleware: 'auth' })
+useSeoMeta({ title: 'Checkout — Fotify' })
 
 const auth = useAuthStore()
 const cart = useCartStore()

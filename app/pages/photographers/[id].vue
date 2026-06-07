@@ -369,5 +369,10 @@ useSeoMeta({
   ogTitle: () => photographer.value?.display_name ?? 'Fotógrafo deportivo',
   ogDescription: () => photographer.value?.bio ?? '',
   ogImage: () => photographer.value?.avatar_url ?? undefined,
+  twitterTitle: () => photographer.value?.display_name
+    ? `${photographer.value.display_name} — Fotógrafo deportivo | Fotify`
+    : 'Fotógrafo | Fotify',
+  twitterDescription: () => photographer.value?.bio ?? 'Perfil público de fotógrafo deportivo en Fotify.',
+  twitterImage: () => photographer.value?.avatar_url ?? undefined,
 })
 </script>

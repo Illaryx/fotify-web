@@ -80,7 +80,7 @@
               <!-- Mini photo grid -->
               <div class="p-4 grid grid-cols-4 gap-1.5">
                 <div v-for="n in 8" :key="n" class="aspect-[3/4] rounded-lg overflow-hidden bg-night-3 relative">
-                  <img :src="`https://picsum.photos/seed/fp-${n}/120/160`" class="w-full h-full object-cover opacity-80" />
+                  <img :src="`https://picsum.photos/seed/fp-${n}/120/160`" :alt="`Sample event photo ${n}`" class="w-full h-full object-cover opacity-80" />
                   <div v-if="n === 3 || n === 5 || n === 7" class="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-violet border border-white/30 flex items-center justify-center">
                     <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </div>
@@ -440,6 +440,8 @@ useSeoMeta({
   description: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende. 70% de cada venta es tuyo.',
   ogTitle: 'Para fotógrafos — Fotify',
   ogDescription: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.',
+  twitterTitle: 'Para fotógrafos — Fotify',
+  twitterDescription: 'Convierte tus fotos deportivas en ingresos reales. Sube tus fotos, la IA las vende.',
 })
 
 // Calculator

@@ -8,7 +8,17 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@pinia/nuxt',
     '@vueuse/nuxt',
+    '@nuxtjs/sitemap',
   ],
+
+  site: {
+    url: 'https://fotify.pe',
+    name: 'Fotify',
+  },
+
+  sitemap: {
+    exclude: ['/search/**', '/checkout', '/purchases', '/downloads/**', '/account', '/auth/**'],
+  },
 
   vite: {
     plugins: [tailwindcss()],
@@ -25,13 +35,28 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      htmlAttrs: { lang: 'es-PE' },
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'description', content: 'Marketplace de fotografía deportiva con IA. Sube tu selfie y encuentra tus fotos en segundos.' },
+        { property: 'og:site_name', content: 'Fotify' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:locale', content: 'es_PE' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@fotify_pe' },
+      ],
       script: [
         {
           src: 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js',
           defer: true,
         },
       ],
-      link: [],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'dns-prefetch', href: 'https://cdn.fotify.pe' },
+      ],
     },
   },
 

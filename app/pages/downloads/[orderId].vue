@@ -240,6 +240,7 @@
 import type { OrderResponse, EventResponse, DownloadResponse, SingleEnvelope } from '~/types'
 
 definePageMeta({ ssr: false, middleware: 'auth' })
+useSeoMeta({ title: 'Descargar fotos — Fotify' })
 
 const route = useRoute()
 const auth = useAuthStore()

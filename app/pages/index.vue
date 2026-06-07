@@ -335,6 +335,8 @@ useSeoMeta({
   description: 'Marketplace de fotografía deportiva con IA. Sube tu selfie y encuentra tus fotos en segundos.',
   ogTitle: 'Fotify — Encuentra tus fotos del evento',
   ogDescription: 'Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.',
+  twitterTitle: 'Fotify — Encuentra tus fotos del evento',
+  twitterDescription: 'Sube una selfie y encuentra todos tus momentos en el evento. Sin buscar foto por foto.',
 })
 </script>
 

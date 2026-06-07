@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 definePageMeta({ ssr: false })
+useSeoMeta({ title: 'Recuperar contraseña — Fotify' })
 
 const email = ref('')
 const loading = ref(false)

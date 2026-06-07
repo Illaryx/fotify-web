@@ -1,2 +1,7 @@
 User-Agent: *
-Disallow:
+Disallow: /checkout
+Disallow: /account
+Disallow: /downloads/
+Disallow: /auth/
+
+Sitemap: https://fotify.pe/sitemap.xml

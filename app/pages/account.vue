@@ -267,6 +267,7 @@
 
 <script setup lang="ts">
 definePageMeta({ ssr: false, middleware: 'auth' })
+useSeoMeta({ title: 'Mi cuenta — Fotify' })
 
 const auth = useAuthStore()
 
