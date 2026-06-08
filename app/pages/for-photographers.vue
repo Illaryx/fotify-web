@@ -44,7 +44,7 @@
               </span>
               <span class="flex items-center gap-1.5">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="#7C3AED" stroke-width="1.2"/><path d="M5 7L6.5 8.5L9 6" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
-                70% de cada venta es tuyo
+                {{ starterCommissionPct }}% de cada venta es tuyo
               </span>
               <span class="flex items-center gap-1.5">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#7C3AED" stroke-width="1.2"/><path d="M7 4V7.5L9 9" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -126,7 +126,7 @@
           <div class="text-xs text-white/50">Promedio mensual<br>fotógrafo activo</div>
         </div>
         <div class="bg-night-2 border border-border rounded-2xl p-5 text-center">
-          <div class="font-display text-2xl lg:text-3xl text-violet mb-1">70%</div>
+          <div class="font-display text-2xl lg:text-3xl text-violet mb-1">{{ starterCommissionPct }}%</div>
           <div class="text-xs text-white/50">Comisión que<br>te llevás</div>
         </div>
         <div class="bg-night-2 border border-border rounded-2xl p-5 text-center">
@@ -164,7 +164,7 @@
           <div class="bg-night-2 border border-border rounded-2xl p-6">
             <div class="w-10 h-10 rounded-full bg-violet/20 border border-violet/40 flex items-center justify-center font-display text-sm text-violet mb-5">2</div>
             <h3 class="font-semibold text-white text-base mb-3">Sube tus fotos</h3>
-            <p class="text-sm text-muted leading-relaxed">Arrastra hasta 2,000 fotos por evento (5,000 con Plan Pro). Nuestra IA procesa los rostros y los vincula automáticamente a cada atleta.</p>
+            <p class="text-sm text-muted leading-relaxed">Arrastra hasta {{ starterPhotoLimit.toLocaleString() }} fotos por evento{{ proPhotoLimit ? ` (${proPhotoLimit.toLocaleString()} con Plan Pro)` : '' }}. Nuestra IA procesa los rostros y los vincula automáticamente a cada atleta.</p>
             <div class="mt-5 bg-night-3 rounded-xl p-4">
               <div class="flex items-center gap-2 mb-2">
                 <div class="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
@@ -243,7 +243,7 @@
           <div class="bg-night-3 border border-border rounded-2xl p-6">
             <div class="text-xs text-white/40 uppercase tracking-widest mb-4">Estimado mensual</div>
             <div class="font-display text-4xl text-white mb-1">S/ {{ calcYours.toLocaleString() }}</div>
-            <div class="text-xs text-white/40 mb-6">después de comisión Fotify (30%)</div>
+            <div class="text-xs text-white/40 mb-6">después de comisión Fotify ({{ platformFeePct }}%)</div>
 
             <div class="flex flex-col gap-3 text-sm">
               <div class="flex justify-between">
@@ -263,7 +263,7 @@
                 <span class="text-white">S/ {{ calcGross.toLocaleString() }}</span>
               </div>
               <div class="flex justify-between font-semibold">
-                <span class="text-violet">Tu 70%</span>
+                <span class="text-violet">Tu {{ starterCommissionPct }}%</span>
                 <span class="text-violet">S/ {{ calcYours.toLocaleString() }}</span>
               </div>
             </div>
@@ -338,7 +338,7 @@
             <div class="font-display text-3xl text-white mb-1">Gratis</div>
             <div class="text-xs text-white/40 mb-6">Para siempre · sin tarjeta</div>
             <ul class="flex flex-col gap-3 text-sm mb-8">
-              <li v-for="f in freePlan" :key="f.text" class="flex items-center gap-2" :class="f.active ? 'text-white/70' : 'text-white/40'">
+              <li v-for="f in freePlanFeatures" :key="f.text" class="flex items-center gap-2" :class="f.active ? 'text-white/70' : 'text-white/40'">
                 <span :class="f.active ? 'text-violet' : 'text-white/20'">{{ f.active ? '✓' : '○' }}</span>
                 {{ f.text }}
               </li>
@@ -358,12 +358,12 @@
             </div>
             <div class="text-xs text-violet uppercase tracking-widest mb-4">Pro</div>
             <div class="flex items-baseline gap-1 mb-1">
-              <div class="font-display text-3xl text-white">S/ 49</div>
+              <div class="font-display text-3xl text-white">S/ {{ proMonthly }}</div>
               <div class="text-sm text-white/50">/mes</div>
             </div>
-            <div class="text-xs text-white/40 mb-6">o S/ 490/año · ahorra 2 meses</div>
+            <div class="text-xs text-white/40 mb-6">o S/ {{ proAnnual }}/año · ahorra 2 meses</div>
             <ul class="flex flex-col gap-3 text-sm mb-8">
-              <li v-for="f in proPlan" :key="f" class="flex items-center gap-2 text-white/70">
+              <li v-for="f in proPlanFeatures" :key="f" class="flex items-center gap-2 text-white/70">
                 <span class="text-violet">✓</span>{{ f }}
               </li>
             </ul>
@@ -435,6 +435,16 @@
 <script setup lang="ts">
 const dashboardBase = useRuntimeConfig().public.dashboardBase
 
+const { fetchPlans, starterPlan, proPlan, starterCommissionPct, proCommissionPct } = usePlans()
+await fetchPlans()
+
+const starterPhotoLimit = computed(() => starterPlan.value?.photo_limit ?? 30000)
+const proPhotoLimit = computed(() => proPlan.value?.photo_limit ?? null)
+const starterMaxEvents = computed(() => starterPlan.value?.max_active_events ?? 3)
+const proMonthly = computed(() => proPlan.value?.monthly_price ?? 49)
+const proAnnual = computed(() => proPlan.value?.annual_price ?? 490)
+const platformFeePct = computed(() => 100 - starterCommissionPct.value)
+
 useSeoMeta({
 	title: "Para fotógrafos — Fotify",
 	description:
@@ -456,7 +466,7 @@ const photosLabel = computed(() => calcPhotos.value.toLocaleString() + " fotos")
 const calcAthletes = computed(() => Math.round(calcPhotos.value * calcEvents.value * 0.3))
 const calcBuyers = computed(() => Math.round((calcAthletes.value * calcConv.value) / 100))
 const calcGross = computed(() => calcBuyers.value * 59)
-const calcYours = computed(() => Math.round(calcGross.value * 0.7))
+const calcYours = computed(() => Math.round(calcGross.value * starterCommissionPct.value / 100))
 
 // FAQ
 const openFaq = ref<number | null>(null)
@@ -550,23 +560,23 @@ const testimonials = [
 	},
 ]
 
-const freePlan = [
-	{ text: "Hasta 3 eventos activos", active: true },
-	{ text: "2,000 fotos por evento", active: true },
+const freePlanFeatures = computed(() => [
+	{ text: `Hasta ${starterMaxEvents.value} eventos activos`, active: true },
+	{ text: `${starterPhotoLimit.value.toLocaleString()} fotos por evento`, active: true },
 	{ text: "IA facial incluida", active: true },
-	{ text: "70% de comisión", active: true },
+	{ text: `${starterCommissionPct.value}% de comisión`, active: true },
 	{ text: "Perfil público", active: true },
 	{ text: "Analytics avanzado", active: false },
 	{ text: "Eventos ilimitados", active: false },
-]
+])
 
-const proPlan = [
+const proPlanFeatures = computed(() => [
 	"Eventos ilimitados",
-	"5,000 fotos por evento",
+	`${proPhotoLimit.value ? proPhotoLimit.value.toLocaleString() : 'Ilimitadas'} fotos por evento`,
 	"IA facial prioritaria",
-	"75% de comisión",
+	`${proCommissionPct.value}% de comisión`,
 	"Analytics avanzado",
 	"Soporte prioritario",
 	"Badge verificado en perfil",
-]
+])
 </script>

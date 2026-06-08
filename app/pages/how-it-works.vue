@@ -132,26 +132,21 @@
           <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div class="bg-night-2 border border-border rounded-xl p-4 text-center">
               <div class="text-xs text-white/40 mb-1">1 foto</div>
-              <div class="font-display text-lg text-white">S/ 15</div>
+              <div class="font-display text-lg text-white">S/ {{ photoPrice }}</div>
             </div>
-            <div class="bg-night-2 border border-border rounded-xl p-4 text-center">
-              <div class="text-xs text-white/40 mb-1">Pack 3</div>
-              <div class="font-display text-lg text-white">S/ 38</div>
-              <div class="text-xs text-green-400">-S/ 7</div>
-            </div>
-            <div class="bg-violet/10 border border-violet/40 rounded-xl p-4 text-center">
-              <div class="text-xs text-violet mb-1">Pack 5 🔥</div>
-              <div class="font-display text-lg text-white">S/ 59</div>
-              <div class="text-xs text-green-400">-S/ 16</div>
-            </div>
-            <div class="bg-night-2 border border-border rounded-xl p-4 text-center">
-              <div class="text-xs text-white/40 mb-1">Pack 10</div>
-              <div class="font-display text-lg text-white">S/ 99</div>
-              <div class="text-xs text-green-400">-S/ 51</div>
+            <div
+              v-for="pack in packs"
+              :key="pack.quantity"
+              class="rounded-xl p-4 text-center"
+              :class="pack.highlighted ? 'bg-violet/10 border border-violet/40' : 'bg-night-2 border border-border'"
+            >
+              <div class="text-xs mb-1" :class="pack.highlighted ? 'text-violet' : 'text-white/40'">Pack {{ pack.quantity }}{{ pack.highlighted ? ' 🔥' : '' }}</div>
+              <div class="font-display text-lg text-white">S/ {{ pack.price }}</div>
+              <div class="text-xs text-green-400">-S/ {{ savingsAmount(pack) }}</div>
             </div>
             <div class="bg-night-2 border border-border rounded-xl p-4 text-center">
               <div class="text-xs text-white/40 mb-1">Todas</div>
-              <div class="font-display text-lg text-white">S/ 129</div>
+              <div class="font-display text-lg text-white">S/ {{ fullEventPrice }}</div>
               <div class="text-xs text-green-400">Mejor valor</div>
             </div>
           </div>
@@ -177,7 +172,7 @@
               </div>
               <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-1">Paso 2</div>
               <h3 class="font-semibold text-white text-sm mb-2">Sube tus fotos</h3>
-              <p class="text-xs text-white/50 leading-relaxed">Arrastra hasta 2,000 fotos (5,000 con Plan Pro). La IA procesa los rostros automáticamente</p>
+              <p class="text-xs text-white/50 leading-relaxed">Arrastra hasta {{ starterPhotoLimit.toLocaleString() }} fotos{{ proPhotoLimit ? ` (${proPhotoLimit.toLocaleString()} con Plan Pro)` : '' }}. La IA procesa los rostros automáticamente</p>
             </div>
 
             <div class="flex flex-col items-center text-center px-4 mb-8 lg:mb-0">
@@ -195,7 +190,7 @@
               </div>
               <div class="text-xs text-coral font-semibold uppercase tracking-widest mb-1">Paso 4</div>
               <h3 class="font-semibold text-white text-sm mb-2">Cobras cada 15 días</h3>
-              <p class="text-xs text-white/50 leading-relaxed">Transferencia automática a tu cuenta. 70% de cada venta es tuyo</p>
+              <p class="text-xs text-white/50 leading-relaxed">Transferencia automática a tu cuenta. {{ starterCommissionPct }}% de cada venta es tuyo</p>
             </div>
           </div>
 
@@ -363,6 +358,13 @@
 </template>
 
 <script setup lang="ts">
+const { fetchPlans, starterPlan, proPlan, starterCommissionPct } = usePlans()
+const { fetchPricing, photoPrice, packs, fullEventPrice, savingsAmount } = usePricing()
+await Promise.all([fetchPlans(), fetchPricing()])
+
+const starterPhotoLimit = computed(() => starterPlan.value?.photo_limit ?? 30000)
+const proPhotoLimit = computed(() => proPlan.value?.photo_limit ?? null)
+
 useSeoMeta({
 	title: "Cómo funciona — Fotify",
 	description:

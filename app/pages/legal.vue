@@ -85,13 +85,11 @@
 
             <h2>5. Pagos y Reembolsos</h2>
             <h3>5.1 Precios y comisiones</h3>
-            <p>Los precios mostrados incluyen IGV (18%). Fotify retiene una comisión del 30% de cada venta; el 70% restante se acredita al Fotógrafo. Las tarifas vigentes son:</p>
+            <p>Los precios mostrados incluyen IGV (18%). Fotify retiene una comisión del {{ platformFeePct }}% de cada venta; el {{ starterCommissionPct }}% restante se acredita al Fotógrafo. Las tarifas de referencia vigentes son:</p>
             <ul>
-              <li>1 foto: S/ 15.00</li>
-              <li>Pack 3 fotos: S/ 38.00 (ahorro 15%)</li>
-              <li>Pack 5 fotos: S/ 59.00 (ahorro 21%)</li>
-              <li>Pack 10 fotos: S/ 99.00 (ahorro 34%)</li>
-              <li>Todas mis fotos: S/ 129.00 (ahorro 43%)</li>
+              <li>1 foto: S/ {{ photoPrice.toFixed(2) }}</li>
+              <li v-for="pack in packs" :key="pack.quantity">Pack {{ pack.quantity }} fotos: S/ {{ pack.price.toFixed(2) }} (ahorro {{ savingsPct(pack) }}%)</li>
+              <li>Todas mis fotos: S/ {{ fullEventPrice.toFixed(2) }}</li>
             </ul>
             <h3>5.2 Política de reembolsos</h3>
             <p>Las compras de fotografías digitales son <strong>no reembolsables</strong> una vez que la descarga ha sido completada. Si por error técnico no puedes acceder a tus fotos dentro de las 48h siguientes a la compra, escribe a soporte@fotify.pe y procesaremos el reembolso en 5–10 días hábiles.</p>
@@ -261,8 +259,8 @@
             <h2>4. Estructura de Pagos</h2>
             <h3>4.1 División de ingresos</h3>
             <ul>
-              <li>Fotógrafo: <strong>70%</strong> del precio de venta (sin IGV).</li>
-              <li>Fotify: <strong>30%</strong> (comisión de plataforma, incluye procesamiento de pagos e infraestructura).</li>
+              <li>Fotógrafo: <strong>{{ starterCommissionPct }}%</strong> del precio de venta (sin IGV).</li>
+              <li>Fotify: <strong>{{ platformFeePct }}%</strong> (comisión de plataforma, incluye procesamiento de pagos e infraestructura).</li>
             </ul>
             <h3>4.2 Calendario de pagos</h3>
             <p>Los pagos se realizan <strong>los días 1 y 15 de cada mes</strong> para saldos acumulados superiores a S/ 50.00. Saldos menores se acumulan hasta alcanzar el mínimo o hasta el final del mes siguiente.</p>
@@ -294,10 +292,10 @@
             </ul>
 
             <h2>7. Plan Pro Fotógrafo</h2>
-            <p>El Plan Pro (S/ 49/mes o S/ 399/año) incluye:</p>
+            <p>El Plan Pro (S/ {{ proMonthly }}/mes o S/ {{ proAnnual }}/año) incluye:</p>
             <ul>
-              <li>Comisión reducida: <strong>75%</strong> para el fotógrafo (vs. 70% en plan gratuito).</li>
-              <li>Eventos ilimitados (plan gratuito: máximo 3 eventos activos simultáneos).</li>
+              <li>Comisión reducida: <strong>{{ proCommissionPct }}%</strong> para el fotógrafo (vs. {{ starterCommissionPct }}% en plan gratuito).</li>
+              <li>Eventos ilimitados (plan gratuito: máximo {{ starterMaxEvents }} eventos activos simultáneos).</li>
               <li>Analytics avanzados: tasa de conversión por foto, heatmap de selección.</li>
               <li>Perfil destacado en búsquedas y página de exploración.</li>
               <li>Acceso prioritario al soporte.</li>
@@ -368,6 +366,15 @@
 </template>
 
 <script setup lang="ts">
+const { fetchPlans, starterPlan, proPlan, starterCommissionPct, proCommissionPct } = usePlans()
+const { fetchPricing, photoPrice, packs, fullEventPrice, savingsPct } = usePricing()
+await Promise.all([fetchPlans(), fetchPricing()])
+
+const starterMaxEvents = computed(() => starterPlan.value?.max_active_events ?? 3)
+const proMonthly = computed(() => proPlan.value?.monthly_price ?? 49)
+const proAnnual = computed(() => proPlan.value?.annual_price ?? 490)
+const platformFeePct = computed(() => 100 - starterCommissionPct.value)
+
 useSeoMeta({
 	title: "Términos y Políticas — Fotify",
 	description:

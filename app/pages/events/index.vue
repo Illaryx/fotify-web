@@ -189,7 +189,7 @@ const sortBy = ref("newest")
 // Data state
 const events = ref<EventResponse[]>([])
 const total = ref(0)
-const loading = ref(false)
+const loading = ref(true)
 const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const page = ref(1)
