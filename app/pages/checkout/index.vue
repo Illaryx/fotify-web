@@ -28,7 +28,8 @@
         </div>
 
         <!-- ── CARD FORM (Izipay Krypton) ─────────────────────────────────── -->
-        <div v-if="ck.step.value === 'payment-form'" class="max-w-md">
+        <!-- v-show keeps the kr-smart-form div in the DOM so Krypton can attach on load -->
+        <div v-show="ck.step.value === 'payment-form'" class="max-w-md">
           <button
             class="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-violet transition-colors mb-4"
             @click="backToDetail"
@@ -39,42 +40,15 @@
             Volver al detalle
           </button>
           <div class="mb-4">
-            <h2 class="font-display font-bold text-[17px] text-white tracking-tight mb-1">Datos de tarjeta</h2>
+            <h2 class="font-display font-bold text-[17px] text-white tracking-tight mb-1">Método de pago</h2>
             <p class="text-[12px] text-white/35">Completa los datos para finalizar tu compra.</p>
           </div>
 
           <div class="space-y-3">
-            <div class="kr-embedded" v-bind="krPublicKey ? {'kr-public-key': krPublicKey} : {}" style="display:contents">
-              <!-- Card number -->
-              <div>
-                <p class="text-[11px] text-white/40 mb-1.5 font-medium">Número de tarjeta</p>
-                <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60 focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.10)]">
-                  <div class="kr-pan"></div>
-                </div>
-              </div>
-              <!-- Expiry + CVV -->
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <p class="text-[11px] text-white/40 mb-1.5 font-medium">Vencimiento</p>
-                  <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                    <div class="kr-expiry"></div>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-[11px] text-white/40 mb-1.5 font-medium">CVV</p>
-                  <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                    <div class="kr-security-code"></div>
-                  </div>
-                </div>
-              </div>
-              <!-- Cardholder name -->
-              <div>
-                <p class="text-[11px] text-white/40 mb-1.5 font-medium">Nombre del titular</p>
-                <div class="bg-night-2 border border-border rounded-xl px-4 py-3.25 transition-colors focus-within:border-violet/60">
-                  <div class="kr-card-holder-name"></div>
-                </div>
-              </div>
-            </div>
+            <div
+              class="kr-smart-form"
+              kr-card-form-expanded
+            ></div>
             <!-- Security note -->
             <div class="flex items-center gap-2 pt-1">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(34,197,94,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -102,7 +76,7 @@
         </div>
 
         <!-- ── PHOTO DETAIL GRID (default state) ─────────────────────────── -->
-        <template v-else>
+        <div v-show="ck.step.value !== 'payment-form'">
 
           <!-- Section header -->
           <div v-if="cart.hasPhotos" class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
@@ -251,7 +225,7 @@
             <p class="text-[11px] text-white/20 text-center mt-3">Procesado por Izipay · Datos encriptados TLS 1.3</p>
           </div>
 
-        </template>
+        </div>
 
       </template>
     </div><!-- /LEFT -->
@@ -329,9 +303,9 @@
 
           <p v-if="orderError" class="text-[12px] text-coral text-center mb-3">{{ orderError }}</p>
 
-          <!-- Pay button (default) -->
+          <!-- Pay button: detail / processing step -->
           <button
-            v-if="ck.step.value !== 'payment-form'"
+            v-if="ck.step.value === 'detail' || ck.step.value === 'processing'"
             :disabled="!termsAccepted || ck.step.value === 'processing' || ck.unavailablePhotos.value.length > 0 || cart.count === 0"
             class="w-full bg-coral hover:bg-[#e62d5a] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors flex items-center justify-center gap-2.5 shadow-lg shadow-coral/25 active:scale-[.98] disabled:opacity-60 disabled:cursor-not-allowed"
             @click="handlePay"
@@ -345,8 +319,8 @@
             {{ payLabel }}
           </button>
 
-          <!-- Card confirm button -->
-          <template v-else>
+          <!-- Card confirm button: payment-form step -->
+          <template v-else-if="ck.step.value === 'payment-form'">
             <p v-if="krError" class="text-[12px] text-coral text-center mb-2">{{ krError }}</p>
             <button
               :disabled="krSubmitting"
@@ -407,6 +381,29 @@ import { apiFetch } from "~/composables/useApi"
 import { useCheckout } from "~/composables/useCheckout"
 import type { CreateOrderInput, OrderResponse } from "~/types"
 
+const config = useRuntimeConfig()
+useHead({
+	script: [
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		{
+			src: "https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js",
+			defer: true,
+			"kr-public-key": config.public.izipayPublicKey,
+			"kr-language": "es-PE",
+		} as any,
+		{
+			src: "https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon.js",
+			defer: true,
+		},
+	],
+	link: [
+		{
+			rel: "stylesheet",
+			href: "https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon-reset.min.css",
+		},
+	],
+})
+
 const cart = useCartStore()
 const izipay = useIzipay()
 const ck = useCheckout()
@@ -416,7 +413,7 @@ const termsAccepted = ref(false)
 const orderError = ref<string | null>(null)
 const krSubmitting = ref(false)
 const krError = ref<string | null>(null)
-const krPublicKey = ref("")
+const idempotencyKey = ref(crypto.randomUUID())
 
 // Computed
 const payLabel = computed(() => {
@@ -431,79 +428,80 @@ onUnmounted(() => {
 function backToDetail() {
   izipay.destroy()
   ck.step.value = "detail"
-  krPublicKey.value = ""
   krError.value = null
   krSubmitting.value = false
+  idempotencyKey.value = crypto.randomUUID()
 }
 
-// Payment flow — defaults to card
 async function handlePay() {
   if (!termsAccepted.value) {
     orderError.value = "Acepta los términos de uso para continuar."
     return
   }
-
   orderError.value = null
-  ck.step.value = "processing"
   ck.successPhotoCount.value = cart.count
+  ck.step.value = "processing"
 
   try {
-    // Reuse existing order if retrying (avoids creating duplicate orders)
     let oid = ck.orderId.value
 
     if (!oid) {
-      const orderRes = await apiFetch<{ data?: OrderResponse }>("/orders", {
+      const orderRes = await apiFetch<{ data?: OrderResponse }>("/web/orders", {
         method: "POST",
         body: {
+          idempotency_key: idempotencyKey.value,
           event_id: cart.eventId,
           payment_gateway: "izipay",
+          payment_method: "card",
           photo_ids: [...cart.photoIds],
           ...(cart.searchSessionId ? { search_session_id: cart.searchSessionId } : {}),
           type: cart.orderType,
         } as CreateOrderInput,
       })
-
       oid = orderRes.data?.id ?? null
       if (!oid) throw new Error("No se recibió un ID de orden válido")
       ck.orderId.value = oid
     }
 
-    // Card flow (default)
-    const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(
-      `/orders/${oid}/payment-token`,
-      { method: "POST" },
-    )
-
-    if (!tokenRes.data) throw new Error("No se recibió token de pago")
-    const { form_token, public_key } = tokenRes.data
-
-    krPublicKey.value = public_key
-    ck.step.value = "payment-form"
-
-    await nextTick()
-    await izipay.initForm(form_token, public_key)
-
-    izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
-      krSubmitting.value = false
-      try {
-        await apiFetch(`/orders/${oid}/confirm-payment`, {
-          method: "POST",
-          body: { kr_answer: krAnswer, kr_hash: krHash },
-        })
-        ck.persistOrderPhotos(oid, [...cart.photoIds])
-        ck.step.value = "success"
-        cart.clear()
-      } catch (err: unknown) {
-        ck.step.value = "failed"
-        const e = err as { data?: { error?: string }; message?: string }
-        ck.failedError.value = e?.data?.error || e?.message || "Pago no completado."
-      }
-    })
+    await startCardFlow(oid)
   } catch (err: unknown) {
     ck.step.value = "failed"
     const e = err as { data?: { error?: string }; message?: string }
     ck.failedError.value = e?.data?.error || e?.message || "Error al procesar el pago."
   }
+}
+
+async function startCardFlow(oid: number) {
+  const tokenRes = await apiFetch<{ data?: { form_token: string; public_key: string } }>(
+    `/web/orders/${oid}/payment-token`,
+    { method: "POST" },
+  )
+  if (!tokenRes.data) throw new Error("No se recibió token de pago")
+  const { form_token, public_key } = tokenRes.data
+
+  await izipay.destroy()
+
+  ck.step.value = "payment-form"
+
+  await nextTick()
+  await izipay.initForm(form_token, public_key)
+
+  izipay.onPaymentResult(async (krAnswer: string, krHash: string) => {
+    krSubmitting.value = false
+    try {
+      await apiFetch(`/web/orders/${oid}/confirm-payment`, {
+        method: "POST",
+        body: { kr_answer: krAnswer, kr_hash: krHash },
+      })
+      ck.persistOrderPhotos(oid, [...cart.photoIds])
+      ck.step.value = "success"
+      cart.clear()
+    } catch (err: unknown) {
+      ck.step.value = "failed"
+      const e = err as { data?: { error?: string }; message?: string }
+      ck.failedError.value = e?.data?.error || e?.message || "Pago no completado."
+    }
+  })
 }
 
 async function handleCardSubmit() {
@@ -524,47 +522,6 @@ async function handleCardSubmit() {
 
 <style scoped>
 
-/* ── Krypton injected elements ────────────────────────────────────────── */
+/* Ocultar botón nativo; usamos el botón propio de Fotify */
 :deep(.kr-payment-button) { display: none !important; }
-
-:deep(.kr-installment-count),
-:deep(.kr-do-register) {
-  width: 100%;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-:deep(.kr-installment-count select),
-:deep(.kr-do-register select) {
-  width: 100%;
-  background-color: #1A1030;
-  border: 1px solid #2A1F4A;
-  border-radius: 0.75rem;
-  padding: 0.8125rem 2.5rem 0.8125rem 1rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
-  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-:deep(.kr-installment-count select:focus),
-:deep(.kr-do-register select:focus) {
-  border-color: rgba(124, 58, 237, 0.6);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.10);
-}
-
-:deep(.kr-installment-count select option),
-:deep(.kr-do-register select option) {
-  background-color: #1A1030;
-  color: white;
-}
 </style>

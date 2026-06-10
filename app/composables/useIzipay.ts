@@ -16,23 +16,6 @@ declare global {
 	}
 }
 
-// CSS injected into each Krypton field iframe to match Fotify's dark theme.
-const FIELD_CSS = [
-	"input, select {",
-	"  color: rgba(255,255,255,0.85) !important;",
-	"  background: transparent !important;",
-	"  border: none !important;",
-	"  outline: none !important;",
-	"  font-size: 14px !important;",
-	'  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;',
-	"  width: 100% !important;",
-	"  padding: 0 !important;",
-	"  line-height: 1.5 !important;",
-	"}",
-	"input::placeholder { color: rgba(255,255,255,0.2) !important; }",
-	"select option { background: #1a1230; color: white; }",
-].join(" ")
-
 export function useIzipay() {
 	async function initForm(formToken: string, publicKey: string): Promise<void> {
 		const KR = window.KR
@@ -42,7 +25,6 @@ export function useIzipay() {
 			formToken,
 			"kr-public-key": publicKey,
 			"kr-language": "es-PE",
-			"kr-custom-css": FIELD_CSS,
 		})
 	}
 

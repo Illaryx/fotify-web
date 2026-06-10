@@ -2915,6 +2915,7 @@ export interface components {
 			status: "paid" | "failed"
 		}
 		"github_com_Illaryx_fotify-api_internal_application_order.CreateOrderInput": {
+			idempotency_key: string
 			event_id: number
 			/** @enum {string} */
 			payment_gateway: "izipay"

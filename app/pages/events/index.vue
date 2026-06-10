@@ -196,7 +196,7 @@ const page = ref(1)
 
 onMounted(async () => {
 	try {
-		const res = await $fetch<{ data: EventCategory[] }>("/event-categories", {
+		const res = await $fetch<{ data: EventCategory[] }>("/web/event-categories", {
 			baseURL: config.public.apiBase,
 		})
 		rawCategories.value = res.data ?? []
@@ -246,7 +246,7 @@ async function fetchEvents() {
 	error.value = null
 	page.value = 1
 	try {
-		const data = await apiFetch<ListEnvelope<EventResponse>>("/events", {
+		const data = await apiFetch<ListEnvelope<EventResponse>>("/web/events", {
 			query: buildQuery(1),
 		})
 		events.value = data?.data?.items ?? []
@@ -263,7 +263,7 @@ async function loadMore() {
 	loadingMore.value = true
 	try {
 		const nextPage = page.value + 1
-		const data = await apiFetch<ListEnvelope<EventResponse>>("/events", {
+		const data = await apiFetch<ListEnvelope<EventResponse>>("/web/events", {
 			query: buildQuery(nextPage),
 		})
 		events.value.push(...(data?.data?.items ?? []))

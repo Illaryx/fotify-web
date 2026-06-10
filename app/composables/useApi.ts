@@ -36,7 +36,7 @@ export async function apiFetch<T>(
 
 export async function validateCartPhotos(eventId: number, photoIds: number[]) {
 	return apiFetch<{ valid: number[]; invalid: number[] }>(
-		`/events/${eventId}/photos/validate`,
+		`/web/events/${eventId}/photos/validate`,
 		{ method: "POST", body: { photo_ids: photoIds } },
 	)
 }

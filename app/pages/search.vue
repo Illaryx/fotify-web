@@ -640,7 +640,7 @@ const event = ref<EventResponse | null>(null)
 async function fetchEvent() {
 	if (!eventId.value) return
 	try {
-		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${eventId.value}`)
+		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/web/events/${eventId.value}`)
 		event.value = res.data ?? null
 	} catch {
 		/* event context is optional — fail silently */
@@ -655,7 +655,7 @@ async function acceptConsent() {
 	consentLoading.value = true
 	consentError.value = null
 	try {
-		await apiFetch<void>("/search/consent", {
+		await apiFetch<void>("/web/search/consent", {
 			method: "POST",
 			body: { accepted: true },
 		})
@@ -720,7 +720,7 @@ async function startSearch() {
 
 	try {
 		// 1. Get S3 presigned URL
-		const initRes = await apiFetch<{ data: InitSearchResponse }>("/search/init", {
+		const initRes = await apiFetch<{ data: InitSearchResponse }>("/web/search/init", {
 			method: "POST",
 			body: { event_id: eventId.value },
 		})
@@ -735,7 +735,7 @@ async function startSearch() {
 		})
 
 		// 3. Execute facial search
-		const searchRes = await apiFetch<{ data: SearchResponse }>("/search/execute", {
+		const searchRes = await apiFetch<{ data: SearchResponse }>("/web/search/execute", {
 			method: "POST",
 			body: { session_id: initData.session_id },
 		})
@@ -877,7 +877,7 @@ async function searchByBib() {
 	bibError.value = null
 	bibResults.value = []
 	try {
-		const res = await apiFetch<{ data: { results: SearchResultResponse[] } }>("/search/bib", {
+		const res = await apiFetch<{ data: { results: SearchResultResponse[] } }>("/web/search/bib", {
 			method: "POST",
 			body: { bib_number: Number(bibNumber.value), event_id: eventId.value },
 		})
@@ -907,7 +907,7 @@ const searchingMessages = [
 async function resolveConsentStep() {
 	// Check server-side consent; fall back to localStorage cache on error.
 	try {
-		const res = await apiFetch<{ data?: { accepted: boolean } }>("/search/consent")
+		const res = await apiFetch<{ data?: { accepted: boolean } }>("/web/search/consent")
 		const accepted = res.data?.accepted ?? false
 		if (accepted) localStorage.setItem("fotify_consented", "true")
 		step.value = accepted ? "upload" : "consent"

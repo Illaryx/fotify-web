@@ -28,7 +28,7 @@ export function usePricing() {
 		if (fetched.value) return
 		fetched.value = true
 		try {
-			const res = await apiFetch<{ data?: DefaultPricing }>("/config/pricing")
+			const res = await apiFetch<{ data?: DefaultPricing }>("/web/config/pricing")
 			if (res.data) {
 				pricing.value = res.data
 			}

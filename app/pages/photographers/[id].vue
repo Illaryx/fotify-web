@@ -283,11 +283,11 @@ const eventsTotal = ref(0)
 
 onMounted(async () => {
 	const [pResult, photosResult, eventsResult] = await Promise.allSettled([
-		apiFetch<PhotographerEnvelope>(`/photographers/${id}`),
-		apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+		apiFetch<PhotographerEnvelope>(`/web/photographers/${id}`),
+		apiFetch<ListEnvelope<PhotoResponse>>("/web/photos", {
 			query: { photographer_id: id, status: "indexed", limit: 8 },
 		}),
-		apiFetch<ListEnvelope<EventResponse>>("/events", {
+		apiFetch<ListEnvelope<EventResponse>>("/web/events", {
 			query: { photographer_id: id, status: "active", limit: 6 },
 		}),
 	])

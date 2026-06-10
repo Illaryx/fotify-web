@@ -628,7 +628,7 @@ const loadingMore = ref(false)
 
 onMounted(async () => {
 	try {
-		const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/slug/${slug}`)
+		const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/web/events/slug/${slug}`)
 		event.value = evRes.data ?? null
 		if (event.value?.id) cart.setEvent(event.value.id)
 	} catch {
@@ -643,7 +643,7 @@ onMounted(async () => {
 	}
 
 	try {
-		const photosRes = await apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+		const photosRes = await apiFetch<ListEnvelope<PhotoResponse>>("/web/photos", {
 			query: { event_id: event.value.id, limit: LIMIT, offset: 0 },
 		})
 		photos.value = photosRes.data?.items ?? []
@@ -659,7 +659,7 @@ async function loadMore() {
 	if (!eventId.value || loadingMore.value) return
 	loadingMore.value = true
 	try {
-		const res = await apiFetch<ListEnvelope<PhotoResponse>>("/photos", {
+		const res = await apiFetch<ListEnvelope<PhotoResponse>>("/web/photos", {
 			query: { event_id: eventId.value, limit: LIMIT, offset: photos.value.length },
 		})
 		photos.value = [...photos.value, ...(res.data?.items ?? [])]

@@ -296,7 +296,7 @@ function observeCard(el: HTMLElement, eventId: number) {
 
 async function fetchEventById(id: number) {
 	try {
-		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${id}`)
+		const res = await apiFetch<SingleEnvelope<EventResponse>>(`/web/events/${id}`)
 		if (res.data) eventsMap.value = { ...eventsMap.value, [id]: res.data }
 	} catch {
 		/* optional context, fail silently */
@@ -307,7 +307,7 @@ async function fetchEventById(id: number) {
 async function fetchOrders() {
 	fetchError.value = null
 	try {
-		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/orders", {
+		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/web/orders", {
 			query: { limit: LIMIT, offset: 0 },
 		})
 		orders.value = res.data?.items ?? []
@@ -321,7 +321,7 @@ async function loadMoreOrders() {
 	if (!hasMore.value || loadingMore.value) return
 	loadingMore.value = true
 	try {
-		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/orders", {
+		const res = await apiFetch<{ data?: { items?: OrderResponse[]; total?: number } }>("/web/orders", {
 			query: { limit: LIMIT, offset: orders.value.length },
 		})
 		orders.value = [...orders.value, ...(res.data?.items ?? [])]

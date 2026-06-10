@@ -286,7 +286,7 @@ const eventsItems = ref<EventResponse[]>([])
 
 onMounted(async () => {
 	try {
-		const res = await apiFetch<ListEnvelope<EventResponse>>("/events", { query: { limit: 20 } })
+		const res = await apiFetch<ListEnvelope<EventResponse>>("/web/events", { query: { limit: 20 } })
 		eventsItems.value = res.data?.items ?? []
 	} finally {
 		eventsLoading.value = false

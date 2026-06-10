@@ -25,6 +25,7 @@ export default defineNuxtConfig({
 		public: {
 			apiBase: "http://localhost:8080/api/v1",
 			dashboardBase: "http://localhost:3001",
+			izipayPublicKey: "",
 		},
 	},
 
@@ -44,12 +45,6 @@ export default defineNuxtConfig({
 				{ property: "og:locale", content: "es_PE" },
 				{ name: "twitter:card", content: "summary_large_image" },
 				{ name: "twitter:site", content: "@fotify_pe" },
-			],
-			script: [
-				{
-					src: "https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js",
-					defer: true,
-				},
 			],
 			link: [
 				{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

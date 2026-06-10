@@ -307,7 +307,7 @@ function resolvePhotoIds(o: OrderResponse, oid: number): number[] {
 
 async function fetchDownloadUrl(photoId: number): Promise<string | null> {
 	try {
-		const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/photos/${photoId}/download`)
+		const res = await apiFetch<SingleEnvelope<DownloadResponse>>(`/web/photos/${photoId}/download`)
 		return res.data?.download_url ?? null
 	} catch {
 		return null
@@ -376,7 +376,7 @@ onMounted(async () => {
 
 	try {
 		const [orderRes, meRes] = await Promise.allSettled([
-			apiFetch<SingleEnvelope<OrderResponse>>(`/orders/${oid}`),
+			apiFetch<SingleEnvelope<OrderResponse>>(`/web/orders/${oid}`),
 			apiFetch<{ data?: { email?: string } }>("/auth/me"),
 		])
 
@@ -392,7 +392,7 @@ onMounted(async () => {
 
 			if (o.event_id) {
 				try {
-					const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${o.event_id}`)
+					const evRes = await apiFetch<SingleEnvelope<EventResponse>>(`/web/events/${o.event_id}`)
 					event.value = evRes.data ?? null
 				} catch {
 					/* non-critical */

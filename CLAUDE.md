@@ -10,7 +10,7 @@ Fotify is a sports photography marketplace (Peru market). Athletes find their ev
 - **Styling**: Tailwind CSS (dark theme, custom colors: `night`, `night-2`, `violet`, `coral`, `border`)
 - **State**: Pinia stores with localStorage persistence
 - **API**: Custom `apiFetch` wrapper (`composables/useApi.ts`) with automatic 401 token refresh
-- **Payments**: Izipay Krypton embedded form (card only, `payment_gateway: "izipay"` always)
+- **Payments**: Izipay Krypton Smart Form (`kr-smart-form`, card only, `payment_gateway: "izipay"` always)
 - **Deploy**: Static/SSR via Nitro
 
 ## Key Architecture Decisions

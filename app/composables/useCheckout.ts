@@ -38,7 +38,7 @@ function createCheckoutState() {
 	async function fetchEvent() {
 		if (!cart.eventId) return
 		try {
-			const res = await apiFetch<SingleEnvelope<EventResponse>>(`/events/${cart.eventId}`)
+			const res = await apiFetch<SingleEnvelope<EventResponse>>(`/web/events/${cart.eventId}`)
 			event.value = res.data ?? null
 		} catch {
 			/* optional context */

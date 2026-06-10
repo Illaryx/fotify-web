@@ -19,7 +19,7 @@ export function usePlans() {
 		if (fetched.value) return
 		fetched.value = true
 		try {
-			const res = await apiFetch<{ data?: PublicPlan[] }>("/plans")
+			const res = await apiFetch<{ data?: PublicPlan[] }>("/web/plans")
 			plans.value = res.data ?? []
 		} catch {
 			// API unreachable — computed fallbacks handle defaults
