@@ -83,6 +83,36 @@
       </div>
     </div>
 
+    <!-- ── PREVIOUS SESSION ─────────────────────────────────────────────────── -->
+    <div v-else-if="step === 'previous-session'" class="flex flex-col items-center justify-center py-16 px-5">
+      <div class="max-w-sm w-full">
+        <div class="bg-night-2 border border-border rounded-2xl p-6 text-center">
+          <div class="w-14 h-14 rounded-2xl bg-violet/15 border border-violet/25 flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+            </svg>
+          </div>
+          <h2 class="font-display font-bold text-[18px] text-white mb-2">Tienes una búsqueda reciente</h2>
+          <p class="text-[13px] text-muted mb-5">Puedes ver los resultados de tu última búsqueda sin tener que subir una nueva selfie.</p>
+          <p v-if="previousSessionError" class="text-[12px] text-coral mb-3">{{ previousSessionError }}</p>
+          <button
+            class="w-full bg-violet hover:bg-violet-deep text-white font-semibold text-[14px] py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 mb-3 disabled:opacity-50"
+            :disabled="loadingPreviousSession"
+            @click="loadPreviousSession"
+          >
+            <svg v-if="loadingPreviousSession" class="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Ver resultados de tu última búsqueda
+          </button>
+          <button
+            class="w-full border border-border text-[13px] text-white/50 hover:text-white/70 py-3 rounded-xl transition-colors"
+            @click="dismissPreviousSession"
+          >
+            Hacer nueva búsqueda
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── UPLOAD ─────────────────────────────────────────────────────────────── -->
     <div v-else-if="step === 'upload'">
       <!-- Breadcrumb -->
@@ -619,7 +649,7 @@ import type {
 } from "~/types"
 import { useDemoPhoto } from "~/composables/useDemoPhoto"
 
-type SearchStep = "auth-gate" | "consent" | "upload" | "searching" | "results"
+type SearchStep = "auth-gate" | "consent" | "previous-session" | "upload" | "searching" | "results"
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -748,6 +778,9 @@ async function startSearch() {
 		cart.setSession(initData.session_id)
 		if (eventId.value) cart.setEvent(eventId.value)
 
+		// Persist session for later recovery
+		localStorage.setItem("fotify_last_search_session", String(initData.session_id))
+
 		step.value = "results"
 	} catch {
 		step.value = "upload"
@@ -760,6 +793,8 @@ function resetSearch() {
 	searchResults.value = []
 	matchesFound.value = 0
 	cart.clear()
+	localStorage.removeItem("fotify_last_search_session")
+	savedSessionId.value = null
 	step.value = "upload"
 }
 
@@ -891,6 +926,39 @@ async function searchByBib() {
 	}
 }
 
+// ── Previous session recovery ────────────────────────────────────────────────
+const loadingPreviousSession = ref(false)
+const previousSessionError = ref<string | null>(null)
+const savedSessionId = ref<number | null>(null)
+
+async function loadPreviousSession() {
+	if (!savedSessionId.value) return
+	loadingPreviousSession.value = true
+	previousSessionError.value = null
+	try {
+		const res = await apiFetch<{ data: SearchResponse }>(`/web/search/sessions/${savedSessionId.value}/results`)
+		searchResults.value = res.data?.results ?? []
+		matchesFound.value = res.data?.matches_found ?? 0
+		searchDate.value = new Date()
+
+		cart.setSession(savedSessionId.value)
+		if (eventId.value) cart.setEvent(eventId.value)
+
+		step.value = "results"
+	} catch {
+		previousSessionError.value = "No se pudieron recuperar los resultados. Intenta una nueva búsqueda."
+		localStorage.removeItem("fotify_last_search_session")
+		savedSessionId.value = null
+	} finally {
+		loadingPreviousSession.value = false
+	}
+}
+
+function dismissPreviousSession() {
+	savedSessionId.value = null
+	step.value = "upload"
+}
+
 // ── Static content ────────────────────────────────────────────────────────────
 const selfieTips = [
 	{ icon: "☀️", label: "Buena iluminación" },
@@ -910,11 +978,29 @@ async function resolveConsentStep() {
 		const res = await apiFetch<{ data?: { accepted: boolean } }>("/web/search/consent")
 		const accepted = res.data?.accepted ?? false
 		if (accepted) localStorage.setItem("fotify_consented", "true")
-		step.value = accepted ? "upload" : "consent"
+		if (!accepted) {
+			step.value = "consent"
+			return
+		}
 	} catch {
 		const cached = localStorage.getItem("fotify_consented") === "true"
-		step.value = cached ? "upload" : "consent"
+		if (!cached) {
+			step.value = "consent"
+			return
+		}
 	}
+
+	// Check for recoverable previous session
+	const storedSession = localStorage.getItem("fotify_last_search_session")
+	if (storedSession) {
+		const parsed = Number(storedSession)
+		if (!isNaN(parsed) && parsed > 0) {
+			savedSessionId.value = parsed
+			step.value = "previous-session"
+			return
+		}
+	}
+	step.value = "upload"
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────

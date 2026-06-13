@@ -9,6 +9,8 @@
 		"preview": "nuxt preview",
 		"postinstall": "nuxt prepare",
 		"typecheck": "nuxi typecheck",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"lint": "biome check .",
 		"lint:fix": "biome check --fix .",
 		"format": "biome format --fix .",
@@ -38,12 +40,16 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.4.16",
 		"@nuxt/image": "^1.10.0",
+		"@nuxt/test-utils": "^4.0.3",
 		"@nuxtjs/sitemap": "^8.0.15",
 		"@pinia/nuxt": "^0.11.3",
 		"@tailwindcss/vite": "^4.1.7",
+		"@vue/test-utils": "^2.4.11",
 		"@vueuse/nuxt": "^12.7.0",
+		"happy-dom": "^20.10.3",
 		"openapi-typescript": "^7.13.0",
 		"tailwindcss": "^4.1.7",
-		"typescript": "^5.8.3"
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.8"
 	}
 }

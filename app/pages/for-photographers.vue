@@ -324,62 +324,106 @@
 
     <!-- PLANES -->
     <section class="px-5 lg:px-16 xl:px-24 py-16">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-6xl mx-auto">
         <div class="text-center mb-12">
           <div class="text-xs text-violet font-semibold uppercase tracking-widest mb-3">Sin sorpresas</div>
           <h2 class="font-display font-bold text-2xl lg:text-4xl text-white mb-3">Modelo simple y justo</h2>
-          <p class="text-muted text-sm">Sin cuotas mensuales. Solo pagamos juntos cuando vendes.</p>
+          <p class="text-muted text-sm">Elige el plan que se adapte a tu volumen. Solo pagamos juntos cuando vendes.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <!-- Free -->
-          <div class="bg-night-2 border border-border rounded-2xl p-7">
-            <div class="text-xs text-white/40 uppercase tracking-widest mb-4">Estándar</div>
-            <div class="font-display text-3xl text-white mb-1">Gratis</div>
-            <div class="text-xs text-white/40 mb-6">Para siempre · sin tarjeta</div>
-            <ul class="flex flex-col gap-3 text-sm mb-8">
-              <li v-for="f in freePlanFeatures" :key="f.text" class="flex items-center gap-2" :class="f.active ? 'text-white/70' : 'text-white/40'">
-                <span :class="f.active ? 'text-violet' : 'text-white/20'">{{ f.active ? '✓' : '○' }}</span>
-                {{ f.text }}
-              </li>
-            </ul>
-            <a
-              :href="`${dashboardBase}/photographers/register`"
-              class="w-full border border-violet text-violet hover:bg-violet hover:text-white font-semibold py-3 rounded-full text-sm transition-colors block text-center"
-            >
-              Empezar gratis
-            </a>
-          </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div
+            v-for="card in planCards"
+            :key="card.slug"
+            class="rounded-2xl p-6 relative flex flex-col"
+            :class="card.popular
+              ? 'bg-gradient-to-br from-violet/20 to-violet-deep/10 border border-violet/40 shadow-[0_0_40px_rgba(124,58,237,0.25)]'
+              : 'bg-night-2 border border-border'"
+          >
+            <span v-if="card.popular" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet text-white text-[10px] font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+              Más popular
+            </span>
 
-          <!-- Pro -->
-          <div class="bg-gradient-to-br from-violet/20 to-violet-deep/10 border border-violet/40 rounded-2xl p-7 relative shadow-[0_0_40px_rgba(124,58,237,0.25)]">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span class="bg-violet text-white text-xs font-semibold px-3 py-1 rounded-full">Más popular</span>
+            <div class="text-xs uppercase tracking-widest mb-3" :class="card.popular ? 'text-violet' : 'text-white/40'">{{ card.label }}</div>
+
+            <div class="mb-1">
+              <template v-if="card.priceLabel === 'custom'">
+                <div class="font-display text-2xl text-white">Personalizado</div>
+              </template>
+              <template v-else-if="card.monthlyPrice === 0">
+                <div class="font-display text-2xl text-white">Gratis</div>
+              </template>
+              <template v-else>
+                <div class="flex items-baseline gap-1">
+                  <div class="font-display text-2xl text-white">S/ {{ card.monthlyPrice }}</div>
+                  <div class="text-xs text-white/50">/mes</div>
+                </div>
+              </template>
             </div>
-            <div class="text-xs text-violet uppercase tracking-widest mb-4">Pro</div>
-            <div class="flex items-baseline gap-1 mb-1">
-              <div class="font-display text-3xl text-white">S/ {{ proMonthly }}</div>
-              <div class="text-sm text-white/50">/mes</div>
+            <div class="text-[11px] text-white/40 mb-5">{{ card.subtitle }}</div>
+
+            <div class="flex flex-col gap-2.5 mb-5">
+              <div class="flex items-center gap-2 text-[12px] text-white/60">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                {{ card.commissionLabel }}
+              </div>
+              <div class="flex items-center gap-2 text-[12px] text-white/60">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                {{ card.eventsLabel }}
+              </div>
             </div>
-            <div class="text-xs text-white/40 mb-6">o S/ {{ proAnnual }}/año · ahorra 2 meses</div>
-            <ul class="flex flex-col gap-3 text-sm mb-8">
-              <li v-for="f in proPlanFeatures" :key="f" class="flex items-center gap-2 text-white/70">
-                <span class="text-violet">✓</span>{{ f }}
+
+            <ul class="flex flex-col gap-2 text-[12px] mb-6 flex-1">
+              <li v-for="f in card.features" :key="f" class="flex items-start gap-2 text-white/60">
+                <span class="text-violet mt-0.5">✓</span>{{ f }}
               </li>
             </ul>
+
             <a
-              :href="`${dashboardBase}/photographers/register`"
-              class="w-full bg-coral hover:opacity-90 text-white font-semibold py-3 rounded-full text-sm transition-opacity block text-center"
+              :href="card.cta.href"
+              :class="card.popular
+                ? 'bg-coral hover:opacity-90 text-white'
+                : 'border border-violet text-violet hover:bg-violet hover:text-white'"
+              class="w-full font-semibold py-2.5 rounded-full text-sm transition-all block text-center"
             >
-              Probar Pro — 30 días gratis
+              {{ card.cta.text }}
             </a>
           </div>
         </div>
 
-        <p class="text-center text-xs text-white/30 mt-6">
-          ¿Organizas más de 20 eventos al mes?
-          <a href="mailto:hola@fotify.pe" class="text-violet hover:underline">Habla con nosotros</a> para plan Enterprise.
-        </p>
+        <!-- Commission breakdown -->
+        <div class="mt-8 bg-night-2 border border-border rounded-2xl p-6">
+          <h3 class="text-sm font-semibold text-white mb-3">Desglose de comisiones</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[13px]">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-violet/15 flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <div class="text-white font-medium">Comisión Fotify</div>
+                <div class="text-white/40 text-xs">{{ platformCommissionPct }}% del precio de venta</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-violet/15 flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="text-white font-medium">Pasarela de pago</div>
+                <div class="text-white/40 text-xs">{{ gatewayFeePct }}% (Izipay)</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-violet/15 flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div>
+                <div class="text-white font-medium">IGV</div>
+                <div class="text-white/40 text-xs">{{ taxIgvPct }}% incluido en el precio</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -435,15 +479,105 @@
 <script setup lang="ts">
 const dashboardBase = useRuntimeConfig().public.dashboardBase
 
-const { fetchPlans, starterPlan, proPlan, starterCommissionPct, proCommissionPct } = usePlans()
-await fetchPlans()
+const { fetchPlans, starterPlan, proPlan, enterprisePlan, payPerUsePlan, starterCommissionPct, commissionPct } = usePlans()
+const { fetchPricing, platformCommissionPct, gatewayFeePct, taxIgvPct } = usePricing()
+await Promise.all([fetchPlans(), fetchPricing()])
 
 const starterPhotoLimit = computed(() => starterPlan.value?.photo_limit ?? 30000)
 const proPhotoLimit = computed(() => proPlan.value?.photo_limit ?? null)
-const starterMaxEvents = computed(() => starterPlan.value?.max_active_events ?? 3)
-const proMonthly = computed(() => proPlan.value?.monthly_price ?? 49)
-const proAnnual = computed(() => proPlan.value?.annual_price ?? 490)
 const platformFeePct = computed(() => 100 - starterCommissionPct.value)
+
+interface PlanCard {
+	slug: string
+	label: string
+	popular: boolean
+	priceLabel: string
+	monthlyPrice: number
+	subtitle: string
+	commissionLabel: string
+	eventsLabel: string
+	features: string[]
+	cta: { text: string; href: string }
+}
+
+const featureLabels: Record<string, string> = {
+	facial_recognition: "IA facial incluida",
+	watermark: "Marca de agua automática",
+	auto_downloads: "Descargas automáticas",
+	sales_dashboard: "Dashboard de ventas",
+	bulk_upload: "Subida masiva",
+	multi_photographer: "Multi-fotógrafo",
+	auto_categories: "Categorías automáticas",
+	ai_tagging: "Etiquetado con IA",
+	marketplace: "Marketplace público",
+	no_monthly_fee: "Sin cuota mensual",
+	per_photo_billing: "Pago por foto procesada",
+	dedicated_infra: "Infraestructura dedicada",
+	custom_api: "API personalizada",
+	white_label: "Marca blanca",
+	premium_recognition: "IA facial premium",
+}
+function featureLabel(slug: string): string {
+	return featureLabels[slug] ?? slug.replace(/_/g, " ")
+}
+
+const planCards = computed<PlanCard[]>(() => {
+	const s = starterPlan.value
+	const p = proPlan.value
+	const e = enterprisePlan.value
+	const ppu = payPerUsePlan.value
+
+	return [
+		{
+			slug: "starter",
+			label: s?.name ?? "Starter",
+			popular: false,
+			priceLabel: "free",
+			monthlyPrice: 0,
+			subtitle: "Para siempre · sin tarjeta",
+			commissionLabel: `${commissionPct(s, 92)}% de cada venta es tuyo`,
+			eventsLabel: `Hasta ${s?.max_active_events ?? 3} eventos activos`,
+			features: s?.features?.length ? s.features.slice(0, 4).map(featureLabel) : ["IA facial incluida", "Perfil público", `${(s?.photo_limit ?? 30000).toLocaleString()} fotos/evento`],
+			cta: { text: "Empezar gratis", href: `${dashboardBase}/photographers/register` },
+		},
+		{
+			slug: "pro_events",
+			label: p?.name ?? "Pro Events",
+			popular: true,
+			priceLabel: "monthly",
+			monthlyPrice: p?.monthly_price ?? 49,
+			subtitle: p?.annual_price ? `o S/ ${p.annual_price}/año · ahorra 2 meses` : "Facturación mensual",
+			commissionLabel: `${commissionPct(p, 88)}% de cada venta es tuyo`,
+			eventsLabel: p?.max_active_events ? `Hasta ${p.max_active_events} eventos` : "Eventos ilimitados",
+			features: p?.features?.length ? p.features.slice(0, 5).map(featureLabel) : ["Eventos ilimitados", "IA facial prioritaria", "Analytics avanzado", "Soporte prioritario", "Badge verificado"],
+			cta: { text: "Probar Pro — 30 días gratis", href: `${dashboardBase}/photographers/register` },
+		},
+		{
+			slug: "pay_per_use",
+			label: ppu?.name ?? "Pay Per Use",
+			popular: false,
+			priceLabel: "per_photo",
+			monthlyPrice: 0,
+			subtitle: ppu?.per_photo_cost ? `S/ ${ppu.per_photo_cost} por foto subida` : "Paga solo por lo que usas",
+			commissionLabel: `${commissionPct(ppu, 95)}% de cada venta es tuyo`,
+			eventsLabel: "Sin límite de eventos",
+			features: ppu?.features?.length ? ppu.features.slice(0, 4).map(featureLabel) : ["Sin cuota mensual", "Pago por foto procesada", "IA facial incluida", "Retiros cada 15 días"],
+			cta: { text: "Elegir Pay Per Use", href: `${dashboardBase}/photographers/register` },
+		},
+		{
+			slug: "enterprise",
+			label: e?.name ?? "Enterprise",
+			popular: false,
+			priceLabel: "custom",
+			monthlyPrice: 0,
+			subtitle: "Para grandes organizadores",
+			commissionLabel: "Comisión negociable",
+			eventsLabel: "Eventos ilimitados",
+			features: e?.features?.length ? e.features.slice(0, 4).map(featureLabel) : ["Precios personalizados", "Account manager dedicado", "API para integración", "SLA garantizado"],
+			cta: { text: "Contactar ventas", href: "mailto:hola@fotify.pe" },
+		},
+	]
+})
 
 useSeoMeta({
 	title: "Para fotógrafos — Fotify",
@@ -462,7 +596,7 @@ const calcPhotos = ref(2000)
 const calcEvents = ref(2)
 const calcConv = ref(15)
 
-const photosLabel = computed(() => calcPhotos.value.toLocaleString() + " fotos")
+const photosLabel = computed(() => `${calcPhotos.value.toLocaleString()} fotos`)
 const calcAthletes = computed(() => Math.round(calcPhotos.value * calcEvents.value * 0.3))
 const calcBuyers = computed(() => Math.round((calcAthletes.value * calcConv.value) / 100))
 const calcGross = computed(() => calcBuyers.value * 59)
@@ -560,23 +694,4 @@ const testimonials = [
 	},
 ]
 
-const freePlanFeatures = computed(() => [
-	{ text: `Hasta ${starterMaxEvents.value} eventos activos`, active: true },
-	{ text: `${starterPhotoLimit.value.toLocaleString()} fotos por evento`, active: true },
-	{ text: "IA facial incluida", active: true },
-	{ text: `${starterCommissionPct.value}% de comisión`, active: true },
-	{ text: "Perfil público", active: true },
-	{ text: "Analytics avanzado", active: false },
-	{ text: "Eventos ilimitados", active: false },
-])
-
-const proPlanFeatures = computed(() => [
-	"Eventos ilimitados",
-	`${proPhotoLimit.value ? proPhotoLimit.value.toLocaleString() : 'Ilimitadas'} fotos por evento`,
-	"IA facial prioritaria",
-	`${proCommissionPct.value}% de comisión`,
-	"Analytics avanzado",
-	"Soporte prioritario",
-	"Badge verificado en perfil",
-])
 </script>

@@ -282,6 +282,10 @@ const photosTotal = ref(0)
 const eventsTotal = ref(0)
 
 onMounted(async () => {
+	// NOTE: photographer_id filter is not in the OpenAPI spec for /photos or /events
+	// (internal endpoints). These /web/ public endpoints may support it separately.
+	// If photos/events come back empty despite the photographer having content,
+	// the backend may not support this query param — open a backend issue.
 	const [pResult, photosResult, eventsResult] = await Promise.allSettled([
 		apiFetch<PhotographerEnvelope>(`/web/photographers/${id}`),
 		apiFetch<ListEnvelope<PhotoResponse>>("/web/photos", {

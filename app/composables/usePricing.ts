@@ -4,10 +4,17 @@ export interface PricingPack {
 	highlighted?: boolean
 }
 
+export interface PricingFees {
+	platform_commission_pct: number
+	payment_gateway_fee_pct: number
+	tax_igv_pct: number
+}
+
 export interface DefaultPricing {
 	photo_price: number
 	packs: PricingPack[]
 	full_event_price: number
+	fees?: PricingFees
 }
 
 const FALLBACK: DefaultPricing = {
@@ -41,6 +48,10 @@ export function usePricing() {
 	const packs = computed(() => pricing.value.packs)
 	const fullEventPrice = computed(() => pricing.value.full_event_price)
 
+	const platformCommissionPct = computed(() => pricing.value.fees?.platform_commission_pct ?? 8)
+	const gatewayFeePct = computed(() => pricing.value.fees?.payment_gateway_fee_pct ?? 3.99)
+	const taxIgvPct = computed(() => pricing.value.fees?.tax_igv_pct ?? 18)
+
 	/** Compute savings amount: (quantity * photoPrice) - packPrice */
 	function savingsAmount(pack: PricingPack): number {
 		return pack.quantity * pricing.value.photo_price - pack.price
@@ -60,6 +71,9 @@ export function usePricing() {
 		photoPrice,
 		packs,
 		fullEventPrice,
+		platformCommissionPct,
+		gatewayFeePct,
+		taxIgvPct,
 		savingsAmount,
 		savingsPct,
 	}

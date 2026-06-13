@@ -28,17 +28,15 @@ export function usePlans() {
 
 	const starterPlan = computed(() => plans.value.find((p) => p.slug === "starter"))
 	const proPlan = computed(() => plans.value.find((p) => p.slug === "pro_events"))
+	const enterprisePlan = computed(() => plans.value.find((p) => p.slug === "enterprise"))
+	const payPerUsePlan = computed(() => plans.value.find((p) => p.slug === "pay_per_use"))
 
-	const starterCommissionPct = computed(() =>
-		starterPlan.value?.commission_rate != null
-			? Math.round((1 - starterPlan.value.commission_rate) * 100)
-			: 92,
-	)
-	const proCommissionPct = computed(() =>
-		proPlan.value?.commission_rate != null
-			? Math.round((1 - proPlan.value.commission_rate) * 100)
-			: 88,
-	)
+	function commissionPct(plan: PublicPlan | undefined, fallback: number): number {
+		return plan?.commission_rate != null ? Math.round((1 - plan.commission_rate) * 100) : fallback
+	}
+
+	const starterCommissionPct = computed(() => commissionPct(starterPlan.value, 92))
+	const proCommissionPct = computed(() => commissionPct(proPlan.value, 88))
 
 	return {
 		plans,
@@ -46,7 +44,10 @@ export function usePlans() {
 		fetchPlans,
 		starterPlan,
 		proPlan,
+		enterprisePlan,
+		payPerUsePlan,
 		starterCommissionPct,
 		proCommissionPct,
+		commissionPct,
 	}
 }

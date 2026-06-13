@@ -163,6 +163,12 @@
               <span class="text-xs bg-green-400/15 text-green-400 px-2 py-0.5 rounded-full">Activa</span>
             </div>
           </div>
+          <button
+            class="mt-4 text-sm text-coral border border-coral/30 hover:bg-coral/10 px-4 py-2.5 rounded-full transition-colors"
+            @click="showRevokeModal = true"
+          >
+            Cerrar todas las sesiones
+          </button>
         </div>
 
         <!-- Cuentas conectadas -->
@@ -255,6 +261,39 @@
 
     </div>
 
+    <!-- Revoke sessions modal -->
+    <Transition name="fade">
+      <div v-if="showRevokeModal" class="fixed inset-0 z-[400] flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-night/80 backdrop-blur-sm" @click="showRevokeModal = false" />
+        <div class="bg-night-2 border border-border rounded-2xl p-6 max-w-sm w-full relative z-10">
+          <div class="w-12 h-12 rounded-xl bg-coral/15 flex items-center justify-center mx-auto mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF3D6B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-white text-center mb-2">¿Cerrar todas las sesiones?</h3>
+          <p class="text-xs text-white/50 text-center mb-5 leading-relaxed">Se cerrarán todas las sesiones activas en otros dispositivos. Tendrás que iniciar sesión de nuevo en cada uno.</p>
+          <p v-if="revokeError" class="text-xs text-coral text-center mb-3">{{ revokeError }}</p>
+          <div class="flex gap-3">
+            <button
+              class="flex-1 border border-border text-white/60 hover:text-white py-2.5 rounded-xl text-sm transition-colors"
+              @click="showRevokeModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              :disabled="revokingAll"
+              class="flex-1 bg-coral hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-opacity flex items-center justify-center gap-2"
+              @click="revokeAllSessions"
+            >
+              <svg v-if="revokingAll" class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              Cerrar todas
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Toast -->
     <Transition name="slide-up">
       <div v-if="toastVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-night-2 border border-green-400/40 text-green-400 text-sm px-5 py-3 rounded-full z-[200] whitespace-nowrap">
@@ -337,6 +376,9 @@ const savingProfile = ref(false)
 const profileError = ref<string | null>(null)
 const savingPassword = ref(false)
 const passwordError = ref<string | null>(null)
+const showRevokeModal = ref(false)
+const revokingAll = ref(false)
+const revokeError = ref<string | null>(null)
 
 const toastVisible = ref(false)
 const toastMessage = ref("")
@@ -404,6 +446,22 @@ async function saveNotifications() {
 	}
 }
 
+async function revokeAllSessions() {
+	revokingAll.value = true
+	revokeError.value = null
+	try {
+		await apiFetch<void>("/auth/sessions", { method: "DELETE" })
+		showRevokeModal.value = false
+		showToast("Todas las sesiones fueron cerradas")
+		auth.logout()
+	} catch (err: unknown) {
+		const e = err as { data?: { error?: string } }
+		revokeError.value = e?.data?.error || "Error al cerrar sesiones. Intenta de nuevo."
+	} finally {
+		revokingAll.value = false
+	}
+}
+
 async function savePassword() {
 	if (!passwordForm.current || !passwordForm.new) {
 		passwordError.value = "Completa todos los campos."
@@ -458,3 +516,8 @@ onMounted(async () => {
 	}
 })
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
